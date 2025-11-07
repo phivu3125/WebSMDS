@@ -1,26 +1,29 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import { Playfair_Display } from "next/font/google"
-import { Suspense } from "react"
+import { Geist, Geist_Mono } from "next/font/google"
+import { Playfair_Display } from 'next/font/google'
 import "./globals.css"
 
-const inter = Inter({
-  subsets: ["latin", "vietnamese"],
-  variable: "--font-sans",
-  display: "swap",
-})
+const _geist = Geist({ subsets: ["latin"] })
+const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
-const playfair = Playfair_Display({
-  subsets: ["latin", "vietnamese"],
-  variable: "--font-serif",
-  display: "swap",
-})
 
 export const metadata: Metadata = {
-  title: "Sắc Màu Di Sản - Vietnamese Cultural Heritage",
-  description: "Bảo tồn, phát huy và lan tỏa những giá trị văn hóa truyền thống Việt Nam"
+  title: "Sắc Màu Di Sản",
+  description:
+    "Sắc Màu Di Sản là hành trình của những con người trẻ chọn đồng hành cùng di sản bằng sự sáng tạo và niềm tự hào văn hóa Việt.",
+  generator: "v0.app",
+  icons: {
+    icon: '/images/logo.png',
+  },
 }
+
+const playfair = Playfair_Display({ 
+  subsets: ['vietnamese'],
+  display: 'swap',
+  variable: '--font-playfair',
+  preload: true
+})
 
 export default function RootLayout({
   children,
@@ -28,9 +31,15 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="vi">
-      <body className={`font-sans ${inter.variable} ${playfair.variable} antialiased`}>
-        <Suspense fallback={null}>{children}</Suspense>
+    <html lang="vi" suppressHydrationWarning>
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className={`font-sans antialiased ${playfair.variable}`}>
+        {children}
       </body>
     </html>
   )

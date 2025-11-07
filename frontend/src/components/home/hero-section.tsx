@@ -1,79 +1,138 @@
-import { Button } from "@/components/ui/button"
-import { ArrowRight } from "lucide-react"
+"use client"
 
-export function HeroSection() {
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
-      <div className="absolute inset-0 z-0">
-        <img
-          src="/images/vietnamese-traditional-architecture-with-red-lacqu.jpg"
-          alt="Vietnamese heritage"
-          className="w-full h-full object-cover opacity-20"
+import { useEffect, useMemo, useState } from "react"
+import { motion } from "framer-motion"
+import { ChevronDown } from "lucide-react"
+import Image from "next/image"
+
+const HERO_POSTER = "/images/hero-poster.jpg"
+
+export default function HeroSection() {
+  const [isVisible, setIsVisible] = useState(false)
+  const [playVideo, setPlayVideo] = useState(false)
+  const [videoReady, setVideoReady] = useState(false)
+
+  useEffect(() => {
+    setIsVisible(true)
+  }, [])
+
+  useEffect(() => {
+    const updatePreference = () => {
+      if (typeof window === "undefined") return
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      setPlayVideo(!prefersReducedMotion)
+    }
+
+    updatePreference()
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
+    const handleMotion = () => updatePreference()
+
+    motionQuery.addEventListener?.("change", handleMotion)
+    window.addEventListener("resize", updatePreference)
+
+    return () => {
+      motionQuery.removeEventListener?.("change", handleMotion)
+      window.removeEventListener("resize", updatePreference)
+    }
+  }, [])
+
+  const scrollToNext = () => {
+    const eventsSection = document.getElementById("events")
+    eventsSection?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  const background = useMemo(() => {
+    if (!playVideo) {
+      return (
+        <Image
+          src={HERO_POSTER}
+          alt="Sắc Màu Di Sản hero"
+          fill
+          priority
+          sizes="100vw"
+          className="absolute inset-0 object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
-      </div>
+      )
+    }
 
-      <div className="absolute inset-0 opacity-[0.03]">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-              <path d="M 60 0 L 0 0 0 60" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </div>
+    return (
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        poster={HERO_POSTER}
+        onCanPlay={() => setVideoReady(true)}
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ backgroundColor: "#1f2937" }}
+      >
+        <source src="/videos/hero-video.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    )
+  }, [playVideo])
 
-      <div className="container mx-auto px-4 lg:px-8 z-10 text-center">
-        <div className="max-w-5xl mx-auto space-y-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/50 backdrop-blur-sm rounded-full border border-border">
-            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            <p className="text-sm text-foreground/80 font-medium">Cầu nối giữa quá khứ và hiện tại</p>
-          </div>
+  return (
+    <section
+      id="hero"
+      className="relative w-full h-screen flex items-center justify-center overflow-hidden"
+      style={{ backgroundColor: "#1f2937" }}
+    >
+      {background}
 
-          <h1 className="font-serif text-6xl md:text-8xl lg:text-9xl font-bold text-foreground text-balance leading-[0.95] tracking-tight">
-            Sắc Màu
-            <br />
-            <span className="text-primary">Di Sản</span>
+      {playVideo && !videoReady && (
+        <Image
+          src={HERO_POSTER}
+          alt="Sắc Màu Di Sản hero fallback"
+          fill
+          priority
+          sizes="100vw"
+          className="absolute inset-0 object-cover"
+        />
+      )}
+
+      <div className="absolute inset-0 bg-black/60" />
+
+      <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+        >
+          <h1
+            className="text-5xl sm:text-6xl md:text-7xl font-serif font-bold mb-6 text-balance"
+            style={{ color: "#fcd34d" }}
+          >
+            Sắc Màu Di Sản
           </h1>
+        </motion.div>
 
-          <p className="text-lg md:text-xl text-muted-foreground text-pretty max-w-3xl mx-auto leading-relaxed">
-            Hành trình chạm – cảm – gìn giữ di sản qua từng mùa lễ hội, kết hợp thẩm mỹ truyền thống và công nghệ đương
-            đại
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          <p
+            className="text-xl sm:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed text-balance"
+            style={{ color: "#fcd34d" }}
+          >
+            Khi văn hóa được chạm vào bằng cảm xúc và sáng tạo <br />
+            di sản lại thức giấc trong đời sống hôm nay
           </p>
+        </motion.div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
-            <Button
-              size="lg"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 rounded-full"
-            >
-              Khám Phá Sự Kiện
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-2 text-base px-8 h-12 rounded-full hover:bg-muted bg-transparent"
-            >
-              Tìm Hiểu Thêm
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-3 gap-8 pt-16 max-w-3xl mx-auto">
-            <div className="space-y-4">
-              <div className="text-4xl md:text-5xl font-bold text-primary font-mono">50+</div>
-              <div className="text-sm text-muted-foreground">Sự kiện</div>
-            </div>
-            <div className="space-y-4">
-              <div className="text-4xl md:text-5xl font-bold text-accent font-mono">10K+</div>
-              <div className="text-sm text-muted-foreground">Người tham gia</div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-4xl md:text-5xl font-bold text-secondary-foreground font-mono">30+</div>
-              <div className="text-sm text-muted-foreground">Làng nghề</div>
-            </div>
-          </div>
-        </div>
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          onClick={scrollToNext}
+          className="inline-flex flex-col items-center gap-2 transition-colors select-none cursor-pointer"
+          style={{ color: "#fcd34d" }}
+        >
+          <span className="text-sm font-semibold">KÉO XUỐNG</span>
+          <ChevronDown size={32} className="animate-bounce" />
+        </motion.button>
       </div>
     </section>
   )

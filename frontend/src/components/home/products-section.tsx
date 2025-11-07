@@ -1,112 +1,238 @@
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+"use client"
+
+import { motion } from "framer-motion"
+import { useInView } from "react-intersection-observer"
 import { ShoppingBag } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { useState, useEffect } from "react"
+import { getProducts } from "@/lib/api/products"
 
-const products = [
-    {
-        id: 1,
-        name: "Áo Dài Truyền Thống",
-        description: "Áo dài lụa tơ tằm thêu tay họa tiết sen",
-        price: "2.500.000đ",
-        image: "/placeholder.svg?height=400&width=400",
-    },
-    {
-        id: 2,
-        name: "Tranh Sơn Mài",
-        description: "Tranh sơn mài vẽ tay phong cảnh Hạ Long",
-        price: "5.000.000đ",
-        image: "/placeholder.svg?height=400&width=400",
-    },
-    {
-        id: 3,
-        name: "Gốm Sứ Bát Tràng",
-        description: "Bộ ấm chén gốm sứ vẽ hoa sen xanh",
-        price: "1.200.000đ",
-        image: "/placeholder.svg?height=400&width=400",
-    },
-    {
-        id: 4,
-        name: "Nón Lá Thủ Công",
-        description: "Nón lá Huế thêu thơ truyền thống",
-        price: "350.000đ",
-        image: "/placeholder.svg?height=300&width=500",
-    },
-    {
-        id: 5,
-        name: "Túi Thổ Cẩm",
-        description: "Túi xách thổ cẩm dệt tay từ Tây Bắc",
-        price: "450.000đ",
-        image: "/placeholder.svg?height=400&width=400",
-    },
-    {
-        id: 6,
-        name: "Đèn Lồng Hội An",
-        description: "Đèn lồng lụa thủ công phong cách Hội An",
-        price: "280.000đ",
-        image: "/placeholder.svg?height=400&width=400",
-    },
-]
+export default function ProductsSection() {
+    const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
+    const [products, setProducts] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
-export function ProductsSection() {
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                setLoading(true)
+                setError(null)
+                const response = await getProducts({ status: 'published', featured: true })
+
+                // Handle both formats: direct array or wrapped in success/data
+                let productsArray: any[] = []
+                if (Array.isArray(response)) {
+                    productsArray = response
+                } else if (response.success && response.data) {
+                    productsArray = response.data
+                } else if (response.data) {
+                    productsArray = response.data
+                }
+
+                setProducts(productsArray.slice(0, 6)) // Lấy 6 sản phẩm đầu
+            } catch (error) {
+                console.error('Failed to fetch products:', error)
+                setError('Không thể tải sản phẩm. Vui lòng thử lại sau.')
+                setProducts([]) // Set empty array on error
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        // Only fetch on client side
+        if (typeof window !== 'undefined') {
+            fetchProducts()
+        }
+    }, [])
+
+    if (loading) {
+        return (
+            <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8">
+                <div className="text-center">Đang tải sản phẩm...</div>
+            </section>
+        )
+    }
+
+    if (error) {
+        return (
+            <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8">
+                <div className="text-center text-red-500">{error}</div>
+            </section>
+        )
+    }
+
+    if (products.length === 0) {
+        return (
+            <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8">
+                <div className="text-center">Hiện chưa có sản phẩm nào</div>
+            </section>
+        )
+    }
+
     return (
-        <section id="san-pham" className="py-32 bg-muted/30 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.03]">
-                <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <pattern id="product-dots" width="40" height="40" patternUnits="userSpaceOnUse">
-                            <circle cx="20" cy="20" r="1.5" fill="currentColor" />
-                        </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#product-dots)" />
-                </svg>
-            </div>
+        <section
+            id="products"
+            ref={ref}
+            className="relative w-full py-20 px-4 sm:px-6 lg:px-8"
+            style={{
+                background: "linear-gradient(to bottom, #ffffff 0%, #FAF9F6 100%)",
+            }}
+        >
+            {/* SVG Pattern Background */}
+            <svg
+                className="absolute inset-0 w-full h-full opacity-5"
+                viewBox="0 0 1200 800"
+                preserveAspectRatio="xMidYMid slice"
+            >
+                <defs>
+                    <pattern
+                        id="product-pattern"
+                        x="0"
+                        y="0"
+                        width="200"
+                        height="200"
+                        patternUnits="userSpaceOnUse"
+                    >
+                        <circle cx="100" cy="100" r="50" fill="none" stroke="#D4AF37" strokeWidth="1" />
+                        <circle cx="100" cy="100" r="30" fill="none" stroke="#B668A1" strokeWidth="1" />
+                    </pattern>
+                </defs>
+                <rect width="1200" height="800" fill="url(#product-pattern)" />
+            </svg>
 
-            <div className="container mx-auto px-4 lg:px-8 relative z-10">
-                <div className="text-center mb-20">
-                    <Badge className="mb-4 bg-secondary/80 text-secondary-foreground border-0">Sản Phẩm</Badge>
-                    <h2 className="font-serif text-5xl md:text-6xl font-bold text-foreground mb-6 text-balance">
-                        Sản Phẩm Đặc Sắc
+            <div className="relative z-10 max-w-7xl mx-auto">
+                {/* Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={inView ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.6 }}
+                    className="text-center mb-16"
+                >
+                    <h2
+                        className="text-4xl md:text-5xl font-serif font-bold mb-4 text-balance"
+                        style={{ color: "#D4AF37" }}
+                    >
+                        "CHẠM" VÀO DI SẢN VÀ SÁNG TẠO
                     </h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty leading-relaxed">
-                        Những sản phẩm thủ công mang đậm bản sắc văn hóa Việt Nam, được tuyển chọn từ các nghệ nhân
+                    <div className="w-24 h-1 mx-auto" style={{ backgroundColor: "#D4AF37" }} />
+                    <p
+                        className="text-center text-lg md:text-xl italic mt-6 leading-relaxed max-w-3xl mx-auto"
+                        style={{ color: "#1f2937" }}
+                    >
+                        "Di sản vượt qua ranh giới bảo tồn và trở thành cảm hứng sáng tạo."
                     </p>
-                </div>
+                </motion.div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                    {products.map((product) => (
-                        <Card
-                            key={product.id}
-                            className="overflow-hidden group hover:shadow-2xl transition-all duration-300 border hover:border-primary/20"
-                        >
-                            <div className="relative h-72 overflow-hidden bg-muted">
-                                <img
-                                    src={product.image || "/placeholder.svg"}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                            <CardContent className="p-6">
-                                <h3 className="font-serif text-xl font-bold mb-2 text-foreground">{product.name}</h3>
-                                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{product.description}</p>
-                                <div className="flex items-center justify-between pt-2">
-                                    <span className="text-2xl font-bold text-primary font-mono">{product.price}</span>
-                                    <Button size="sm" variant="outline" className="rounded-full border-2 bg-transparent">
-                                        <ShoppingBag className="h-4 w-4 mr-2" />
-                                        Mua
-                                    </Button>
+                {/* Products Grid */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={inView ? { opacity: 1 } : {}}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"
+                >
+                    {products.map((product, index) => (
+                        <Link href={`/products/${product.slug}`} key={product.id}>
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={inView ? { opacity: 1, y: 0 } : {}}
+                                transition={{ duration: 0.5, delay: index * 0.1 }}
+                                className="group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 cursor-pointer"
+                                style={{
+                                    border: "2px solid transparent",
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = "#B668A1"
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = "transparent"
+                                }}
+                            >
+                                {/* Image */}
+                                <div className="relative h-72 overflow-hidden">
+                                    <Image
+                                        src={product.image || "/placeholder.svg"}
+                                        alt={product.name}
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, 400px"
+                                        className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700 select-none"
+                                        priority={index === 0}
+                                        placeholder="blur"
+                                        blurDataURL="/placeholder.svg"
+                                    />
+                                    <div
+                                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                        style={{
+                                            background:
+                                                "linear-gradient(to top, rgba(212, 175, 55, 0.3), transparent)",
+                                        }}
+                                    />
                                 </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
 
-                <div className="text-center">
-                    <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8">
+                                {/* Content */}
+                                <div className="p-6">
+                                    <h3
+                                        className="font-serif text-xl font-bold mb-2"
+                                        style={{ color: "#1f2937" }}
+                                    >
+                                        {product.name}
+                                    </h3>
+                                    <p
+                                        className="text-sm mb-4 leading-relaxed line-clamp-2"
+                                        style={{ color: "#6b7280" }}
+                                    >
+                                        {product.description}
+                                    </p>
+
+                                    {/* Price & Button */}
+                                    <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: "#e5e7eb" }}>
+                                        <span
+                                            className="text-2xl font-bold font-mono"
+                                            style={{ color: "#D4AF37" }}
+                                        >
+                                            {Number(product.price).toLocaleString('vi-VN')}đ
+                                        </span>
+                                        <button
+                                            className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 select-none cursor-pointer"
+                                            style={{
+                                                backgroundColor: "#B668A1",
+                                                color: "white",
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor = "#D4AF37"
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor = "#B668A1"
+                                            }}
+                                        >
+                                            <ShoppingBag size={16} />
+                                            Xem chi tiết
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </Link>
+                    ))}
+                </motion.div>
+
+                {/* CTA Button */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={inView ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    className="text-center"
+                >
+                    <button
+                        onClick={() => { window.location.href = "/products" }}
+                        className="px-8 py-3 rounded-full font-semibold text-white transition-all duration-300 hover:scale-105 select-none cursor-pointer"
+                        style={{
+                            background: "linear-gradient(135deg, #D4AF37, #B668A1)",
+                        }}
+                    >
                         Xem Tất Cả Sản Phẩm
-                    </Button>
-                </div>
+                    </button>
+                </motion.div>
             </div>
         </section>
     )

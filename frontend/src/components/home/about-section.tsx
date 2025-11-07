@@ -1,103 +1,193 @@
-import { Badge } from "@/components/ui/badge"
-import { Archive, Sprout, Megaphone } from "lucide-react"
+"use client"
 
-const values = [
-    {
-        icon: Archive,
-        title: "Gìn Giữ",
-        description: "Bảo tồn làng nghề truyền thống và di sản văn hóa Việt Nam qua từng thế hệ",
-    },
-    {
-        icon: Sprout,
-        title: "Phát Triển",
-        description: "Ứng dụng công nghệ và sáng tạo để phát triển di sản một cách bền vững",
-    },
-    {
-        icon: Megaphone,
-        title: "Lan Tỏa",
-        description: "Đưa di sản văn hóa đến gần hơn với công chúng, đặc biệt là thế hệ trẻ",
-    },
-]
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { useInView } from "react-intersection-observer"
+import Image from "next/image"
+import { ChevronDown } from "lucide-react"
 
-export function AboutSection() {
-    return (
-        <section id="ve-chung-toi" className="py-24 bg-muted/30 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.02]">
-                <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <pattern id="tech-grid" width="60" height="60" patternUnits="userSpaceOnUse">
-                            <circle cx="30" cy="30" r="1" fill="currentColor" />
-                            <circle cx="0" cy="0" r="1" fill="currentColor" />
-                            <circle cx="60" cy="0" r="1" fill="currentColor" />
-                            <circle cx="0" cy="60" r="1" fill="currentColor" />
-                            <circle cx="60" cy="60" r="1" fill="currentColor" />
-                        </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#tech-grid)" />
-                </svg>
+export default function AboutSection({ images = [] }) {
+  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
+  const [showFullText, setShowFullText] = useState(false)
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const slideInterval = useState(3000)
+
+  // Auto-slide logic
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % (images.length || 6))
+    }, slideInterval[0])
+    return () => clearInterval(interval)
+  }, [images.length])
+
+  // Placeholder if no images provided
+  const defaultImages = [
+    '/images/about-us/img1.jpg', '/images/about-us/img2.jpg', '/images/about-us/img3.jpg',
+    '/images/about-us/img4.jpg', '/images/about-us/img5.jpg', '/images/about-us/img6.jpg'
+  ]
+  const imgSrc = images.length > 0 ? images : defaultImages
+
+  const boldText = (text: string) => (
+    <span style={{ fontWeight: '600' }}>
+      {text}
+    </span>
+  )
+
+  const italicText = (text: string) => (
+    <span style={{ fontStyle: 'italic' }}>
+      {text}
+    </span>
+  )
+
+  return (
+    <section
+      id="about"
+      ref={ref}
+      className="relative w-full py-20 px-4 sm:px-6 lg:px-8"
+      style={{ backgroundColor: "#f8fafc" }}
+    >
+      {/* SVG Pattern Background - Update purple stroke */}
+      <svg
+        className="absolute inset-0 w-full h-full opacity-5"
+        viewBox="0 0 1200 800"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        <defs>
+          <pattern id="lotus-pattern" x="0" y="0" width="300" height="300" patternUnits="userSpaceOnUse">
+            <circle cx="150" cy="150" r="100" fill="none" stroke="#B668A1" strokeWidth="2" />
+            <circle cx="150" cy="150" r="70" fill="none" stroke="#B668A1" strokeWidth="1.5" />
+          </pattern>
+        </defs>
+        <rect width="1200" height="800" fill="url(#lotus-pattern)" />
+      </svg>
+
+      <div className="relative z-10 max-w-7xl mx-auto">
+        {/* Tiêu đề - Giữ center */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4 text-balance" style={{ color: "#D4AF37" }}>
+            KHỞI NGUỒN CỦA HÀNH TRÌNH
+          </h2>
+          <div className="w-24 h-1 mx-auto" style={{ backgroundColor: "#D4AF37" }} />
+          <p
+            className="text-center text-xl md:text-2xl italic leading-relaxed mb-4 mt-4"
+            style={{ color: "#1f2937" }}
+          >
+            “Từ những nỗ lực gặp gỡ giữa văn hóa và công nghệ, một hành trình dài hơn được hình thành.”
+          </p>
+        </motion.div>
+
+        {/* Grid Layout: 2 columns */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 items-start"
+        >
+          {/* Left: Carousel of images */}
+          <motion.div
+            className="relative h-96 lg:h-[500px] rounded-lg overflow-hidden shadow-lg select-none"
+            whileHover={{ scale: 1.02 }}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial={{ x: 100, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -100, opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="absolute inset-0 w-full h-full"
+              >
+                <Image
+                  src={imgSrc[currentSlide]}
+                  alt={`Hoạt động ${currentSlide + 1}`}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Dots navigation */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+              {imgSrc.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className={`w-3 h-3 rounded-full transition-all ${i === currentSlide ? 'bg-[#D4AF37]' : 'bg-white/50'}`}
+                />
+              ))}
             </div>
 
-            <div className="container mx-auto px-4 lg:px-8 relative z-10">
-                <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-stretch min-h-[600px]">
-                    <div className="relative h-full">
-                        <div className="relative rounded-2xl overflow-hidden shadow-2xl h-full">
-                            <img
-                                src="/placeholder.svg?height=1024&width=1024"
-                                alt="Về chúng tôi"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        
-                        <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-secondary/20 rounded-full blur-3xl -z-10" />
-                        <div className="absolute -top-6 -left-6 w-48 h-48 bg-accent/20 rounded-full blur-3xl -z-10" />
-                    </div>
+            {/* Arrows (tùy chọn, dùng icon SVG nếu cần) */}
+            <button
+              onClick={() => setCurrentSlide((prev) => (prev - 1 + imgSrc.length) % imgSrc.length)}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => setCurrentSlide((prev) => (prev + 1) % imgSrc.length)}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50"
+            >
+              ›
+            </button>
+          </motion.div>
 
-                    <div className="space-y-8">
-                        <div>
-                            <Badge className="mb-4 bg-secondary text-secondary-foreground">Về Chúng Tôi</Badge>
-                            <h2 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-6 text-balance">
-                                Tầm Nhìn và Sứ Mệnh
-                            </h2>
+          {/* Right: Text with highlight */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg p-8 border shadow-md" style={{ borderColor: "#B668A1" }}>
+              <p className="leading-relaxed text-justify mb-4" style={{ color: "#1f2937", lineHeight: 1.7 }}>
+                Mọi hành trình đều bắt đầu từ một niềm tin — rằng những giá trị của {boldText('di sản và văn hóa Việt Nam')} xứng đáng
+                được tiếp nối, được sống cùng hơi thở của thời đại. Với chúng tôi, đó là khởi đầu của {italicText('Sắc Màu Di Sản')}.
+              </p>
 
-                            <div className="space-y-4">
-                                <p className="text-lg text-muted-foreground leading-relaxed text-pretty">
-                                    Giữa nhịp sống hiện đại, <span className="font-semibold text-foreground">"Sắc Màu Di Sản"</span> ra
-                                    đời như một cây cầu nối quá khứ và hiện tại — nơi mỗi người được chạm tay vào ký ức văn hoá, thưởng
-                                    thức tinh hoa thủ công, và sống lại những khoảnh khắc mang đậm hồn Việt.
-                                </p>
-                                <p className="text-lg text-muted-foreground leading-relaxed text-pretty">
-                                    Chuỗi sự kiện được thiết kế với tinh thần{" "}
-                                    <span className="font-semibold text-foreground">
-                                        kết hợp thẩm mỹ truyền thống và công nghệ đương đại
-                                    </span>
-                                    , để mỗi trải nghiệm không chỉ là tham quan mà là một hành trình cảm xúc, một di sản được đánh thức.
-                                </p>
-                                <div className="bg-primary/5 border-l-4 border-primary p-4 rounded-r-lg">
-                                    <p className="text-base font-medium text-foreground">
-                                        Tất cả tâm huyết đều hướng tới một sứ mệnh duy nhất:{" "}
-                                        <span className="text-primary">Gìn giữ – Phát triển – Lan tỏa</span> những làng nghề truyền thống và
-                                        di sản văn hóa Việt đến gần hơn với công chúng.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+              <p className="leading-relaxed text-justify mb-4" style={{ color: "#1f2937", lineHeight: 1.7 }}>
+                Là những người trẻ đam mê văn hóa và bản sắc dân tộc, chúng tôi không chỉ đơn giản nghĩ rằng văn hóa là những
+                giá trị hiện diện trong xã hội, mà sâu xa hơn nữa, văn hóa chính là những gì thuộc căn tính, là tiếng vọng
+                từ trong cội nguồn, gốc rễ của mỗi con người, là một phần "nhân văn" trong tâm hồn của mỗi người dân Việt Nam.
+              </p>
 
-                        <div className="space-y-6 pt-4">
-                            {values.map((value, index) => (
-                                <div key={index} className="flex gap-4 group">
-                                    <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                        <value.icon className="h-6 w-6 text-primary" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-lg text-foreground mb-1">{value.title}</h3>
-                                        <p className="text-muted-foreground leading-relaxed">{value.description}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+              {showFullText && (
+                <div className="space-y-4 mt-4">
+                  <p className="leading-relaxed text-justify" style={{ color: "#1f2937", lineHeight: 1.7 }}>
+                    Từ sự thấu hiểu rằng văn hóa như một phần của đời sống con người, chúng tôi cùng chung tay nỗ lực bảo tồn
+                    và phát huy văn hóa, di sản qua những câu chuyện từ Mỹ Vị Việt Nam, Chợ Lớn Food Story, hay những dự án
+                    số hóa các không gian văn hóa bằng giải pháp công nghệ hiện đại như thư viện Danh Nhân Nam Bộ, không gian
+                    Văn hóa đọc trực tuyến. Chúng tôi từng bước đi qua nhiều con đường khác nhau, cùng một khát vọng chung:
+                    {italicText(' làm cho di sản trở nên gần gũi, có thể chạm, có thể cảm, và có thể sống trong đời sống hôm nay.')}
+                  </p>
+
+                  <p className="leading-relaxed text-justify" style={{ color: "#1f2937", lineHeight: 1.7 }}>
+                    Tuy nhiên, qua những bước đi đầu tiên, chúng tôi nhận thấy rằng, để di sản thật sự "sống", cần phải có một
+                    {boldText(' hệ sinh thái kết nối')}, nơi những giá trị truyền thống được tiếp sức bởi sáng tạo đương đại, nơi những nguồn lực
+                    từ mọi miền mang bản sắc riêng, độc đáo hòa chung thành một hệ sinh thái sống động mang tên {italicText('Sắc Màu Di Sản')}.
+                  </p>
                 </div>
+              )}
+
+              <button
+                onClick={() => setShowFullText(!showFullText)}
+                className="font-semibold mt-4 transition-all duration-300 hover:scale-105 flex items-center select-none cursor-pointer"
+                style={{ color: "#D4AF37" }}
+              >
+                {showFullText ? "Thu gọn" : "Tìm hiểu thêm"}
+                <motion.div
+                  animate={{ rotate: showFullText ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="ml-1"
+                >
+                  <ChevronDown size={32} />
+                </motion.div>
+              </button>
             </div>
-        </section>
-    )
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  )
 }

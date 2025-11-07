@@ -1,126 +1,215 @@
-"use client";
+"use client"
 
-import * as React from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
-import { Calendar, MapPin, ArrowRight } from "lucide-react"
+import { motion } from "framer-motion"
+import { useInView } from "react-intersection-observer"
+import { useState, useEffect } from "react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { LotusPattern } from "../ui/lotus-pattern"
+import Link from "next/link"
+import { getEvents } from "@/lib/api/events"
+import Image from "next/image"
+import { resolveMediaUrl } from "@/lib/media"
 
-const events = [
-  {
-    id: 1,
-    title: "Hướng Sắc Cổ Đô",
-    description: "Khám phá vẻ đẹp kiến trúc và văn hóa của cố đô Huế",
-    date: "15-20 Tháng 11, 2025",
-    location: "Huế, Việt Nam",
-    image: "/placeholder.svg?height=400&width=400",
-    featured: true,
-  },
-  {
-    id: 2,
-    title: "Sắc Hội Tràng Thu",
-    description: "Lễ hội thu hoạch truyền thống miền Bắc",
-    date: "5-7 Tháng 12, 2025",
-    location: "Hà Nội, Việt Nam",
-    image: "/placeholder.svg?height=400&width=400",
-    featured: false,
-  },
-  {
-    id: 3,
-    title: "Nghệ Thuật Sơn Mài",
-    description: "Workshop trải nghiệm nghệ thuật sơn mài truyền thống",
-    date: "10 Tháng 12, 2025",
-    location: "TP. Hồ Chí Minh",
-    image: "/placeholder.svg?height=400&width=400",
-    featured: false,
-  },
-  {
-    id: 4,
-    title: "Âm Nhạc Dân Gian",
-    description: "Đêm nhạc ca trù và hát xẩm truyền thống",
-    date: "18 Tháng 12, 2025",
-    location: "Hà Nội, Việt Nam",
-    image: "/placeholder.svg?height=400&width=400",
-    featured: false,
-  },
-]
+type EventsSectionProps = {
+  initialEvents?: any[]
+}
 
-export function EventsSection() {
+export default function EventsSection({ initialEvents = [] }: EventsSectionProps) {
+  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [events, setEvents] = useState<any[]>(initialEvents)
+  const [loading, setLoading] = useState(initialEvents.length === 0)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (initialEvents.length > 0) return
+
+    const fetchEvents = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await getEvents({ status: 'published' })
+
+        // Handle both direct array and wrapped response
+        const eventsArray = Array.isArray(data) ? data : (data.data || [])
+        setEvents(eventsArray)
+      } catch (error) {
+        console.error('Failed to fetch events:', error)
+        setError('Không thể tải sự kiện. Vui lòng thử lại sau.')
+        setEvents([]) // Set empty array on error
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    // Only fetch on client side
+    if (typeof window !== 'undefined') {
+      fetchEvents()
+    }
+  }, [initialEvents.length])
+
+  const nextEvent = () => {
+    setCurrentIndex((prev) => (prev + 1) % events.length)
+  }
+
+  const prevEvent = () => {
+    setCurrentIndex((prev) => (prev - 1 + events.length) % events.length)
+  }
+
+  if (loading) {
+    return (
+      <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8">
+        <div className="text-center text-white">Đang tải sự kiện...</div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8">
+        <div className="text-center text-red-500">{error}</div>
+      </section>
+    )
+  }
+
+  if (events.length === 0) {
+    return (
+      <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8">
+        <div className="text-center text-white">Hiện chưa có sự kiện nào</div>
+      </section>
+    )
+  }
+
+  const currentEvent = events[currentIndex]
+
   return (
-    <section id="su-kien" className="py-32 bg-background relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.02]">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="event-grid" width="80" height="80" patternUnits="userSpaceOnUse">
-              <path d="M 80 0 L 0 0 0 80" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#event-grid)" />
-        </svg>
-      </div>
+    <section
+      id="events"
+      ref={ref}
+      className="relative w-full py-20 px-4 sm:px-6 lg:px-8"
+      style={{
+        background: "linear-gradient(135deg, rgb(115, 66, 186) 0%, #B668A1 100%)",
+      }}
+    >
+      {/* SVG Pattern Overlay - LOTUS */}
+      <LotusPattern
+        patternId="events-lotus"
+        patternSize={300}
+        opacity={0.05}
+        rotation={15}
+        petalFill="#f7f5f5"
+        pistilFill="#fae757"
+      />
 
-      <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <div className="text-center mb-20">
-          <Badge className="mb-4 bg-secondary/80 text-secondary-foreground border-0">Sự Kiện</Badge>
-          <h2 className="font-serif text-5xl md:text-6xl font-bold text-foreground mb-6 text-balance">
-            Sự Kiện Đang Diễn Ra
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4 text-balance" style={{ color: "#fcd34d" }}>
+            SỰ KIỆN ĐANG DIỄN RA
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty leading-relaxed">
-            Tham gia cùng chúng tôi trong những hành trình khám phá văn hóa Việt Nam đầy ý nghĩa
-          </p>
+          <div className="w-24 h-1 mx-auto" style={{ backgroundColor: "#fcd34d" }} />
+        </motion.div>
+
+        <div className="relative">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0, x: 0 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="max-w-5xl mx-auto"
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.05}
+            onDragEnd={(event, info) => {
+              const { offset, velocity } = info
+              const swipeThreshold = 30
+
+              if (offset.x > swipeThreshold || velocity.x > 300) {
+                prevEvent()
+              } else if (offset.x < -swipeThreshold || velocity.x < -300) {
+                nextEvent()
+              }
+            }}
+          >
+            <div
+              className="bg-white border rounded-lg shadow-md overflow-hidden"
+              style={{
+                borderColor: "#a78bfa",
+              }}
+            >
+              <div className="w-full h-[28rem] relative overflow-hidden">
+                <Image
+                  src={resolveMediaUrl(currentEvent.image) || "/placeholder.svg"}
+                  alt={currentEvent.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 800px"
+                  className="object-cover rounded-t-lg"
+                  priority={currentIndex === 0}
+                  placeholder="blur"
+                  blurDataURL="/placeholder.svg"
+                />
+              </div>
+
+              <div className="p-8">
+                <p className="text-sm font-semibold mb-2" style={{ color: "#fcd34d" }}>
+                  {currentEvent.dateDisplay}
+                </p>
+                <h3 className="text-3xl font-serif font-bold mb-4" style={{ color: "#5b21b6" }}>
+                  {currentEvent.title}
+                </h3>
+                <p className="text-base mb-6 leading-relaxed" style={{ color: "#1f2937" }}>
+                  {currentEvent.description}
+                </p>
+                <Link
+                  href={`/events/${currentEvent.slug}`}
+                  className="w-full px-8 py-3 rounded-full text-white font-semibold transition-all duration-300 select-none cursor-pointer block text-center"
+                  style={{ backgroundColor: "#fcd34d" }}
+                >
+                  Tham gia ngay
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Navigation Buttons */}
+          <button
+            onClick={prevEvent}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 md:-translate-x-20 p-2 rounded-full transition-all duration-300 hover:scale-110 cursor-pointer"
+            style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+            aria-label="Sự kiện trước"
+          >
+            <ChevronLeft size={24} color="white" />
+          </button>
+
+          <button
+            onClick={nextEvent}
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 md:translate-x-20 p-2 rounded-full transition-all duration-300 hover:scale-110 cursor-pointer"
+            style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+            aria-label="Sự kiện tiếp theo"
+          >
+            <ChevronRight size={24} color="white" />
+          </button>
         </div>
 
-        <Carousel className="w-full">  {/* Shadcn Carousel wrapper */}
-          <CarouselContent className="-ml-1 transform -translate-x-[8%] md:-translate-x-[4%] lg:-translate-x-[2%]">  {/* Negative margin cho snap mượt */}
-            {events.map((event) => (
-              <CarouselItem  key={event.id} className="md:basis-1/2 lg:basis-1/3 pl-4">  {/* Responsive: 1/2/3 slides */}
-                <Card className="group hover:shadow-xl transition-all duration-300 overflow-hidden border hover:border-primary/20 h-full w-full">
-                  <div className="relative h-32 overflow-hidden">
-                    <img
-                      src={event.image || "/placeholder.svg"}
-                      alt={event.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-                    {event.featured && (
-                      <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground border-0 px-3 py-1">
-                        Nổi Bật
-                      </Badge>
-                    )}
-                  </div>
-                  <CardHeader className="p-6">
-                    <CardTitle className="font-serif text-xl font-bold text-foreground mb-2 line-clamp-1">{event.title}</CardTitle>
-                    <CardDescription className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-4">
-                      {event.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6 pt-0 space-y-3">
-                    <div className="flex items-center gap-2 text-xs text-foreground">
-                      <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
-                      <span>{event.date}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-foreground">
-                      <MapPin className="h-3 w-3 text-accent flex-shrink-0" />
-                      <span>{event.location}</span>
-                    </div>
-                    <Button variant="outline" size="sm" className="w-full rounded-full mt-4 border-2">
-                      Tìm Hiểu Thêm
-                      <ArrowRight className="ml-2 h-3 w-3" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious />  {/* Shadcn buttons tự handle */}
-          <CarouselNext />
-        </Carousel>
+        {/* Dots Indicator */}
+        <div className="relative z-10 flex justify-center gap-3 mt-12">
+          {events.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => setCurrentIndex(index)}
+              aria-label={`Đi tới sự kiện ${index + 1}`}
+              className={`rounded-full transition-all duration-300 cursor-pointer ${currentIndex === index ? "w-8" : "w-3"} h-3`}
+              style={{
+                backgroundColor: currentIndex === index ? "#fcd34d" : "rgba(255, 255, 255, 0.5)",
+              }}
+            />
+          ))}
+        </div>
       </div>
     </section>
   )
