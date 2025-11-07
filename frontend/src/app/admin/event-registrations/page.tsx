@@ -59,11 +59,13 @@ export default function EventRegistrationsAdmin() {
           ? data.data
           : []
 
-      setEvents(eventsArray.map((event: any) => ({
-        id: event.id,
-        title: event.title,
-        slug: event.slug,
-      })))
+      setEvents(
+        eventsArray.map((event) => ({
+          id: event.id,
+          title: event.title,
+          slug: event.slug,
+        }))
+      )
     } catch (error) {
       console.error("Failed to fetch events for filter:", error)
     }

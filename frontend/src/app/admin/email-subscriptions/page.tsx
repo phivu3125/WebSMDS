@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
 import { adminApi } from "@/lib/api"
@@ -81,31 +81,31 @@ export default function EmailSubscriptionsAdmin() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px] text-sm">
-            <thead className="bg-muted text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium">Email</th>
-                <th className="px-4 py-3 text-left font-medium">Trạng thái</th>
-                <th className="px-4 py-3 text-left font-medium">Ngày đăng ký</th>
-              </tr>
-            </thead>
-            <tbody>
-              {subscriptions.length === 0 && (
+              <thead className="bg-muted text-muted-foreground">
                 <tr>
-                  <td className="px-4 py-6 text-center text-gray-500" colSpan={3}>
-                    Chưa có email nào đăng ký
-                  </td>
+                  <th className="px-4 py-3 text-left font-medium">Email</th>
+                  <th className="px-4 py-3 text-left font-medium">Trạng thái</th>
+                  <th className="px-4 py-3 text-left font-medium">Ngày đăng ký</th>
                 </tr>
-              )}
-              {subscriptions.map((subscription) => (
-                <tr key={subscription.id} className="border-t">
-                  <td className="px-4 py-3 font-medium text-gray-900">{subscription.email}</td>
-                  <td className="px-4 py-3 capitalize text-gray-600">{subscription.status}</td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {new Date(subscription.subscribedAt).toLocaleString("vi-VN")}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+              </thead>
+              <tbody>
+                {subscriptions.length === 0 && (
+                  <tr>
+                    <td className="px-4 py-6 text-center text-gray-500" colSpan={3}>
+                      Chưa có email nào đăng ký
+                    </td>
+                  </tr>
+                )}
+                {subscriptions.map((subscription) => (
+                  <tr key={subscription.id} className="border-t">
+                    <td className="px-4 py-3 font-medium text-gray-900">{subscription.email}</td>
+                    <td className="px-4 py-3 capitalize text-gray-600">{subscription.status}</td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {new Date(subscription.subscribedAt).toLocaleString("vi-VN")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         </CardContent>
