@@ -19,6 +19,8 @@ interface EventSection {
   position: number
 }
 
+type SectionField = "title" | "items"
+
 interface Event {
   id: string
   title: string
@@ -142,14 +144,15 @@ export default function CreateEventPage() {
     setInvalidSectionItems(prev => ({ ...prev, [newSection.id]: [0] }))
   }
 
-  const updateSection = (index: number, field: string, value: any) => {
+  const updateSection = (index: number, field: SectionField, value: string | string[]) => {
     const updatedSections = [...sections]
     if (field === "title") {
-      updatedSections[index].title = value
+      const titleValue = value as string
+      updatedSections[index].title = titleValue
       const sectionId = updatedSections[index].id
       setInvalidSectionTitles(prev => {
         const next = new Set(prev)
-        if (!value.trim()) {
+        if (!titleValue.trim()) {
           next.add(sectionId)
         } else {
           next.delete(sectionId)
@@ -157,7 +160,7 @@ export default function CreateEventPage() {
         return next
       })
     } else if (field === "items") {
-      updatedSections[index].items = value
+      updatedSections[index].items = value as string[]
     }
     setSections(updatedSections)
   }
@@ -202,8 +205,9 @@ export default function CreateEventPage() {
         return { ...prev, [sectionId]: [...filtered, itemIndex] }
       }
       if (!filtered.length) {
-        const { [sectionId]: _, ...rest } = prev
-        return rest
+        const updated = { ...prev }
+        delete updated[sectionId]
+        return updated
       }
       return { ...prev, [sectionId]: filtered }
     })
@@ -221,8 +225,9 @@ export default function CreateEventPage() {
         .filter(idx => idx !== itemIndex)
         .map(idx => (idx > itemIndex ? idx - 1 : idx))
       if (!filtered.length) {
-        const { [sectionId]: _, ...rest } = prev
-        return rest
+        const updated = { ...prev }
+        delete updated[sectionId]
+        return updated
       }
       return { ...prev, [sectionId]: filtered }
     })
@@ -234,8 +239,9 @@ export default function CreateEventPage() {
     setSections(updatedSections)
     setInvalidSectionItems(prev => {
       if (!removed) return prev
-      const { [removed.id]: _, ...rest } = prev
-      return rest
+      const updated = { ...prev }
+      delete updated[removed.id]
+      return updated
     })
     setInvalidSectionTitles(prev => {
       if (!removed) return prev
@@ -593,7 +599,7 @@ export default function CreateEventPage() {
             {sections.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <p>Chưa có phần nội dung nào</p>
-                <p className="text-sm">Nhấn "Thêm phần" để bắt đầu</p>
+                <p className="text-sm">Nhấn &quot;Thêm phần&quot; để bắt đầu</p>
               </div>
             )}
           </CardContent>
