@@ -15,7 +15,7 @@ if (!existsSync(backupFile)) {
 // Run Prisma db execute to import data
 try {
   console.log('📥 Importing data from backup.sql...');
-  execSync(`npx prisma db execute --file ${backupFile}`, { stdio: 'inherit' });
+  execSync(`npx prisma db execute --file ${backupFile} --url "${process.env.DATABASE_URL}"`, { stdio: 'inherit' });
   console.log('✅ Data import completed successfully!');
 } catch (error) {
   console.error('❌ Error during data import:', error.message);
