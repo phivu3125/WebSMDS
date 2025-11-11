@@ -9,6 +9,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed": "tsx prisma/seed.ts",
+    "import-data": "node scripts/import-data.js",
+    "dump-data": "tsx scripts/dump-data.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
