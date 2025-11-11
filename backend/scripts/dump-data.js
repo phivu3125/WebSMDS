@@ -64,7 +64,7 @@ function generateInserts(tableName, records) {
       if (val instanceof Date) return `'${val.toISOString()}'`;
       if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
       if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
-      if (Array.isArray(val)) return `'${JSON.stringify(val).replace(/'/g, "''")}'`; // For JSON arrays
+      if (Array.isArray(val)) return `ARRAY[${val.map(item => `'${item.replace(/'/g, "''")}'`).join(',')}]`; // PostgreSQL array syntax
       if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`; // For JSON objects
       return val;
     });
