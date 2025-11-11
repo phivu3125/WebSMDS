@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { adminApi } from "@/lib/api"
+import { getAuthToken } from "@/lib/auth-cookies"
 import { resolveApiUrl } from "@/lib/api/base"
 
 interface EventSummary {
@@ -46,7 +47,7 @@ export default function EventRegistrationsAdmin() {
 
   const fetchEvents = async () => {
     try {
-      const token = localStorage.getItem("token")
+      const token = getAuthToken()
       const response = await fetch(resolveApiUrl("events"), {
         headers: {
           Authorization: `Bearer ${token}`,

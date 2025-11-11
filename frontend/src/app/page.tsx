@@ -1,6 +1,6 @@
 import HomeClient, { HomeEvent, HomePress } from "./home-client"
 import { getEvents } from "@/lib/api/events"
-import { getPress } from "@/lib/api/news"
+import { getPress } from "@/lib/api/press"
 import { getTalkSection } from "@/lib/api/talk-section"
 import type { TalkSectionProps } from "@/components/home/talk-section"
 

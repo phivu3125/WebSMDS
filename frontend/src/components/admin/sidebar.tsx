@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { removeAuthToken } from "@/lib/auth-cookies"
 import {
   Home,
   FileText,
@@ -14,13 +15,13 @@ import {
   Package,
   LogOut,
   Menu,
-  X as CloseIcon,
   ChevronDown,
   ChevronRight,
   Users,
   Video,
   ShoppingCart,
   HandHeart,
+  CalendarDays,
 } from "lucide-react"
 
 interface NavItem {
@@ -39,6 +40,7 @@ const navigation: NavItem[] = [
     children: [
       { name: "Danh sách Sự kiện", href: "/admin/events", icon: Calendar },
       { name: "Đăng ký tham gia", href: "/admin/event-registrations", icon: Users },
+      { name: "Sự kiện đã qua", href: "/admin/past-events", icon: CalendarDays },
     ],
   },
   {
@@ -77,11 +79,28 @@ export function Sidebar() {
 
   useEffect(() => {
     setIsMobileOpen(false)
+
+    // Auto-expand groups that contain the current page
+    const currentPath = pathname
+    const groupsToExpand: string[] = []
+
+    navigation.forEach((item) => {
+      if (item.children) {
+        const hasActiveChild = item.children.some((child) => child.href === currentPath)
+        if (hasActiveChild) {
+          groupsToExpand.push(item.name)
+        }
+      }
+    })
+
+    setExpandedGroups((prev) => {
+      const newGroups = [...new Set([...prev, ...groupsToExpand])]
+      return newGroups
+    })
   }, [pathname])
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
+    removeAuthToken()
     router.push("/admin/login")
   }
 
@@ -93,20 +112,20 @@ export function Sidebar() {
         onClick={() => setIsMobileOpen((prev) => !prev)}
         aria-label="Toggle sidebar"
       >
-        {isMobileOpen ? <CloseIcon className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        <Menu className="h-4 w-4" />
         <span>Menu</span>
       </button>
 
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-30 w-64 transform bg-white shadow-lg transition-transform duration-200 md:static md:inset-auto md:translate-x-0",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          "fixed inset-y-0 left-0 z-30 w-64 transform bg-white shadow-lg transition-transform duration-200 lg:translate-x-0",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center justify-center px-4 border-b">
-            <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
-          </div>
+      <div className="flex h-full flex-col">
+        <div className="sticky top-0 flex h-16 items-center justify-center px-4 border-b bg-white z-10">
+          <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+        </div>
           <nav className="flex-1 overflow-y-auto py-6">
             <div className="space-y-1 px-4">
               {navigation.map((item) => {
@@ -178,7 +197,7 @@ export function Sidebar() {
               })}
             </div>
           </nav>
-          <div className="border-t p-4">
+          <div className="sticky bottom-0 border-t bg-white p-4 z-10">
             <button
               onClick={handleLogout}
               className="flex w-full items-center rounded-md px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"

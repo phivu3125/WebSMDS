@@ -5,12 +5,11 @@ import { motion } from "framer-motion"
 import { ChevronDown } from "lucide-react"
 import Image from "next/image"
 
-const HERO_POSTER = "/images/hero-poster.jpg"
+const HERO_POSTER = "/images/hero-section/hero-poster.png"
 
 export default function HeroSection() {
   const [isVisible, setIsVisible] = useState(false)
   const [playVideo, setPlayVideo] = useState(false)
-  const [videoReady, setVideoReady] = useState(false)
 
   useEffect(() => {
     setIsVisible(true)
@@ -56,20 +55,13 @@ export default function HeroSection() {
     }
 
     return (
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        poster={HERO_POSTER}
-        onCanPlay={() => setVideoReady(true)}
-        className="absolute inset-0 w-full h-full object-cover"
+      <iframe
+        src="https://www.youtube.com/embed/6CtljF3b9hw?autoplay=1&mute=1&loop=1&playlist=6CtljF3b9hw&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&cc_load_policy=0&fs=0&disablekb=1"
+        allow="autoplay; encrypted-media"
+        allowFullScreen
+        className="absolute inset-0 w-full h-full"
         style={{ backgroundColor: "#1f2937" }}
-      >
-        <source src="/videos/hero-video.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+      />
     )
   }, [playVideo])
 
@@ -80,17 +72,6 @@ export default function HeroSection() {
       style={{ backgroundColor: "#1f2937" }}
     >
       {background}
-
-      {playVideo && !videoReady && (
-        <Image
-          src={HERO_POSTER}
-          alt="Sắc Màu Di Sản hero fallback"
-          fill
-          priority
-          sizes="100vw"
-          className="absolute inset-0 object-cover"
-        />
-      )}
 
       <div className="absolute inset-0 bg-black/60" />
 

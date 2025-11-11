@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { ChevronDown } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -17,6 +17,7 @@ const sectionColors = {
   about: "linear-gradient(135deg, rgba(115, 66, 186, 0.9) 0%, rgba(182, 104, 161, 0.9) 100%)",
   sac_mau_disan: "linear-gradient(135deg, rgba(115, 66, 186, 0.9) 0%, rgba(182, 104, 161, 0.9) 100%)",
   past_events: "linear-gradient(135deg, rgba(115, 66, 186, 0.9) 0%, rgba(182, 104, 161, 0.9) 100%)",
+  hanh_trinh_danh_thuc_disan: "linear-gradient(135deg, rgba(115, 66, 186, 0.9) 0%, rgba(182, 104, 161, 0.9) 100%)",
   products: "linear-gradient(135deg, rgba(115, 66, 186, 0.9) 0%, rgba(182, 104, 161, 0.9) 100%)",
   partners: "transparent",
   news: "linear-gradient(135deg, rgba(115, 66, 186, 0.9) 0%, rgba(182, 104, 161, 0.9) 100%)",
@@ -24,21 +25,80 @@ const sectionColors = {
   talk: "linear-gradient(135deg, rgba(115, 66, 186, 0.9) 0%, rgba(182, 104, 161, 0.9) 100%)",
 }
 
+// Định nghĩa sections bên ngoài component để tránh re-render không cần thiết
+const navigationGroups = [
+  {
+    label: "Trang chủ",
+    id: "hero",
+    standalone: true
+  },
+  {
+    label: "Giới thiệu",
+    dropdown: [
+      { id: "about", label: "Về chúng tôi" },
+      { id: "sac_mau_disan", label: "Sắc Màu Di Sản" },
+      { id: "hanh_trinh_danh_thuc_disan", label: "Đánh thức di sản" },
+      { id: "past_events", label: "Hành trình" },
+    ]
+  },
+  {
+    label: "Dịch vụ",
+    dropdown: [
+      // { id: "events", label: "Sự kiện" },
+      // { id: "products", label: "Sản phẩm" },
+      { id: "partners", label: "Đối tác" }
+    ]
+  },
+  {
+    label: "Hoạt động",
+    dropdown: [
+      { id: "news", label: "Tin tức" },
+      { id: "talk", label: "Toạ đàm" }
+    ]
+  },
+  {
+    label: "Liên hệ",
+    id: "contact",
+    standalone: true
+  }
+]
+
+// Flatten sections for observer and scroll functionality
+const sections = navigationGroups
+  .filter(group => group.dropdown)
+  .flatMap(group => group.dropdown!)
+  .concat(
+    navigationGroups
+      .filter(group => group.standalone)
+      .map(group => ({ id: group.id!, label: group.label }))
+  )
+
 export default function Navigation({ isScrolled, mode = "home" }: NavigationProps) {
   const [activeSection, setActiveSection] = useState("hero")
   const [isOpen, setIsOpen] = useState(false)
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const sections = [
-    { id: "hero", label: "Trang chủ" },
-    { id: "events", label: "Sự kiện" },
-    { id: "about", label: "Về chúng tôi" },
-    { id: "past_events", label: "Hành trình" },
-    { id: "products", label: "Sản phẩm" },
-    { id: "partners", label: "Đối tác" },
-    { id: "news", label: "Tin tức" },
-    { id: "talk", label: "Toạ đàm" },
-    { id: "contact", label: "Liên hệ" },
-  ]
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const toggleDropdown = (groupLabel: string) => {
+    setOpenDropdown(openDropdown === groupLabel ? null : groupLabel)
+  }
+
+  const handleDropdownItemClick = (sectionId: string) => {
+    scrollToSection(sectionId)
+    setOpenDropdown(null)
+  }
 
   const observer = useMemo(() => {
     if (mode !== "home") return null
@@ -64,29 +124,45 @@ export default function Navigation({ isScrolled, mode = "home" }: NavigationProp
   }, [mode])
 
   useEffect(() => {
-    if (!observer) return
+    if (!observer || mode !== "home") return
 
-    sections.forEach(({ id }) => {
-      const element = document.getElementById(id)
-      if (element) observer.observe(element)
-    })
-
-    return () => {
+    // Đợi DOM ready trước khi observe
+    const timeoutId = setTimeout(() => {
       sections.forEach(({ id }) => {
         const element = document.getElementById(id)
-        if (element) observer.unobserve(element)
+        if (element) {
+          observer.observe(element)
+        }
       })
-      observer.disconnect()
+    }, 100)
+
+    return () => {
+      clearTimeout(timeoutId)
+      if (observer) {
+        sections.forEach(({ id }) => {
+          const element = document.getElementById(id)
+          if (element) observer.unobserve(element)
+        })
+        observer.disconnect()
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, observer])
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id)
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" })
+      element.scrollIntoView({ behavior: "smooth", block: "start" })
       setActiveSection(id)
       setIsOpen(false)
+    } else {
+      // Fallback: try to scroll after a short delay in case element isn't ready yet
+      setTimeout(() => {
+        const fallbackElement = document.getElementById(id)
+        if (fallbackElement) {
+          fallbackElement.scrollIntoView({ behavior: "smooth", block: "start" })
+          setActiveSection(id)
+        }
+      }, 100)
     }
   }
 
@@ -114,21 +190,68 @@ export default function Navigation({ isScrolled, mode = "home" }: NavigationProp
             />
           </div>
 
-          <div className="hidden md:flex items-center space-x-1">
+          <div className="hidden md:flex items-center space-x-1" ref={dropdownRef}>
             {mode === "home" ? (
-              sections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => scrollToSection(section.id)}
-                  className="px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
-                  style={{
-                    color: activeSection === section.id ? "#fcd34d" : "white",
-                    backgroundColor: activeSection === section.id ? "rgba(167, 139, 250, 0.2)" : "transparent",
-                  }}
-                >
-                  {section.label}
-                </button>
-              ))
+              navigationGroups.map((group) => {
+                if (group.standalone) {
+                  // Standalone button
+                  return (
+                    <button
+                      key={group.id}
+                      onClick={() => scrollToSection(group.id!)}
+                      className="px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
+                      style={{
+                        color: activeSection === group.id ? "#fcd34d" : "white",
+                        backgroundColor: activeSection === group.id ? "rgba(167, 139, 250, 0.2)" : "transparent",
+                      }}
+                    >
+                      {group.label}
+                    </button>
+                  )
+                } else if (group.dropdown) {
+                  // Dropdown menu
+                  const isGroupActive = group.dropdown.some(item => item.id === activeSection)
+                  const isDropdownOpen = openDropdown === group.label
+
+                  return (
+                    <div key={group.label} className="relative">
+                      <button
+                        onClick={() => toggleDropdown(group.label)}
+                        className="flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
+                        style={{
+                          color: isGroupActive ? "#fcd34d" : "white",
+                          backgroundColor: isGroupActive ? "rgba(167, 139, 250, 0.2)" : "transparent",
+                        }}
+                      >
+                        {group.label}
+                        <ChevronDown
+                          size={14}
+                          className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+
+                      {isDropdownOpen && (
+                        <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                          {group.dropdown.map((item) => (
+                            <button
+                              key={item.id}
+                              onClick={() => handleDropdownItemClick(item.id)}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 first:rounded-t-md last:rounded-b-md"
+                              style={{
+                                color: activeSection === item.id ? "#7c3aed" : "#374151",
+                                fontWeight: activeSection === item.id ? "600" : "normal"
+                              }}
+                            >
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+                return null
+              })
             ) : (
               <Link
                 href="/"

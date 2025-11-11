@@ -196,16 +196,25 @@ model TalkSection {
   @@map("talk_sections")
 }
 
-model past_events {
-  id          String   @id @default(uuid())
-  title       String
-  slug        String   @unique
-  description String?
-  image       String?
-  year        Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime
+model PastEvent {
+  id             String   @id @default(uuid())
+  title          String
+  slug           String   @unique
+  subtitle       String?
+  description    String?  @db.Text
+  thumbnailImage String?
+  year           Int
 
+  hero        Json      @default("{}")
+  intro       Json      @default("{}")
+  featureList Json      @default("{}")
+  gallery     Json      @default("{}")
+  conclusion  Json      @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("past_events")
   @@index([year])
 }
 

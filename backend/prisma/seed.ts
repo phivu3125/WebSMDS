@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -16,6 +16,7 @@ async function main() {
     await prisma.story.deleteMany()
     await prisma.press.deleteMany()
     await prisma.product.deleteMany()
+    await prisma.pastEvent.deleteMany()
     await prisma.eventSection.deleteMany()
     await prisma.event.deleteMany()
     await prisma.talkSection.deleteMany()
@@ -195,6 +196,94 @@ Chương trình kết nối với di sản văn hóa Hội An qua trải nghiệ
         }),
     ])
     console.log(`✅ Created ${events.length} events`)
+
+    // Create Past Events
+    console.log('📚 Creating past events...')
+    const pastEventsData: Prisma.PastEventCreateInput[] = [
+        {
+                title: 'Sắc Hội Trăng Thu 2023',
+                slug: 'sac-hoi-trang-thu-2023',
+                subtitle: 'Hành trình đưa di sản trở lại trong một mùa Trung thu hiện đại',
+                description: 'Chương trình mang đến trải nghiệm Trung thu truyền thống với các hoạt động dành cho gia đình và giới trẻ.',
+                heroImage: '/past-events/sac-hoi-trang-thu-2023/hero.jpg',
+                year: 2023,
+                heroTitle: 'SẮC HỘI TRĂNG THU 2023',
+                heroQuote: '“Di sản không chỉ để ngắm nhìn, mà để sống cùng.”',
+                introContent: 'Sự kiện được tổ chức tại trung tâm thành phố với không gian tái hiện Trung thu xưa, kết hợp hoạt động tương tác hiện đại.',
+                activities: [
+                    {
+                        icon: '🎭',
+                        title: 'Không gian Trung thu xưa',
+                        subtitle: 'Tương tác đa giác quan',
+                        content: 'Khu phố đèn lồng, chợ đêm văn hóa, các góc trải nghiệm cho trẻ em và gia đình.',
+                        images: [
+                            '/past-events/sac-hoi-trang-thu-2023/activity-1.jpg',
+                            '/past-events/sac-hoi-trang-thu-2023/activity-2.jpg',
+                        ],
+                    },
+                    {
+                        icon: '🧑‍🎨',
+                        title: 'Workshop thủ công truyền thống',
+                        subtitle: 'Nghệ nhân đồng hành',
+                        content: 'Người tham gia tự tay làm lồng đèn, tô mặt nạ, nặn tò he cùng nghệ nhân lâu năm.',
+                        images: [
+                            '/past-events/sac-hoi-trang-thu-2023/workshop-1.jpg',
+                        ],
+                    },
+                ] as Prisma.JsonArray,
+                galleryImages: [
+                    '/past-events/sac-hoi-trang-thu-2023/gallery-1.jpg',
+                    '/past-events/sac-hoi-trang-thu-2023/gallery-2.jpg',
+                    '/past-events/sac-hoi-trang-thu-2023/gallery-3.jpg',
+                ],
+                conclusion: 'Chương trình khép lại với đêm thả đèn và sân khấu nghệ thuật truyền thống, ghi dấu cảm xúc khó quên cho người tham dự.',
+                status: 'published',
+                featured: true,
+        },
+        {
+                title: 'Lan Toả Di Sản 2022',
+                slug: 'lan-toa-di-san-2022',
+                subtitle: 'Cùng nhau kể những câu chuyện di sản qua trải nghiệm đa giác quan',
+                description: 'Chuỗi hoạt động triển lãm, workshop và tọa đàm về di sản văn hóa Việt Nam.',
+                heroImage: '/past-events/lan-toa-di-san-2022/hero.jpg',
+                year: 2022,
+                heroTitle: 'LAN TỎA DI SẢN 2022',
+                heroQuote: '“Mỗi câu chuyện di sản là một sợi dây nối quá khứ với hiện tại.”',
+                introContent: 'Diễn ra tại nhiều địa điểm văn hóa trọng điểm, sự kiện thu hút hàng nghìn lượt khách tham quan và trải nghiệm.',
+                activities: [
+                    {
+                        icon: '🏛️',
+                        title: 'Triển lãm tương tác',
+                        subtitle: 'Kể chuyện bằng công nghệ',
+                        content: 'Không gian triển lãm sử dụng AR/VR giúp du khách tương tác với hiện vật và câu chuyện di sản.',
+                        images: [
+                            '/past-events/lan-toa-di-san-2022/exhibit-1.jpg',
+                        ],
+                    },
+                    {
+                        icon: '🎤',
+                        title: 'Tọa đàm nghệ nhân',
+                        subtitle: 'Giao lưu truyền nghề',
+                        content: 'Các nghệ nhân chia sẻ hành trình giữ nghề, đồng thời giới thiệu sản phẩm thủ công đặc sắc.',
+                        images: [
+                            '/past-events/lan-toa-di-san-2022/talk-1.jpg',
+                        ],
+                    },
+                ] as Prisma.JsonArray,
+                galleryImages: [
+                    '/past-events/lan-toa-di-san-2022/gallery-1.jpg',
+                    '/past-events/lan-toa-di-san-2022/gallery-2.jpg',
+                ],
+                conclusion: 'Sự kiện góp phần tạo nên mạng lưới những người trẻ yêu di sản, tiếp nối các hoạt động bảo tồn trong năm tiếp theo.',
+                status: 'published',
+                featured: false,
+        },
+    ]
+
+    const pastEvents = await Promise.all(
+        pastEventsData.map((event) => prisma.pastEvent.create({ data: event }))
+    )
+    console.log(`✅ Created ${pastEvents.length} past events`)
 
     // Create Products
     console.log('🛍️ Creating products...')
@@ -560,6 +649,7 @@ Xây dựng ứng dụng thực tế tăng cường (AR) cho phép người dùn
     console.log(`- Events: ${events.length}`)
     console.log(`- Products: ${products.length}`)
     console.log(`- Press: ${press.length}`)
+    console.log(`- Past events: ${pastEvents.length}`)
     console.log(`- Stories: ${stories.length}`)
     console.log(`- Ideas: ${ideas.length}`)
     console.log(`- Email subscriptions: ${emailSubscriptions.length}`)

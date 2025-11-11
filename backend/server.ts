@@ -12,6 +12,7 @@ import emailSubscriptionRoutes from './src/routes/email-subscription.routes'
 import ordersRoutes from './src/routes/orders.routes'
 import uploadsRoutes from './src/routes/uploads.routes'
 import talkSectionRoutes from './src/routes/talk-section.routes'
+import pastEventsRoutes from './src/routes/past-events.routes'
 
 dotenv.config()
 
@@ -39,6 +40,7 @@ app.use('/api/email-subscriptions', emailSubscriptionRoutes)
 app.use('/api/orders', ordersRoutes)
 app.use('/api/uploads', uploadsRoutes)
 app.use('/api/talk-section', talkSectionRoutes)
+app.use('/api/past-events', pastEventsRoutes)
 
 // Static files
 app.use('/uploads', express.static('uploads'))

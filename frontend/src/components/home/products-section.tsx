@@ -5,68 +5,18 @@ import { useInView } from "react-intersection-observer"
 import { ShoppingBag } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useState, useEffect } from "react"
-import { getProducts } from "@/lib/api/products"
+import { products } from "@/mock/products"
 
 export default function ProductsSection() {
     const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
-    const [products, setProducts] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                setLoading(true)
-                setError(null)
-                const response = await getProducts({ status: 'published', featured: true })
+    // Get featured products
+    const featuredProducts = products.filter(product => product.featured).slice(0, 6)
 
-                // Handle both formats: direct array or wrapped in success/data
-                let productsArray: any[] = []
-                if (Array.isArray(response)) {
-                    productsArray = response
-                } else if (response.success && response.data) {
-                    productsArray = response.data
-                } else if (response.data) {
-                    productsArray = response.data
-                }
-
-                setProducts(productsArray.slice(0, 6)) // Lấy 6 sản phẩm đầu
-            } catch (error) {
-                console.error('Failed to fetch products:', error)
-                setError('Không thể tải sản phẩm. Vui lòng thử lại sau.')
-                setProducts([]) // Set empty array on error
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        // Only fetch on client side
-        if (typeof window !== 'undefined') {
-            fetchProducts()
-        }
-    }, [])
-
-    if (loading) {
+    if (featuredProducts.length === 0) {
         return (
             <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8">
-                <div className="text-center">Đang tải sản phẩm...</div>
-            </section>
-        )
-    }
-
-    if (error) {
-        return (
-            <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8">
-                <div className="text-center text-red-500">{error}</div>
-            </section>
-        )
-    }
-
-    if (products.length === 0) {
-        return (
-            <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8">
-                <div className="text-center">Hiện chưa có sản phẩm nào</div>
+                <div className="text-center">Hiện chưa có sản phẩm nổi bật nào</div>
             </section>
         )
     }
@@ -132,8 +82,8 @@ export default function ProductsSection() {
                     transition={{ duration: 0.6, delay: 0.2 }}
                     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"
                 >
-                    {products.map((product, index) => (
-                        <Link href={`/products/${product.slug}`} key={product.id}>
+                    {featuredProducts.map((product, index) => (
+                        <Link href={`/products/${product.id}`} key={product.id}>
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -191,7 +141,7 @@ export default function ProductsSection() {
                                             className="text-2xl font-bold font-mono"
                                             style={{ color: "#D4AF37" }}
                                         >
-                                            {Number(product.price).toLocaleString('vi-VN')}đ
+                                            {product.priceNum.toLocaleString('vi-VN')}đ
                                         </span>
                                         <button
                                             className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 select-none cursor-pointer"

@@ -99,6 +99,33 @@ export const getEventRegistrationsAdmin = async (req: AuthRequest, res: Response
   }
 }
 
+export const checkEventSlug = async (req: Request, res: Response) => {
+  try {
+    const { slug, excludeId } = req.query;
+
+    if (!slug || typeof slug !== 'string') {
+      return res.status(400).json({ error: 'Slug is required' });
+    }
+
+    const sanitizedSlug = slug.trim().toLowerCase();
+
+    const existing = await prisma.event.findFirst({
+      where: {
+        slug: sanitizedSlug,
+        ...(excludeId && typeof excludeId === 'string'
+          ? { NOT: { id: excludeId } }
+          : {}),
+      },
+      select: { id: true },
+    });
+
+    res.json({ exists: Boolean(existing) });
+  } catch (error) {
+    console.error('Error checking event slug:', error);
+    res.status(500).json({ error: 'Failed to check slug' });
+  }
+}
+
 export const updateEventRegistrationStatus = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params

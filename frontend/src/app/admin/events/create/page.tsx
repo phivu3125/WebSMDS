@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { ArrowLeft, Save, Eye, X } from "lucide-react"
 import Link from "next/link"
 import { adminApi } from "@/lib/api"
-import { ImageUpload } from "../[id]/edit/components/ImageUpload"
+import { SingleImageUpload } from "@/components/admin/reusable-image-upload"
 import { EventPreview } from "../[id]/edit/components/EventPreview"
 
 interface EventSection {
@@ -72,6 +72,8 @@ export default function CreateEventPage() {
   const [sections, setSections] = useState<EventSection[]>([])
   const [invalidSectionItems, setInvalidSectionItems] = useState<Record<string, number[]>>({})
   const [invalidSectionTitles, setInvalidSectionTitles] = useState<Set<string>>(new Set())
+  const slugInputRef = useRef<HTMLInputElement>(null)
+  const [slugTouched, setSlugTouched] = useState(false)
 
   const scrollToFirstInvalid = (invalidMap: Record<string, number[]>) => {
     for (const section of sections) {
@@ -104,19 +106,46 @@ export default function CreateEventPage() {
     }
   }
 
+  const scrollToSlugError = () => {
+    if (slugInputRef.current) {
+      slugInputRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      })
+      slugInputRef.current.focus()
+    }
+  }
+
+  const sanitizeSlug = (input: string) =>
+    input
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "")
+
+  const checkSlugExists = async (slug: string): Promise<boolean> => {
+    try {
+      const sanitized = sanitizeSlug(slug)
+      if (!sanitized) return false
+
+      const res = await adminApi.checkEventSlug(sanitized)
+      return res.exists === true
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra slug:", error)
+      return false
+    }
+  }
+
   const handleInputChange = (field: keyof EventFormData, value: string | File) => {
     setValidationError(null)
 
-    const sanitizeSlug = (input: string) =>
-      input
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/đ/g, "d")
-        .replace(/[^a-z0-9\s-]/g, "")
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-+|-+$/g, "")
+    if (field === "slug") {
+      setSlugTouched(true)
+    }
 
     setFormData(prev => {
       const updated = {
@@ -126,6 +155,7 @@ export default function CreateEventPage() {
 
       if (field === "title") {
         updated.slug = sanitizeSlug(value as string)
+        setSlugTouched(false)
       }
 
       return updated
@@ -324,7 +354,19 @@ export default function CreateEventPage() {
     setInvalidSectionTitles(new Set())
     setInvalidSectionItems({})
     setSaving(true)
+    
     try {
+      // Check for slug duplicates before saving
+      if (formData.slug.trim()) {
+        const slugExists = await checkSlugExists(formData.slug.trim())
+        if (slugExists) {
+          setValidationError("Slug đã tồn tại, vui lòng chọn slug khác.")
+          setSaving(false)
+          scrollToSlugError()
+          return
+        }
+      }
+
       // Upload images before creating event
       const imageFields = ['image', 'venueMap', 'pricingImage'] as const
       const updatedFormData = { ...formData }
@@ -433,6 +475,7 @@ export default function CreateEventPage() {
                 onChange={(e) => handleInputChange("slug", e.target.value)}
                 placeholder="slug-su-kiem"
                 required
+                ref={slugInputRef}
               />
               <p className="text-xs text-gray-500 mt-1">Slug sẽ được tự động tạo từ tiêu đề</p>
             </div>
@@ -499,23 +542,26 @@ export default function CreateEventPage() {
             <CardTitle>Hình ảnh</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ImageUpload
+            <SingleImageUpload
               value={formData.image}
-              onChange={(url) => handleInputChange("image", url)}
+              onChange={(value) => handleInputChange("image", value || "")}
               label="Hình ảnh sự kiện"
               placeholder="Tải lên hình ảnh chính của sự kiện"
+              size="lg"
             />
-            <ImageUpload
+            <SingleImageUpload
               value={formData.venueMap}
-              onChange={(url) => handleInputChange("venueMap", url)}
+              onChange={(value) => handleInputChange("venueMap", value || "")}
               label="Sơ đồ địa điểm"
               placeholder="Tải lên sơ đồ địa điểm sự kiện"
+              size="lg"
             />
-            <ImageUpload
+            <SingleImageUpload
               value={formData.pricingImage}
-              onChange={(url) => handleInputChange("pricingImage", url)}
+              onChange={(value) => handleInputChange("pricingImage", value || "")}
               label="Bảng giá"
               placeholder="Tải lên hình ảnh bảng giá"
+              size="lg"
             />
           </CardContent>
         </Card>

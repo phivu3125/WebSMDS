@@ -1,79 +1,48 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useInView } from "react-intersection-observer"
-import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react"
+import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
+import { PastEventListItem } from "@/types/PastEvent"
 
-// Mock data - thay bằng API call sau
-const eventsByYear = {
-    2024: [
-        {
-            id: 1,
-            title: "Triển lãm Nghệ thuật Dân gian Đông Hồ",
-            image: "/events/event1.jpg",
-            slug: "trien-lam-dong-ho-2024"
-        },
-        {
-            id: 2,
-            title: "Workshop Thêu Truyền Thống",
-            image: "/events/event2.jpg",
-            slug: "workshop-theu-2024"
-        },
-        {
-            id: 3,
-            title: "Hội thảo Di sản Số",
-            image: "/events/event3.jpg",
-            slug: "hoi-thao-di-san-so-2024"
-        },
-        {
-            id: 4,
-            title: "Festival Áo Dài Việt Nam",
-            image: "/events/event4.jpg",
-            slug: "festival-ao-dai-2024"
-        },
-    ],
-    2023: [
-        {
-            id: 5,
-            title: "Triển lãm Tranh Lụa Hà Đông",
-            image: "/events/event5.jpg",
-            slug: "trien-lam-lua-ha-dong-2023"
-        },
-        {
-            id: 6,
-            title: "Chợ Tết Xưa",
-            image: "/events/event6.jpg",
-            slug: "cho-tet-xua-2023"
-        },
-        {
-            id: 7,
-            title: "Làng Nghề Truyền Thống",
-            image: "/events/event7.jpg",
-            slug: "lang-nghe-2023"
-        },
-    ],
-    2022: [
-        {
-            id: 8,
-            title: "Gala Nghệ Thuật Dân Gian",
-            image: "/events/event8.jpg",
-            slug: "gala-nghe-thuat-2022"
-        },
-        {
-            id: 9,
-            title: "Triển lãm Gốm Sứ Việt",
-            image: "/events/event9.jpg",
-            slug: "trien-lam-gom-su-2022"
-        },
-    ],
+interface EventsByYear {
+    [year: number]: PastEventListItem[]
 }
 
 export default function PastEventsSection() {
     const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
     const [showFullIntro, setShowFullIntro] = useState(false)
     const [selectedYear, setSelectedYear] = useState<number | "all">("all")
+    const [events, setEvents] = useState<PastEventListItem[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        fetchEvents()
+    }, [])
+
+    const fetchEvents = async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/past-events`)
+            const data = await res.json()
+            setEvents(data)
+        } catch (error) {
+            console.error("Error fetching events:", error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Group events by year
+    const eventsByYear: EventsByYear = events.reduce((acc, event) => {
+        if (!acc[event.year]) {
+            acc[event.year] = []
+        }
+        acc[event.year].push(event)
+        return acc
+    }, {} as EventsByYear)
 
     const years = Object.keys(eventsByYear)
         .map(Number)
@@ -225,79 +194,65 @@ export default function PastEventsSection() {
                     transition={{ duration: 0.6, delay: 0.4 }}
                     className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6"
                 >
-                    {filteredEvents.map((event, index) => (
-                        <motion.div
-                            key={event.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4, delay: index * 0.05 }}
-                            className="break-inside-avoid"
-                        >
-                            <div
-                                className="group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 cursor-pointer"
-                                style={{
-                                    border: "2px solid transparent",
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.borderColor = "#B668A1"
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.borderColor = "transparent"
-                                }}
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <p className="text-lg" style={{ color: "#6b7280" }}>
+                                Đang tải...
+                            </p>
+                        </div>
+                    ) : (
+                        filteredEvents.map((event: PastEventListItem, index: number) => (
+                            <motion.div
+                                key={event.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4, delay: index * 0.05 }}
+                                className="break-inside-avoid"
                             >
-                                {/* Image */}
-                                <div className="relative overflow-hidden">
-                                    <div className="relative w-full" style={{ aspectRatio: index % 2 === 0 ? "4/3" : "3/4" }}>
-                                        <Image
-                                            src={event.image || "/placeholder.svg"}
-                                            alt={event.title}
-                                            fill
-                                            sizes="(max-width: 768px) 100vw, 400px"
-                                            className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700 select-none"
-                                            priority={index === 0}
-                                            placeholder="blur"
-                                            blurDataURL="/placeholder.svg"
-                                        />
-                                    </div>
-                                    {/* Overlay on Hover */}
-                                    <div
-                                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
-                                        style={{
-                                            background:
-                                                "linear-gradient(to top, rgba(182, 104, 161, 0.9), rgba(212, 175, 55, 0.7))",
-                                        }}
-                                    >
-                                        <ExternalLink size={32} color="white" />
-                                    </div>
-                                </div>
+                                <Link href={`/past-events/${event.slug}`} className="block">
+                                    <div className="group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 cursor-pointer border-2 border-transparent hover:border-[#B668A1]">
+                                        <div className="relative h-52 w-full overflow-hidden">
+                                            <Image
+                                                src={event.thumbnailImage || "/placeholder.svg"}
+                                                alt={event.title}
+                                                fill
+                                                sizes="(max-width: 768px) 100vw, 400px"
+                                                className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700 select-none"
+                                            />
+                                        </div>
 
-                                {/* Title & CTA */}
-                                <div className="p-4">
-                                    <h3
-                                        className="font-serif text-lg font-bold mb-3 line-clamp-2"
-                                        style={{ color: "#1f2937" }}
-                                    >
-                                        {event.title}
-                                    </h3>
-                                    <button
-                                        className="w-full py-2 rounded-full font-semibold text-sm transition-all duration-300 select-none cursor-pointer"
-                                        style={{
-                                            backgroundColor: "#B668A1",
-                                            color: "white",
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.backgroundColor = "#D4AF37"
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.backgroundColor = "#B668A1"
-                                        }}
-                                    >
-                                        Xem chi tiết
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    ))}
+                                        <div className="p-5 space-y-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">
+                                                    Sự kiện đã diễn ra
+                                                </span>
+                                                <span className="px-3 py-1 text-xs font-semibold text-white rounded-full" style={{ backgroundColor: "#D4AF37" }}>
+                                                    {event.year}
+                                                </span>
+                                            </div>
+
+                                            <h3 className="text-xl font-serif font-bold leading-tight" style={{ color: "#1f2937" }}>
+                                                {event.title}
+                                            </h3>
+
+                                            {event.description && (
+                                                <p className="text-sm text-gray-600 line-clamp-3">
+                                                    {event.description}
+                                                </p>
+                                            )}
+
+                                            <div className="pt-2">
+                                                <span className="inline-flex items-center gap-2 text-sm font-semibold" style={{ color: "#B668A1" }}>
+                                                    Xem chi tiết
+                                                    <ChevronRight size={16} />
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Link>
+                            </motion.div>
+                        ))
+                    )}
                 </motion.div>
 
                 {/* Empty State */}

@@ -81,7 +81,7 @@ export default function HomeClient({ events = [], press = [], talkSection }: Hom
     <main className="min-h-screen overflow-x-hidden">
       <Navigation isScrolled={isScrolled} />
       <HeroSection />
-      <EventsSection initialEvents={events} />
+      {/* <EventsSection initialEvents={events} /> */}
       <LazySection id="about">
         <AboutSection />
       </LazySection>
@@ -94,9 +94,9 @@ export default function HomeClient({ events = [], press = [], talkSection }: Hom
       <LazySection id="past_events">
         <PastEventsSection />
       </LazySection>
-      <LazySection>
+      {/* <LazySection>
         <ProductsSection />
-      </LazySection>
+      </LazySection> */}
       <LazySection>
         <PartnersSection />
       </LazySection>

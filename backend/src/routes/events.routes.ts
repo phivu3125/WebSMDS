@@ -11,6 +11,7 @@ import {
   getEventRegistrationsAdmin,
   updateEventRegistrationStatus,
   deleteEventRegistration,
+  checkEventSlug,
 } from '../controllers/events.controller'
 
 import { requireAuth } from '../middleware/auth'
@@ -25,6 +26,7 @@ router.get('/admin/registrations', requireAuth, getEventRegistrationsAdmin)
 router.patch('/admin/registrations/:id/status', requireAuth, updateEventRegistrationStatus)
 router.delete('/admin/registrations/:id', requireAuth, deleteEventRegistration)
 router.get('/admin/:id', requireAuth, getEventByIdAdmin)
+router.get('/check-slug', requireAuth, checkEventSlug)
 router.post('/', requireAuth, createEvent)
 router.put('/:id', requireAuth, updateEvent)
 router.patch('/:id/status', requireAuth, updateEventStatus)

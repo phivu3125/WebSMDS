@@ -395,7 +395,7 @@ export default function EventDetailPage() {
                                     <img
                                         src={resolveMediaUrl(event.image) || "/placeholder.svg"}
                                         alt={event.title}
-                                        className="w-full max-h-[28rem] object-contain"
+                                        className="w-full max-h-[28rem] object-cover"
                                         loading="lazy"
                                         decoding="async"
                                     />

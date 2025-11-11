@@ -22,7 +22,7 @@ export const uploadsController = {
             }
 
             const { filename } = req.file
-            const url = `/uploads/${filename}`
+            const url = `${req.protocol}://${req.get('host')}/uploads/${filename}`
 
             res.status(201).json({
                 success: true,

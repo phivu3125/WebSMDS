@@ -7,7 +7,14 @@ import { Calendar, ExternalLink, Youtube } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
-import { getPress, PressItem } from "@/lib/api/news"
+import { getPress, PressItem } from "@/lib/api/press"
+import { resolveMediaUrl } from "@/lib/media"
+
+const formatVNDate = (date: string): string => {
+  if (!date) return ""
+  const [year, month, day] = date.split('-')
+  return `${day}/${month}/${year}`
+}
 
 type NewsSectionProps = {
   initialPress?: PressItem[]
@@ -170,9 +177,8 @@ export default function NewsSection({ initialPress = [] }: NewsSectionProps) {
               initial={{ opacity: 0, x: -50 }}
               animate={inView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className={`lg:col-span-2 group bg-white rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 relative ${
-                highlightedArticle.featured ? "border-2 border-[#D4AF37]" : "border border-transparent"
-              }`}
+              className={`lg:col-span-2 group bg-white rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 relative ${highlightedArticle.featured ? "border-2 border-[#D4AF37]" : "border border-transparent"
+                }`}
             >
               <div className="absolute top-6 left-6 z-20 bg-gradient-to-r from-amber-500 to-yellow-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -183,7 +189,7 @@ export default function NewsSection({ initialPress = [] }: NewsSectionProps) {
 
               <div className="relative h-[400px] lg:h-[500px] overflow-hidden">
                 <Image
-                  src={highlightedArticle.image || "/placeholder.svg"}
+                  src={resolveMediaUrl(highlightedArticle.image) || "/placeholder.svg"}
                   alt={highlightedArticle.title}
                   fill
                   sizes="(max-width: 1024px) 100vw, 66vw"
@@ -213,7 +219,7 @@ export default function NewsSection({ initialPress = [] }: NewsSectionProps) {
                   </span>
                   <p className="text-sm font-semibold flex items-center gap-2 text-gray-500">
                     <Calendar size={16} />
-                    {highlightedArticle.date}
+                    {formatVNDate(highlightedArticle.date)}
                   </p>
                 </div>
 
@@ -256,7 +262,7 @@ export default function NewsSection({ initialPress = [] }: NewsSectionProps) {
                   <div className="flex gap-4 p-4">
                     <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                       <Image
-                        src={article.image || "/placeholder.svg"}
+                        src={resolveMediaUrl(article.image) || "/placeholder.svg"}
                         alt={article.title}
                         fill
                         sizes="96px"
@@ -281,19 +287,24 @@ export default function NewsSection({ initialPress = [] }: NewsSectionProps) {
                       <h4 className="font-serif text-sm font-bold mt-2 mb-1 line-clamp-2 text-gray-900 group-hover:text-[#B668A1] transition-colors">
                         {article.title}
                       </h4>
-                      <p className="text-xs flex items-center gap-1 mb-2 text-gray-400">
-                        <Calendar size={10} />
-                        {article.date}
+                      <p className="text-xs text-gray-600 mb-1 line-clamp-1 leading-relaxed">
+                        {article.description}
                       </p>
-                      <a
-                        href={article.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-semibold flex items-center gap-1 text-[#B668A1] hover:gap-2 transition-all"
-                      >
-                        Xem thêm
-                        <ExternalLink size={10} />
-                      </a>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs flex items-center gap-1 text-gray-400">
+                          <Calendar size={10} />
+                          {formatVNDate(article.date)}
+                        </p>
+                        <a
+                          href={article.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-semibold flex items-center gap-1 text-[#B668A1] hover:gap-2 transition-all"
+                        >
+                          Xem thêm
+                          <ExternalLink size={10} />
+                        </a>
+                      </div>
                     </div>
                   </div>
                 ) : (

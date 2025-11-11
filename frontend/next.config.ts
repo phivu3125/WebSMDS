@@ -7,6 +7,14 @@ const remotePatterns: RemotePattern[] = [
     hostname: "localhost",
     port: "5000",
   },
+  {
+    protocol: "https",
+    hostname: "**",
+  },
+  {
+    protocol: "http",
+    hostname: "**",
+  }
 ]
 
 if (process.env.NEXT_PUBLIC_MEDIA_HOST) {

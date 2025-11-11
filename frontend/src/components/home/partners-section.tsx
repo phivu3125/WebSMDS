@@ -16,55 +16,55 @@ export default function PartnersSection() {
             id: "phan-nu",
             name: "Phấn Nụ Hoàng Cung",
             bio: "Giữ lại tinh hoa làm đẹp của cung đình xưa, Phấn Nụ Hoàng Cung không chỉ là thương hiệu mỹ phẩm truyền thống mà còn là biểu tượng của sự thanh tao, nền nã và thuần Việt trong văn hóa làm đẹp.",
-            logo: "/partners/phan-nu.jpg",
+            logo: "/images/partners/PHAN-NU-HOANG-CUNG-LOGO.png",
         },
         {
             id: "viet-phuc",
             name: "Việt phục Chiêu Minh Các",
             bio: "Mỗi tà áo, mỗi đường kim mũi chỉ, mỗi kiểu cách của dáng đứng, mái tóc là một nhịp nối giữa quá khứ và hiện tại. Chiêu Minh Các mang đến không chỉ là hình ảnh của người Việt trong trang phục truyền thống, mà là tinh thần Việt được tái sinh trong đời sống đương đại.",
-            logo: "/partners/chieu-minh-cac.jpg",
+            logo: "/images/partners/CHIEU-MINH-CAC-LOGO.png",
         },
         {
             id: "de-do",
             name: "Đế Đô Khảo Cổ",
             bio: "Từ những mảnh vỡ lịch sử, Đế Đô Khảo Cổ khơi dậy ký ức một thời vàng son. Họ là những người kể chuyện quá khứ bằng hiện vật, giúp chúng ta nhìn thấy sự sống của di sản trong từng lớp đất, từng dấu tích.",
-            logo: "/partners/de-do.jpg",
+            logo: "/images/partners/DE-DO-KHAO-CO-LOGO.png",
         },
         {
             id: "am-thuc",
             name: "Ẩm thực Góc Huế",
             bio: "Hương vị là ký ức. Góc Huế gìn giữ tinh hoa ẩm thực cố đô, đưa những món ăn dân dã mà thanh nhã trở lại trong đời sống hôm nay, như một cách chạm vào di sản bằng vị giác và cảm xúc.",
-            logo: "/partners/goc-hue.jpg",
+            logo: "/images/partners/GOC-HUE-AM-THUC-LOGO.png",
         },
         {
             id: "truc-chi",
             name: "Trúc Chỉ",
             bio: 'Nghệ thuật giấy Trúc Chỉ là biểu tượng của sáng tạo từ truyền thống. Mỗi tấm giấy được tạo nên từ nước, ánh sáng và đôi bàn tay nghệ nhân, mang trong mình triết lý "nghệ thuật là dòng chảy của tâm hồn Việt".',
-            logo: "/partners/truc-chi.jpg",
+            logo: "/images/partners/TRUC-CHI-LOGO.png",
         },
-        {
-            id: "thuong-an",
-            name: "Trường hướng nghiệp Thương và An",
-            bio: "Nơi nghệ thuật và giáo dục gặp gỡ trong yêu thương. Thương và An đồng hành cùng Sắc Màu Di Sản để mang di sản đến gần hơn với trẻ tự kỷ và trầm cảm — để mỗi em nhỏ đều có thể tìm thấy niềm vui, sự kết nối và chữa lành từ văn hóa thông qua những sản phẩm thủ công mà chính tay các em sáng tạo và làm ra, góp phần giá trị nhân văn khi kết nối các em với cộng đồng thông qua vẻ đẹp của văn hóa và di sản.",
-            logo: "/partners/thuong-an.jpg",
-        },
+        // {
+        //     id: "thuong-an",
+        //     name: "Trường hướng nghiệp Thương và An",
+        //     bio: "Nơi nghệ thuật và giáo dục gặp gỡ trong yêu thương. Thương và An đồng hành cùng Sắc Màu Di Sản để mang di sản đến gần hơn với trẻ tự kỷ và trầm cảm — để mỗi em nhỏ đều có thể tìm thấy niềm vui, sự kết nối và chữa lành từ văn hóa thông qua những sản phẩm thủ công mà chính tay các em sáng tạo và làm ra, góp phần giá trị nhân văn khi kết nối các em với cộng đồng thông qua vẻ đẹp của văn hóa và di sản.",
+        //     logo: "/images/partners/THUONG-AN-LOGO.png",
+        // },
         {
             id: "moc-truly",
             name: "Mộc Truly's Hue",
             bio: "Mang hơi thở của xứ Huế vào từng sản phẩm, Mộc Truly's Hue kết nối truyền thống và hiện đại qua những món đồ gỗ thủ công tinh xảo.",
-            logo: "/partners/moc-truly.jpg",
+            logo: "/images/partners/MOC-TRULY-HUE-LOGO.png",
         },
-        {
-            id: "vivian",
-            name: "Vivian",
-            bio: "Đối tác sáng tạo của Sắc Màu Di Sản, Vivian đồng hành cùng chúng tôi trong việc lan tỏa giá trị văn hóa qua nghệ thuật và thiết kế.",
-            logo: "/partners/vivian.jpg",
-        },
+        // {
+        //     id: "vivian",
+        //     name: "Vivian",
+        //     bio: "Đối tác sáng tạo của Sắc Màu Di Sản, Vivian đồng hành cùng chúng tôi trong việc lan tỏa giá trị văn hóa qua nghệ thuật và thiết kế.",
+        //     logo: "/images/partners/VIVIAN-LOGO.png",
+        // },
         {
             id: "co-ca-ngua",
-            name: "Cờ Cá Ngựa",
+            name: "Cờ Cá Ngựa-Ori Craftaholic",
             bio: "Trò chơi dân gian truyền thống được tái hiện, Cờ Cá Ngựa mang đến niềm vui và sự kết nối giữa các thế hệ thông qua những ván cờ đầy màu sắc.",
-            logo: "/partners/co-ca-ngua.jpg",
+            logo: "/images/partners/ORI-CRAFTAHOLIC-LOGO.jpg",
         },
     ]
 
@@ -147,7 +147,7 @@ export default function PartnersSection() {
                                         className="text-base md:text-lg leading-relaxed text-justify"
                                         style={{ color: "white", lineHeight: 1.8 }}
                                     >
-                                        Trên hành trình lan tỏa giá trị văn hóa, <span className="italic">Sắc Màu Di Sản </span> 
+                                        Trên hành trình lan tỏa giá trị văn hóa, <span className="italic">Sắc Màu Di Sản </span>
                                         không bước đi một
                                         mình, mà chúng tôi rất hạnh phúc khi được sánh vai cùng những người bạn đồng
                                         hành — những "đồng đội" mang trong mình tình yêu sâu sắc với truyền thống và

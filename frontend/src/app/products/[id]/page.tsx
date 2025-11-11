@@ -2,141 +2,36 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { ShoppingBag, Minus, Plus, Package, Truck, Shield, ArrowLeft, Star, Check, Phone, Mail, MapPin, User } from "lucide-react"
+import { ShoppingBag, Minus, Plus, Package, Truck, Shield, ArrowLeft, Star, Check, Phone, Mail, MapPin, User, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import Navigation from "@/components/home/navigation"
 import { Footer } from "@/components/layout/Footer"
 import { Product, OrderFormData } from "@/types"
-
-// Mock product data - trong thực tế sẽ fetch từ API
-const allProducts: Product[] = [
-    {
-        id: 1,
-        name: "Áo Dài Truyền Thống",
-        slug: "ao-dai-truyen-thong",
-        description: "Áo dài lụa tơ tằm thêu tay họa tiết sen, chất liệu cao cấp, thiết kế tinh xảo",
-        details: "Áo dài truyền thống được làm từ lụa tơ tằm 100% cao cấp, thêu tay họa tiết hoa sen - biểu tượng của sự thanh khiết và vẻ đẹp trong văn hóa Việt Nam. Mỗi sản phẩm được thực hiện bởi các nghệ nhân có trên 20 năm kinh nghiệm, đảm bảo từng đường nét thêu đều tinh xảo và tỉ mỉ.\n\nÁo dài không chỉ là trang phục mà còn là biểu tượng văn hóa, thể hiện nét đẹp duyên dáng, thanh lịch của phụ nữ Việt. Sản phẩm phù hợp cho các dịp lễ tết, cưới hỏi, hoặc làm quà tặng ý nghĩa.",
-        price: "2.500.000đ",
-        priceNum: 2500000,
-        category: "Thời trang",
-        image: "/placeholder.svg?height=600&width=600",
-        featured: true,
-        inStock: true,
-        specifications: {
-            material: "Lụa tơ tằm 100%",
-            origin: "Làng nghề Vạn Phúc, Hà Đông",
-            size: "S, M, L, XL (có thể đo may riêng)",
-            color: "Đỏ, Vàng, Xanh, Trắng",
-            weight: "300g"
-        },
-        images: [
-            "/placeholder.svg?height=600&width=600",
-            "/placeholder.svg?height=600&width=600&text=Image2",
-            "/placeholder.svg?height=600&width=600&text=Image3",
-        ]
-    },
-    {
-        id: 2,
-        name: "Tranh Sơn Mài",
-        slug: "tranh-son-mai",
-        description: "Tranh sơn mài vẽ tay phong cảnh Hạ Long, nghệ thuật truyền thống Việt Nam",
-        details: "Tranh sơn mài là một trong những nghệ thuật đặc trưng nhất của Việt Nam, kết hợp giữa kỹ thuật vẽ và công nghệ sơn mài truyền thống. Bức tranh phong cảnh Vịnh Hạ Long được vẽ tay hoàn toàn bởi họa sĩ, qua nhiều lớp sơn mài tạo nên chiều sâu và độ bóng đặc trưng.\n\nSản phẩm mang đến vẻ đẹp sang trọng, cổ điển, phù hợp trang trí cho không gian phòng khách, văn phòng làm việc hoặc làm quà tặng cao cấp.",
-        price: "5.000.000đ",
-        priceNum: 5000000,
-        category: "Nghệ thuật",
-        image: "/placeholder.svg?height=600&width=600",
-        featured: false,
-        inStock: true,
-        specifications: {
-            material: "Sơn mài thiên nhiên, gỗ MDF",
-            origin: "Hà Nội",
-            size: "60cm x 80cm",
-            weight: "2.5kg"
-        },
-        images: [
-            "/placeholder.svg?height=600&width=600",
-            "/placeholder.svg?height=600&width=600&text=Detail",
-        ]
-    },
-    {
-        id: 3,
-        name: "Gốm Sứ Bát Tràng",
-        slug: "gom-su-bat-trang",
-        description: "Bộ ấm chén gốm sứ vẽ hoa sen xanh, làng nghề truyền thống Bát Tràng",
-        details: "Bộ ấm chén gốm sứ Bát Tràng được làm thủ công hoàn toàn tại làng nghề gốm sứ Bát Tràng nổi tiếng với lịch sử hàng trăm năm. Men gốm trắng ngà kết hợp với họa tiết hoa sen xanh coban được vẽ tay tỉ mỉ, tạo nên vẻ đẹp thanh tao, tinh tế.\n\nBộ sản phẩm gồm 1 ấm trà và 6 chén nhỏ, thích hợp cho việc thưởng trà cùng gia đình và bạn bè, hoặc làm món quà tặng ý nghĩa.",
-        price: "1.200.000đ",
-        priceNum: 1200000,
-        category: "Gốm sứ",
-        image: "/placeholder.svg?height=600&width=600",
-        featured: true,
-        inStock: true,
-        specifications: {
-            material: "Gốm sứ cao cấp",
-            origin: "Làng Bát Tràng, Gia Lâm, Hà Nội",
-            size: "Ấm: 15cm x 12cm, Chén: 6cm x 4cm",
-            weight: "1.2kg (bộ)"
-        },
-        images: [
-            "/placeholder.svg?height=600&width=600",
-        ]
-    },
-    {
-        id: 4,
-        name: "Nón Lá Thủ Công",
-        slug: "non-la-thu-cong",
-        description: "Nón lá Huế thêu thơ truyền thống, thủ công tinh xảo từ nghệ nhân",
-        details: "Nón lá Huế là một trong những biểu tượng văn hóa đặc sắc của miền Trung Việt Nam. Mỗi chiếc nón được làm từ lá cọ non, qua nhiều công đoạn tỉ mỉ từ phơi lá, tẩm, xén, khâu cho đến thêu thơ.\n\nĐiểm đặc biệt của nón lá Huế là những câu thơ, hình ảnh được thêu tinh xảo vào giữa các lớp lá, chỉ có thể nhìn thấy khi đưa nón lên ánh sáng.",
-        price: "350.000đ",
-        priceNum: 350000,
-        category: "Thủ công",
-        image: "/placeholder.svg?height=600&width=600",
-        featured: false,
-        inStock: true,
-        specifications: {
-            material: "Lá cọ, chỉ tơ tằm",
-            origin: "Huế",
-            size: "Đường kính 40cm - 45cm",
-            weight: "150g"
-        },
-        images: [
-            "/placeholder.svg?height=600&width=600",
-        ]
-    },
-    {
-        id: 5,
-        name: "Túi Thổ Cẩm",
-        slug: "tui-tho-cam",
-        description: "Túi xách thổ cẩm dệt tay từ Tây Bắc, họa tiết độc đáo của dân tộc thiểu số",
-        details: "Túi xách thổ cẩm mang đậm nét văn hóa của các dân tộc thiểu số vùng Tây Bắc. Mỗi chiếc túi được dệt tay hoàn toàn trên khung cửi truyền thống, với những họa tiết màu sắc rực rỡ đặc trưng.\n\nSản phẩm không chỉ đẹp mắt mà còn bền chắc, thể hiện sự khéo léo và tài năng của người phụ nữ dân tộc.",
-        price: "450.000đ",
-        priceNum: 450000,
-        category: "Thời trang",
-        image: "/placeholder.svg?height=600&width=600",
-        featured: false,
-        inStock: false,
-        specifications: {
-            material: "Vải thổ cẩm dệt tay, da PU",
-            origin: "Sapa, Lào Cai",
-            size: "30cm x 25cm x 10cm",
-            weight: "300g"
-        },
-        images: [
-            "/placeholder.svg?height=600&width=600",
-        ]
-    },
-]
+import { products } from "@/mock/products"
+import { categories } from "@/mock/categories"
+import { brands } from "@/mock/brands"
 
 export default function ProductDetailPage() {
     const params = useParams()
     const router = useRouter()
     const productId = Number(params.id)
 
+    const getCategoryName = (categoryId: number) => {
+        return categories.find(c => c.id === categoryId)?.name || ''
+    }
+
+    const getBrand = (brandId?: number) => {
+        return brandId ? brands.find(b => b.id === brandId) : null
+    }
+
     const [product, setProduct] = useState<Product | null>(null)
     const [quantity, setQuantity] = useState(1)
     const [selectedImage, setSelectedImage] = useState(0)
     const [showOrderForm, setShowOrderForm] = useState(false)
+    const [lightboxOpen, setLightboxOpen] = useState(false)
+    const [lightboxIndex, setLightboxIndex] = useState(0)
     const [formData, setFormData] = useState<OrderFormData>({
         productId: 0,
         productName: "",
@@ -151,10 +46,10 @@ export default function ProductDetailPage() {
     const [submitSuccess, setSubmitSuccess] = useState(false)
 
     useEffect(() => {
-        const foundProduct = allProducts.find(p => p.id === productId)
+        const foundProduct = products.find(p => p.id === productId)
         if (foundProduct) {
             setProduct(foundProduct)
-            setFormData(prev => ({
+            setFormData((prev: OrderFormData) => ({
                 ...prev,
                 productId: foundProduct.id,
                 productName: foundProduct.name
@@ -182,13 +77,18 @@ export default function ProductDetailPage() {
         const newQuantity = quantity + delta
         if (newQuantity >= 1 && newQuantity <= 99) {
             setQuantity(newQuantity)
-            setFormData(prev => ({ ...prev, quantity: newQuantity }))
+            setFormData((prev: OrderFormData) => ({ ...prev, quantity: newQuantity }))
         }
+    }
+
+    const handleMainImageClick = () => {
+        setLightboxIndex(selectedImage)
+        setLightboxOpen(true)
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
-        setFormData(prev => ({ ...prev, [name]: value }))
+        setFormData((prev: OrderFormData) => ({ ...prev, [name]: value }))
     }
 
     const handleSubmitOrder = async (e: React.FormEvent) => {
@@ -251,7 +151,7 @@ export default function ProductDetailPage() {
                         {/* Images */}
                         <div className="space-y-4">
                             {/* Main Image */}
-                            <div className="relative aspect-square rounded-2xl overflow-hidden bg-white shadow-xl border-4 border-white">
+                            <div className="relative aspect-square rounded-2xl overflow-hidden bg-white shadow-xl border-4 border-white cursor-zoom-in" onClick={handleMainImageClick}>
                                 <Image
                                     src={product.images?.[selectedImage] || product.image}
                                     alt={product.name}
@@ -275,12 +175,12 @@ export default function ProductDetailPage() {
 
                             {/* Thumbnail Images */}
                             {product.images && product.images.length > 1 && (
-                                <div className="grid grid-cols-4 gap-4">
+                                <div className="flex gap-4 overflow-x-auto pb-2">
                                     {product.images.map((img, idx) => (
                                         <button
                                             key={idx}
                                             onClick={() => setSelectedImage(idx)}
-                                            className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === idx
+                                            className={`relative flex-shrink-0 aspect-square w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === idx
                                                     ? "border-purple-600 scale-105"
                                                     : "border-gray-200 hover:border-purple-400"
                                                 }`}
@@ -289,8 +189,8 @@ export default function ProductDetailPage() {
                                                 src={img}
                                                 alt={`${product.name} ${idx + 1}`}
                                                 fill
-                                                sizes="100px"
-                                                className="object-cover"
+                                                sizes="80px"
+                                                className="object-cover cursor-pointer"
                                             />
                                         </button>
                                     ))}
@@ -306,7 +206,7 @@ export default function ProductDetailPage() {
                                     className="inline-block text-sm font-bold uppercase tracking-wider px-4 py-2 rounded-lg"
                                     style={{ backgroundColor: "#D4AF37", color: "white" }}
                                 >
-                                    {product.category}
+                                    {getCategoryName(product.categoryId)}
                                 </span>
                             </div>
 
@@ -315,10 +215,32 @@ export default function ProductDetailPage() {
                                 {product.name}
                             </h1>
 
+                            {/* Brand Info */}
+                            {getBrand(product.brandId) && (
+                                <div className="flex items-center gap-4 mt-2">
+                                    {getBrand(product.brandId)?.logo && (
+                                        <div className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-purple-200 bg-white shadow-sm">
+                                            <Image
+                                                src={getBrand(product.brandId)?.logo!}
+                                                alt={getBrand(product.brandId)?.name || "Logo thương hiệu"}
+                                                fill
+                                                sizes="48px"
+                                                className="object-contain"
+                                            />
+                                        </div>
+                                    )}
+                                    {getBrand(product.brandId)?.name && (
+                                        <span className="text-lg font-semibold text-gray-700">
+                                            {getBrand(product.brandId)?.name}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Price */}
                             <div className="flex items-baseline gap-4">
                                 <span className="text-5xl font-bold" style={{ color: "#D4AF37" }}>
-                                    {product.price}
+                                    {product.priceNum.toLocaleString('vi-VN')}đ
                                 </span>
                                 {product.inStock && (
                                     <span className="text-green-600 font-semibold flex items-center gap-1">
@@ -356,7 +278,7 @@ export default function ProductDetailPage() {
                                                         const val = parseInt(e.target.value) || 1
                                                         if (val >= 1 && val <= 99) {
                                                             setQuantity(val)
-                                                            setFormData(prev => ({ ...prev, quantity: val }))
+                                                            setFormData((prev: OrderFormData) => ({ ...prev, quantity: val }))
                                                         }
                                                     }}
                                                     className="w-16 text-center font-bold text-lg border-x-2 border-gray-300 focus:outline-none"
@@ -382,7 +304,7 @@ export default function ProductDetailPage() {
                                     {/* Order Button */}
                                     <button
                                         onClick={() => setShowOrderForm(true)}
-                                        className="w-full flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-lg text-white transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                                        className="w-full flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-lg text-white transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl cursor-pointer"
                                         style={{
                                             background: "linear-gradient(135deg, #D4AF37, #B668A1)",
                                         }}
@@ -392,31 +314,6 @@ export default function ProductDetailPage() {
                                     </button>
                                 </div>
                             )}
-
-                            {/* Features */}
-                            <div className="grid grid-cols-3 gap-4 pt-6 border-t">
-                                <div className="text-center">
-                                    <div className="flex justify-center mb-2">
-                                        <Package className="text-purple-600" size={32} />
-                                    </div>
-                                    <p className="text-sm font-semibold text-gray-700">Hàng thủ công</p>
-                                    <p className="text-xs text-gray-500">100% chính hãng</p>
-                                </div>
-                                <div className="text-center">
-                                    <div className="flex justify-center mb-2">
-                                        <Truck className="text-purple-600" size={32} />
-                                    </div>
-                                    <p className="text-sm font-semibold text-gray-700">Miễn phí ship</p>
-                                    <p className="text-xs text-gray-500">Đơn từ 500k</p>
-                                </div>
-                                <div className="text-center">
-                                    <div className="flex justify-center mb-2">
-                                        <Shield className="text-purple-600" size={32} />
-                                    </div>
-                                    <p className="text-sm font-semibold text-gray-700">Đổi trả 7 ngày</p>
-                                    <p className="text-xs text-gray-500">Nếu lỗi</p>
-                                </div>
-                            </div>
                         </div>
                     </motion.div>
 
@@ -438,22 +335,18 @@ export default function ProductDetailPage() {
                         </div>
 
                         {/* Specifications */}
-                        {product.specifications && (
+                        {product.specifications && product.specifications.length > 0 && (
                             <div className="bg-white rounded-2xl p-8 shadow-lg">
                                 <h3 className="text-2xl font-serif font-bold mb-6" style={{ color: "#5b21b6" }}>
                                     Thông số kỹ thuật
                                 </h3>
                                 <div className="space-y-4">
-                                    {Object.entries(product.specifications).map(([key, value]) => (
-                                        <div key={key} className="border-b border-gray-200 pb-3">
+                                    {product.specifications.map((spec, idx) => (
+                                        <div key={`${spec.label}-${idx}`} className="border-b border-gray-200 pb-3 last:border-b-0 last:pb-0">
                                             <dt className="text-sm font-semibold text-gray-600 mb-1 uppercase">
-                                                {key === "material" && "Chất liệu"}
-                                                {key === "origin" && "Xuất xứ"}
-                                                {key === "size" && "Kích thước"}
-                                                {key === "weight" && "Trọng lượng"}
-                                                {key === "color" && "Màu sắc"}
+                                                {spec.label}
                                             </dt>
-                                            <dd className="text-base text-gray-900 font-medium">{value}</dd>
+                                            <dd className="text-base text-gray-900 font-medium">{spec.value}</dd>
                                         </div>
                                     ))}
                                 </div>
@@ -508,7 +401,7 @@ export default function ProductDetailPage() {
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-gray-700">{product.name}</span>
                                             <span className="font-bold" style={{ color: "#D4AF37" }}>
-                                                {product.price}
+                                                {product.priceNum.toLocaleString('vi-VN')}đ
                                             </span>
                                         </div>
                                         <div className="flex justify-between items-center mb-2">
@@ -635,6 +528,27 @@ export default function ProductDetailPage() {
                             )}
                         </div>
                     </motion.div>
+                </div>
+            )}
+
+            {/* Image Lightbox Modal */}
+            {lightboxOpen && (
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 cursor-zoom-out" onClick={() => setLightboxOpen(false)}>
+                    <div className="relative max-w-4xl max-h-full p-4">
+                        <button
+                            onClick={() => setLightboxOpen(false)}
+                            className="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 z-10"
+                        >
+                            <X size={24} />
+                        </button>
+                        <Image
+                            src={product.images?.[lightboxIndex] || product.image}
+                            alt={product.name}
+                            width={600}
+                            height={600}
+                            className="object-contain max-w-[90vw] max-h-[90vh]"
+                        />
+                    </div>
                 </div>
             )}
 

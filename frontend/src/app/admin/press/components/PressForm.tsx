@@ -8,8 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { adminApi } from "@/lib/api"
 import type { AdminPressItem, AdminPressPayload } from "@/lib/api/admin/press"
-import { ImageUpload } from "@/app/admin/events/[id]/edit/components/ImageUpload"
+import { SingleImageUpload } from "@/components/admin/reusable-image-upload"
 import { resolveMediaUrl } from "@/lib/media"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
+import { vi } from "date-fns/locale"
 
 const PRESS_TYPES: { value: string; label: string }[] = [
   { value: "article", label: "Bài viết" },
@@ -188,13 +191,20 @@ export function PressForm({ initialData, mode }: PressFormProps) {
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Ngày đăng *</label>
-              <Input
-                type="date"
-                value={formData.date}
-                onChange={handleInputChange("date")}
-                placeholder="2024-05-20"
-                required
-              />
+              <div className="relative">
+                <DatePicker
+                  selected={formData.date && formData.date.trim() !== '' && !isNaN(new Date(formData.date).getTime()) ? new Date(formData.date) : null}
+                  onChange={(date: Date | null) => {
+                    const dateStr = date ? date.toISOString().split('T')[0] : '';
+                    handleChange('date', dateStr);
+                  }}
+                  locale={vi}
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText="20/05/2024"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
+                  required
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Loại nội dung *</label>
@@ -214,11 +224,12 @@ export function PressForm({ initialData, mode }: PressFormProps) {
           </div>
 
           <div className="space-y-4">
-            <ImageUpload
+            <SingleImageUpload
               value={formData.image}
-              onChange={(url) => handleChange("image", url)}
+              onChange={(value) => handleChange("image", value || "")}
               label="Hình ảnh đại diện"
               placeholder="Kéo thả hoặc chọn ảnh để tải lên"
+              size="lg"
             />
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Hoặc nhập URL hình ảnh</label>

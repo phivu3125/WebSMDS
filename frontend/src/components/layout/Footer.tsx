@@ -65,7 +65,7 @@ export function Footer() {
           {/* Cột 1: Logo & Mô tả */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <Image src="/images/logo2.png" alt="Sắc Màu Di Sản" width={180} height={180} className ="-ml-2" />
+              <Image src="/images/logo2.png" alt="Sắc Màu Di Sản" width={180} height={180} className="-ml-2" />
             </div>
             <p className="text-white/90 text-sm leading-relaxed">
               Bảo tồn, phát huy và lan tỏa những giá trị văn hóa truyền thống Việt Nam qua
@@ -80,13 +80,14 @@ export function Footer() {
             </h3>
             <ul className="space-y-2 text-sm">
               {[
-                { label: "Sự Kiện", href: "#events" },
-                { label: "Về Chúng Tôi", href: "#about" },
-                { label: "Hành Trình", href: "#past_events" },
-                { label: "Sản Phẩm", href: "#products" },
-                { label: "Đối Tác", href: "#partners" },
-                { label: "Tin Tức", href: "#news" },
-                { label: "Liên Hệ", href: "#contact" },
+                { label: "Về chúng tôi", href: "#about" },
+                { label: "Sắc Màu Di Sản", href: "#sac_mau_disan" },
+                { label: "Đánh thức di sản", href: "#hanh_trinh_danh_thuc_disan" },
+                { label: "Hành trình", href: "#past_events" },
+                { label: "Đối tác", href: "#partners" },
+                { label: "Tin tức", href: "#news" },
+                { label: "Toạ đàm", href: "#talk" },
+                { label: "Liên hệ", href: "#contact" },
               ].map((link) => (
                 <li key={link.href}>
                   <a
@@ -120,7 +121,7 @@ export function Footer() {
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: "#fcd34d" }} />
                 <span className="leading-relaxed">
-                  Văn phòng [số], Tầng 03, Tòa nhà Sihub - Trung tâm khởi nghiệp sáng tạo TP.HCM,
+                  Tầng 03, Tòa nhà Sihub - Trung tâm khởi nghiệp sáng tạo TP.HCM,
                   số 123 Trương Định, Phường Võ Thị Sáu, Quận 3, TP. Hồ Chí Minh
                 </span>
               </li>
@@ -231,29 +232,6 @@ export function Footer() {
             </div>
           </div>
         </div>
-
-        {/* Copyright */}
-        {/* <div
-          className="border-t pt-8 mt-8 text-center"
-          style={{ borderColor: "rgba(255, 255, 255, 0.2)" }}
-        >
-          <p className="text-sm text-white/70">
-            © 2025 Sắc Màu Di Sản. Tất cả quyền được bảo lưu.
-          </p>
-          <div className="flex justify-center gap-6 mt-4 text-xs text-white/60">
-            <a href="#" className="hover:text-white transition-colors">
-              Chính sách bảo mật
-            </a>
-            <span>|</span>
-            <a href="#" className="hover:text-white transition-colors">
-              Điều khoản sử dụng
-            </a>
-            <span>|</span>
-            <a href="#" className="hover:text-white transition-colors">
-              Sitemap
-            </a>
-          </div>
-        </div> */}
       </div>
     </footer>
   )

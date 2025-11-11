@@ -7,7 +7,7 @@ import Image from "next/image"
 import Link from "next/link"
 import Navigation from "@/components/home/navigation"
 import { Footer } from "@/components/layout/Footer"
-import { getPress, PressItem } from "@/lib/api/news"
+import { getPress, PressItem } from "@/lib/api/press"
 
 export default function PressPage() {
     const [searchTerm, setSearchTerm] = useState("")

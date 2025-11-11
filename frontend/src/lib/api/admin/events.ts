@@ -90,7 +90,7 @@ export async function deleteEvent(id: string, password: string): Promise<{ messa
 export async function getEventRegistrations(eventId?: string): Promise<EventRegistration[]> {
   const params = new URLSearchParams()
   if (eventId) params.append("eventId", eventId)
-  
+
   const response = await adminApiFetch(
     `events/admin/registrations${params.toString() ? `?${params}` : ""}`
   )
@@ -107,6 +107,15 @@ export async function updateRegistrationStatus(
     body: JSON.stringify({ status })
   })
   return handleAdminResponse<EventRegistration>(response)
+}
+
+export async function checkEventSlug(slug: string, excludeId?: string): Promise<{ exists: boolean }> {
+  const params = new URLSearchParams({ slug: encodeURIComponent(slug) })
+  if (excludeId) {
+    params.append("excludeId", excludeId)
+  }
+  const response = await adminApiFetch(`events/check-slug?${params.toString()}`)
+  return handleAdminResponse<{ exists: boolean }>(response)
 }
 
 export async function deleteRegistration(id: string): Promise<{ message: string }> {

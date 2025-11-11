@@ -21,9 +21,9 @@ export default function SacMauDiSanSection({ images = [] }) { // Pass array 3 im
 
   // Placeholder images (thay bằng real URLs)
   const defaultImages = [
-    '/le-hoi-da-sac.jpg', // Tầng SẮC
-    '/nghe-thuat-duong-dai.jpg', // Tầng MÀU
-    '/hoa-sen.jpg' // Tầng DI SẢN
+    '/images/sac-mau-disan/img1.jpg', // Tầng SẮC
+    '/images/sac-mau-disan/img2.jpg', // Tầng MÀU
+    '/images/sac-mau-disan/img3.jpg' // Tầng DI SẢN
   ]
   const imgSrc = images.length > 0 ? images : defaultImages
 

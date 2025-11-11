@@ -1,18 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { ArrowLeft, Save, Eye, X } from "lucide-react"
 import Link from "next/link"
 import { adminApi } from "@/lib/api"
-import { resolveMediaUrl } from "@/lib/media"
+import { uploadImage, deleteImage } from "@/lib/api/admin/uploads"
 import { EventPreview } from "./components/EventPreview"
-import { ImageUpload } from "./components/ImageUpload"
+import { SingleImageUpload } from "@/components/admin/reusable-image-upload"
 
 interface EventSection {
   id: string
@@ -42,12 +41,18 @@ interface EventFormData {
   slug: string
   description: string
   fullDescription: string
-  image: string | File
+  image: string
+  imageFile?: File
+  removedImage?: boolean
   location: string
   openingHours: string
   dateDisplay: string
-  venueMap: string | File
-  pricingImage: string | File
+  venueMap: string
+  venueMapFile?: File
+  removedVenueMap?: boolean
+  pricingImage: string
+  pricingImageFile?: File
+  removedPricingImage?: boolean
   status: string
 }
 
@@ -78,6 +83,8 @@ export default function EditEventPage() {
   const [sections, setSections] = useState<EventSection[]>([])
   const [invalidSectionItems, setInvalidSectionItems] = useState<Record<string, number[]>>({})
   const [invalidSectionTitles, setInvalidSectionTitles] = useState<Set<string>>(new Set())
+  const slugInputRef = useRef<HTMLInputElement>(null)
+  const [slugTouched, setSlugTouched] = useState(false)
 
   const scrollToFirstInvalid = (invalidMap: Record<string, number[]>) => {
     for (const section of sections) {
@@ -107,6 +114,40 @@ export default function EditEventPage() {
         }
         break
       }
+    }
+  }
+
+  const scrollToSlugError = () => {
+    if (slugInputRef.current) {
+      slugInputRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      })
+      slugInputRef.current.focus()
+    }
+  }
+
+  const sanitizeSlug = (input: string) =>
+    input
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "")
+
+  const checkSlugExists = async (slug: string): Promise<boolean> => {
+    try {
+      const sanitized = sanitizeSlug(slug)
+      if (!sanitized) return false
+
+      const res = await adminApi.checkEventSlug(sanitized, id)
+      return res.exists === true
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra slug:", error)
+      return false
     }
   }
 
@@ -145,10 +186,52 @@ export default function EditEventPage() {
 
   const handleInputChange = (field: keyof EventFormData, value: string | File) => {
     setValidationError(null)
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
+
+    if (field === "slug") {
+      setSlugTouched(true)
+    }
+
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        [field]: field === "slug" ? sanitizeSlug(value as string) : value,
+      }
+
+      if (field === "title") {
+        updated.slug = sanitizeSlug(value as string)
+        setSlugTouched(false)
+      }
+
+      return updated
+    })
+  }
+
+  const handleImageChange = (field: 'image' | 'venueMap' | 'pricingImage', value: string | File) => {
+    setValidationError(null)
+
+    setFormData(prev => {
+      const updated = { ...prev } as any // Use any to allow dynamic property access
+
+      if (value instanceof File) {
+        // New file uploaded
+        updated[field] = "" // Clear the URL since we have a new file
+        updated[`${field}File`] = value
+        updated[`removed${field.charAt(0).toUpperCase() + field.slice(1)}`] = false
+      } else if (value === "") {
+        // Image removed
+        if (prev[field]) {
+          // Had an existing image, mark for removal
+          updated[`removed${field.charAt(0).toUpperCase() + field.slice(1)}`] = true
+        }
+        updated[field] = ""
+        updated[`${field}File`] = undefined
+      } else {
+        // URL set (shouldn't happen in new system)
+        updated[field] = value
+      }
+
+      return updated as EventFormData
+    })
   }
 
   const addSection = () => {
@@ -336,39 +419,57 @@ export default function EditEventPage() {
     setInvalidSectionTitles(new Set())
     setInvalidSectionItems({})
     setSaving(true)
+    
     try {
+      // Check for slug duplicates before saving
+      if (formData.slug.trim()) {
+        const slugExists = await checkSlugExists(formData.slug.trim())
+        if (slugExists) {
+          setValidationError("Slug đã tồn tại, vui lòng chọn slug khác.")
+          setSaving(false)
+          scrollToSlugError()
+          return
+        }
+      }
+
       // Upload new images and delete old ones
-      const imageFields = ['image', 'venueMap', 'pricingImage'] as const
+      const imageFields: Array<{field: 'image' | 'venueMap' | 'pricingImage', fileField: 'imageFile' | 'venueMapFile' | 'pricingImageFile', removedField: 'removedImage' | 'removedVenueMap' | 'removedPricingImage'}> = [
+        { field: 'image', fileField: 'imageFile', removedField: 'removedImage' },
+        { field: 'venueMap', fileField: 'venueMapFile', removedField: 'removedVenueMap' },
+        { field: 'pricingImage', fileField: 'pricingImageFile', removedField: 'removedPricingImage' }
+      ]
+
       const updatedFormData = { ...formData }
-      
-      for (const field of imageFields) {
-        const currentValue = formData[field]
+
+      for (const { field, fileField, removedField } of imageFields) {
+        const currentFile = updatedFormData[fileField]
         const originalValue = event?.[field]
-        
-        if (currentValue instanceof File) {
+        const isRemoved = updatedFormData[removedField]
+
+        if (currentFile instanceof File) {
           // Upload new image
-          const uploadedUrl = await adminApi.uploadImage(currentValue)
+          const uploadedUrl = await uploadImage(currentFile)
           updatedFormData[field] = uploadedUrl
-          
+
           // Delete old image if it exists
           if (originalValue && typeof originalValue === 'string') {
             try {
-              const url = new URL(resolveMediaUrl(originalValue))
+              const url = new URL(originalValue)
               const filename = url.pathname.split("/").filter(Boolean).pop()
               if (filename) {
-                await adminApi.deleteImage(filename)
+                await deleteImage(filename)
               }
             } catch (deleteError) {
               console.warn("Failed to delete old image:", deleteError)
             }
           }
-        } else if (currentValue === "" && originalValue && typeof originalValue === 'string') {
+        } else if (isRemoved && originalValue && typeof originalValue === 'string') {
           // Image was removed, delete old image
           try {
-            const url = new URL(resolveMediaUrl(originalValue))
+            const url = new URL(originalValue)
             const filename = url.pathname.split("/").filter(Boolean).pop()
             if (filename) {
-              await adminApi.deleteImage(filename)
+              await deleteImage(filename)
             }
           } catch (deleteError) {
             console.warn("Failed to delete old image:", deleteError)
@@ -443,9 +544,9 @@ export default function EditEventPage() {
     ...formData,
     id: event.id,
     sections: sections,
-    image: typeof formData.image === 'string' ? formData.image : undefined,
-    venueMap: typeof formData.venueMap === 'string' ? formData.venueMap : undefined,
-    pricingImage: typeof formData.pricingImage === 'string' ? formData.pricingImage : undefined,
+    image: formData.imageFile ? "" : formData.image || undefined,
+    venueMap: formData.venueMapFile ? "" : formData.venueMap || undefined,
+    pricingImage: formData.pricingImageFile ? "" : formData.pricingImage || undefined,
   }
 
   return (
@@ -523,6 +624,7 @@ export default function EditEventPage() {
                 onChange={(e) => handleInputChange("slug", e.target.value)}
                 placeholder="slug-su-kiem"
                 required
+                ref={slugInputRef}
               />
             </div>
             <div>
@@ -588,23 +690,26 @@ export default function EditEventPage() {
             <CardTitle>Hình ảnh</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ImageUpload
-              value={formData.image}
-              onChange={(url) => handleInputChange("image", url)}
+            <SingleImageUpload
+              value={formData.imageFile ? formData.imageFile : formData.image || undefined}
+              onChange={(value) => handleImageChange("image", value || "")}
               label="Hình ảnh sự kiện"
               placeholder="Tải lên hình ảnh chính của sự kiện"
+              size="lg"
             />
-            <ImageUpload
-              value={formData.venueMap}
-              onChange={(url) => handleInputChange("venueMap", url)}
+            <SingleImageUpload
+              value={formData.venueMapFile ? formData.venueMapFile : formData.venueMap || undefined}
+              onChange={(value) => handleImageChange("venueMap", value || "")}
               label="Sơ đồ địa điểm"
               placeholder="Tải lên sơ đồ địa điểm sự kiện"
+              size="lg"
             />
-            <ImageUpload
-              value={formData.pricingImage}
-              onChange={(url) => handleInputChange("pricingImage", url)}
+            <SingleImageUpload
+              value={formData.pricingImageFile ? formData.pricingImageFile : formData.pricingImage || undefined}
+              onChange={(value) => handleImageChange("pricingImage", value || "")}
               label="Bảng giá"
               placeholder="Tải lên hình ảnh bảng giá"
+              size="lg"
             />
           </CardContent>
         </Card>

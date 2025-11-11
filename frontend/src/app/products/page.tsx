@@ -7,157 +7,25 @@ import Image from "next/image"
 import Link from "next/link"
 import Navigation from "@/components/home/navigation"
 import { Footer } from "@/components/layout/Footer"
+import { products } from "@/mock/products"
+import { categories } from "@/mock/categories"
 
-const allProducts = [
-    {
-        id: 1,
-        name: "Áo Dài Truyền Thống",
-        description: "Áo dài lụa tơ tằm thêu tay họa tiết sen, chất liệu cao cấp, thiết kế tinh xảo",
-        price: "2.500.000đ",
-        priceNum: 2500000,
-        category: "Thời trang",
-        image: "/placeholder.svg?height=400&width=400",
-        featured: true,
-        inStock: true,
-    },
-    {
-        id: 2,
-        name: "Tranh Sơn Mài",
-        description: "Tranh sơn mài vẽ tay phong cảnh Hạ Long, nghệ thuật truyền thống Việt Nam",
-        price: "5.000.000đ",
-        priceNum: 5000000,
-        category: "Nghệ thuật",
-        image: "/placeholder.svg?height=400&width=400",
-        featured: false,
-        inStock: true,
-    },
-    {
-        id: 3,
-        name: "Gốm Sứ Bát Tràng",
-        description: "Bộ ấm chén gốm sứ vẽ hoa sen xanh, làng nghề truyền thống Bát Tràng",
-        price: "1.200.000đ",
-        priceNum: 1200000,
-        category: "Gốm sứ",
-        image: "/placeholder.svg?height=400&width=400",
-        featured: true,
-        inStock: true,
-    },
-    {
-        id: 4,
-        name: "Nón Lá Thủ Công",
-        description: "Nón lá Huế thêu thơ truyền thống, thủ công tinh xảo từ nghệ nhân",
-        price: "350.000đ",
-        priceNum: 350000,
-        category: "Thủ công",
-        image: "/placeholder.svg?height=300&width=500",
-        featured: false,
-        inStock: true,
-    },
-    {
-        id: 5,
-        name: "Túi Thổ Cẩm",
-        description: "Túi xách thổ cẩm dệt tay từ Tây Bắc, họa tiết độc đáo của dân tộc thiểu số",
-        price: "450.000đ",
-        priceNum: 450000,
-        category: "Thời trang",
-        image: "/placeholder.svg?height=400&width=400",
-        featured: false,
-        inStock: false,
-    },
-    {
-        id: 6,
-        name: "Đèn Lồng Hội An",
-        description: "Đèn lồng lụa thủ công phong cách Hội An, mang đậm nét văn hóa phố cổ",
-        price: "280.000đ",
-        priceNum: 280000,
-        category: "Trang trí",
-        image: "/placeholder.svg?height=400&width=400",
-        featured: false,
-        inStock: true,
-    },
-    {
-        id: 7,
-        name: "Khăn Lụa Thêu Tay",
-        description: "Khăn lụa cao cấp thêu hoa văn truyền thống, quà tặng sang trọng",
-        price: "650.000đ",
-        priceNum: 650000,
-        category: "Thời trang",
-        image: "/placeholder.svg?height=400&width=400",
-        featured: false,
-        inStock: true,
-    },
-    {
-        id: 8,
-        name: "Tranh Đông Hồ",
-        description: "Tranh dân gian Đông Hồ in bằng khuôn gỗ truyền thống",
-        price: "180.000đ",
-        priceNum: 180000,
-        category: "Nghệ thuật",
-        image: "/placeholder.svg?height=400&width=400",
-        featured: true,
-        inStock: true,
-    },
-    {
-        id: 9,
-        name: "Cờ Cá Ngựa",
-        description: "Bộ cờ cá ngựa gỗ thủ công, trò chơi dân gian truyền thống",
-        price: "320.000đ",
-        priceNum: 320000,
-        category: "Giải trí",
-        image: "/placeholder.svg?height=400&width=400",
-        featured: false,
-        inStock: true,
-    },
-    {
-        id: 10,
-        name: "Tượng Gỗ Dân Gian",
-        description: "Tượng gỗ khắc tay nghệ thuật dân gian Việt Nam",
-        price: "890.000đ",
-        priceNum: 890000,
-        category: "Trang trí",
-        image: "/placeholder.svg?height=400&width=400",
-        featured: false,
-        inStock: true,
-    },
-    {
-        id: 11,
-        name: "Bình Sơn Mài",
-        description: "Bình sơn mài hoa văn truyền thống, trang trí nội thất cao cấp",
-        price: "2.200.000đ",
-        priceNum: 2200000,
-        category: "Trang trí",
-        image: "/placeholder.svg?height=400&width=400",
-        featured: false,
-        inStock: true,
-    },
-    {
-        id: 12,
-        name: "Giỏ Đan Tre",
-        description: "Giỏ đan tre thủ công từ làng nghề truyền thống miền Tây",
-        price: "150.000đ",
-        priceNum: 150000,
-        category: "Thủ công",
-        image: "/placeholder.svg?height=400&width=400",
-        featured: false,
-        inStock: true,
-    },
-]
+const categoryOptions = ["all", ...categories.map(c => c.name)]
 
 export default function ProductsPage() {
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedCategory, setSelectedCategory] = useState("all")
+    const [selectedStock, setSelectedStock] = useState("all")
     const [sortBy, setSortBy] = useState("featured")
 
-    // Get unique categories
-    const categories = ["all", ...Array.from(new Set(allProducts.map(product => product.category)))]
-
     // Filter and sort products
-    let filteredProducts = allProducts.filter(product => {
+    let filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.description.toLowerCase().includes(searchTerm.toLowerCase())
-        const matchesCategory = selectedCategory === "all" || product.category === selectedCategory
+        const matchesCategory = selectedCategory === "all" || categories.find(c => c.id === product.categoryId)?.name === selectedCategory
+        const matchesStock = selectedStock === "all" || (selectedStock === "inStock" ? product.inStock : !product.inStock)
 
-        return matchesSearch && matchesCategory
+        return matchesSearch && matchesCategory && matchesStock
     })
 
     // Sort products
@@ -222,11 +90,25 @@ export default function ProductsPage() {
                                 onChange={(e) => setSelectedCategory(e.target.value)}
                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             >
-                                {categories.map(category => (
+                                {categoryOptions.map(category => (
                                     <option key={category} value={category}>
                                         {category === "all" ? "Tất cả danh mục" : category}
                                     </option>
                                 ))}
+                            </select>
+                        </div>
+
+                        {/* Stock Filter */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">Tình trạng:</span>
+                            <select
+                                value={selectedStock}
+                                onChange={(e) => setSelectedStock(e.target.value)}
+                                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="all">Tất cả</option>
+                                <option value="inStock">Còn hàng</option>
+                                <option value="outOfStock">Hết hàng</option>
                             </select>
                         </div>
 
@@ -317,7 +199,7 @@ export default function ProductsPage() {
                                                         color: "white",
                                                     }}
                                                 >
-                                                    {product.category}
+                                                    {categories.find(c => c.id === product.categoryId)?.name || ''}
                                                 </span>
                                             </div>
 
@@ -338,7 +220,7 @@ export default function ProductsPage() {
                                                     className="text-2xl font-bold font-mono"
                                                     style={{ color: "#D4AF37" }}
                                                 >
-                                                    {product.price}
+                                                    {product.priceNum.toLocaleString('vi-VN')}đ
                                                 </span>
                                                 <button
                                                     disabled={!product.inStock}

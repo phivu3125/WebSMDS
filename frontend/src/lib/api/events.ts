@@ -17,17 +17,6 @@ export async function getEventBySlug(slug: string) {
   return response.json()
 }
 
-export async function getEventBySlugAdmin(slug: string) {
-  const token = localStorage.getItem("token")
-  const response = await apiFetch(`events/admin/${slug}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-  if (!response.ok) throw new Error("Failed to fetch event")
-  return response.json()
-}
-
 export async function submitEventRegistration(
   slug: string,
   payload: {
@@ -45,56 +34,8 @@ export async function submitEventRegistration(
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
     const message = error?.error || error?.message || "Không thể gửi đăng ký"
-    throw new Error(message)
+    throw new Error("Failed to submit registration")
   }
 
-  return response.json()
-}
-
-export async function getEventRegistrationsAdmin(eventId?: string) {
-  const token = localStorage.getItem("token")
-  const params = new URLSearchParams()
-  if (eventId) params.append("eventId", eventId)
-
-  const response = await apiFetch(
-    `events/admin/registrations${params.toString() ? `?${params}` : ""}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  )
-
-  if (!response.ok) throw new Error("Failed to fetch registrations")
-  return response.json()
-}
-
-export async function updateEventRegistrationStatus(
-  id: string,
-  status: "read" | "unread"
-) {
-  const token = localStorage.getItem("token")
-  const response = await apiFetch(`events/admin/registrations/${id}/status`, {
-    method: "PATCH",
-    body: JSON.stringify({ status }),
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  if (!response.ok) throw new Error("Failed to update registration status")
-  return response.json()
-}
-
-export async function deleteEventRegistration(id: string) {
-  const token = localStorage.getItem("token")
-  const response = await apiFetch(`events/admin/registrations/${id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  if (!response.ok) throw new Error("Failed to delete registration")
   return response.json()
 }

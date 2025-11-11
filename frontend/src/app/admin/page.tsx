@@ -9,6 +9,7 @@ import {
   BookOpen,
   Lightbulb,
   Mail,
+  CalendarDays,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -29,6 +30,14 @@ const overviewCards = [
     action: "Xem đăng ký",
     icon: Users,
     iconBg: "bg-blue-100 text-blue-700",
+  },
+  {
+    title: "Sự kiện đã qua",
+    description: "Quản lý sự kiện đã qua",
+    href: "/admin/past-events",
+    action: "Xem sự kiện đã qua",
+    icon: CalendarDays,
+    iconBg: "bg-indigo-100 text-indigo-700",
   },
   {
     title: "Tọa đàm trực tuyến",
@@ -88,13 +97,6 @@ const managementCards = [
 export default function AdminDashboard() {
   return (
     <div className="space-y-10">
-      {/* <header className="rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-8 text-white shadow-lg">
-        <h1 className="text-3xl font-bold tracking-tight">Bảng điều khiển quản trị</h1>
-        <p className="mt-2 max-w-2xl text-white/80">
-          Tổng quan nhanh các khu vực quản lý nội dung, sự kiện và thương mại điện tử của Sắc Màu Di Sản.
-        </p>
-      </header> */}
-
       <section>
         <div className="mb-6 flex items-center justify-between">
           <div>

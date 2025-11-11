@@ -22,8 +22,8 @@ export default function AboutSection({ images = [] }) {
 
   // Placeholder if no images provided
   const defaultImages = [
-    '/images/about-us/img1.jpg', '/images/about-us/img2.jpg', '/images/about-us/img3.jpg',
-    '/images/about-us/img4.jpg', '/images/about-us/img5.jpg', '/images/about-us/img6.jpg'
+    '/images/about-us/img1.JPG', '/images/about-us/img2.JPG', '/images/about-us/img3.JPG',
+    '/images/about-us/img4.JPG', '/images/about-us/img5.JPG', '/images/about-us/img6.JPG'
   ]
   const imgSrc = images.length > 0 ? images : defaultImages
 
