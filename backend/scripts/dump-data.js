@@ -54,20 +54,22 @@ async function exportData() {
 function generateInserts(tableName, records) {
   if (records.length === 0) return '';
 
-  const columns = Object.keys(records[0]).map(key => key.toLowerCase()); // Convert camelCase to lowercase
-  let sql = `TRUNCATE TABLE ${tableName} CASCADE;\n-- INSERT INTO ${tableName}\n`;
+  const columns = Object.keys(records[0]);
+  let sql = `TRUNCATE TABLE "${tableName}" CASCADE;\n-- INSERT INTO ${tableName}\n`;
 
   records.forEach(record => {
-    const values = Object.keys(record).map(col => {
+    const values = columns.map(col => {
       const val = record[col];
-      if (val === null) return 'NULL';
+      if (val === null || typeof val === 'undefined') return 'NULL';
+      if (val instanceof Date) return `'${val.toISOString()}'`;
       if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
       if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
       if (Array.isArray(val)) return `'${JSON.stringify(val).replace(/'/g, "''")}'`; // For JSON arrays
       if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`; // For JSON objects
       return val;
     });
-    sql += `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${values.join(', ')});\n`;
+    const quotedColumns = columns.map(col => `"${col}"`).join(', ');
+    sql += `INSERT INTO "${tableName}" (${quotedColumns}) VALUES (${values.join(', ')});\n`;
   });
 
   sql += '\n';
