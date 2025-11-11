@@ -54,11 +54,11 @@ async function exportData() {
 function generateInserts(tableName, records) {
   if (records.length === 0) return '';
 
-  const columns = Object.keys(records[0]);
+  const columns = Object.keys(records[0]).map(key => key.replace(/([A-Z])/g, '_$1').toLowerCase()); // Convert camelCase to snake_case
   let sql = `-- INSERT INTO ${tableName}\n`;
 
   records.forEach(record => {
-    const values = columns.map(col => {
+    const values = Object.keys(record).map(col => {
       const val = record[col];
       if (val === null) return 'NULL';
       if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
