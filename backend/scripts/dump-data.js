@@ -54,7 +54,7 @@ async function exportData() {
 function generateInserts(tableName, records) {
   if (records.length === 0) return '';
 
-  const columns = Object.keys(records[0]).map(key => key.replace(/([A-Z])/g, '_$1').toLowerCase()); // Convert camelCase to snake_case
+  const columns = Object.keys(records[0]).map(key => key.toLowerCase()); // Convert camelCase to lowercase
   let sql = `-- INSERT INTO ${tableName}\n`;
 
   records.forEach(record => {
