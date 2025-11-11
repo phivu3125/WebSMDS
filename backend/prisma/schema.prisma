@@ -1,3 +1,4 @@
+// Force regenerate on Render
 generator client {
   provider = "prisma-client-js"
 }
