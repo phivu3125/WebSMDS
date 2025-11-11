@@ -55,7 +55,7 @@ function generateInserts(tableName, records) {
   if (records.length === 0) return '';
 
   const columns = Object.keys(records[0]).map(key => key.toLowerCase()); // Convert camelCase to lowercase
-  let sql = `-- INSERT INTO ${tableName}\n`;
+  let sql = `TRUNCATE TABLE ${tableName} CASCADE;\n-- INSERT INTO ${tableName}\n`;
 
   records.forEach(record => {
     const values = Object.keys(record).map(col => {
