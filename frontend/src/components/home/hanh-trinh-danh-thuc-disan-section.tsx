@@ -32,37 +32,39 @@ const projects = [
     title: "Thiên Hùng Ca Sử Việt",
     description:
       "Ứng dụng công nghệ tương tác kể lại lịch sử qua hình ảnh, âm thanh và chuyển động, giúp thế hệ trẻ “chạm” vào sử Việt bằng cảm xúc thật.",
-    image: "/images/about-us/img1.JPG",
+    image: "/images/hanh-trinh-danh-thuc-disan/img1.jpg",
   },
   {
     title: "Không gian di sản số hóa 3D",
     description:
       "Khu di tích và điểm đến du lịch văn hóa được tái hiện bằng mô hình số hóa 3D và trưng bày tương tác, tái tạo không khí lễ hội giữa lòng đô thị.",
-    image: "/images/about-us/img2.JPG",
+    image: "/images/hanh-trinh-danh-thuc-disan/img2.jpg",
   },
   {
     title: "Số hóa đình đền Sài Gòn",
     description:
       "Các đình, đền như Lăng Võ Tánh, Đình An Khánh… được quét 3D và chụp ảnh thực địa, tái hiện trong không gian trưng bày ảo để gìn giữ giá trị kiến trúc, tín ngưỡng và mỹ thuật.",
-    image: "/images/about-us/img3.JPG",
+    image: "/images/hanh-trinh-danh-thuc-disan/img3.png",
+    link: "https://no1on.me/viewer/nghinh-ong-can-gio",
   },
   {
     title: "Phòng truyền thống doanh nghiệp",
     description:
       "Mô hình kết hợp giữa công nghệ và ký ức tập thể, nơi mỗi hiện vật kể lại câu chuyện của một hành trình phát triển.",
-    image: "/images/about-us/img4.JPG",
+    image: "/images/hanh-trinh-danh-thuc-disan/img4.png",
+    link: "https://thuydai.sawaco.com.vn/",
   },
   {
     title: "Triển lãm văn hóa Hồ Chí Minh",
     description:
       "Ứng dụng công nghệ cảm ứng và trình chiếu tương tác để đưa tinh thần văn hóa của Thành phố vào trải nghiệm sống động, gần gũi.",
-    image: "/images/about-us/img5.JPG",
+    image: "/images/hanh-trinh-danh-thuc-disan/img5.jpg",
   },
   {
     title: "Trải nghiệm AR Thả lồng đèn ảo",
     description:
       "Cho phép du khách thả những chiếc đèn lồng ảo mang lời chúc tốt lành, để di sản trở thành một phần của ký ức số lung linh và bền vững.",
-    image: "/images/about-us/img6.JPG",
+    image: "/images/hanh-trinh-danh-thuc-disan/img6.jpg",
   },
 ]
 
@@ -169,7 +171,40 @@ export default function HanhTrinhDanhThucDiSanSection() {
               const textOrderClass = isEven ? "order-2 lg:order-2" : "order-1 lg:order-1"
               const imageOrderClass = isEven ? "order-1 lg:order-1" : "order-2 lg:order-2"
 
-              return (
+              return project.link ? (
+                <a
+                  href={project.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block no-underline"
+                  key={project.title}
+                >
+                  <motion.div
+                    variants={fadeUp}
+                    className="grid grid-cols-1 items-center gap-8 rounded-3xl bg-white/80 p-6 shadow-xl ring-1 ring-[#B668A1]/10 md:p-10 lg:grid-cols-2 cursor-pointer"
+                  >
+                    <div className={`space-y-3 ${textOrderClass}`}>
+                      <div className="inline-flex items-center gap-2 rounded-full bg-[#B668A1]/10 px-4 py-1 text-sm font-semibold uppercase tracking-wider text-[#B668A1]">
+                        <span>{String(index + 1).padStart(2, "0")}</span>
+                        <span className="h-1 w-8 rounded-full bg-[#D4AF37]" />
+                      </div>
+                      <h3 className="text-2xl font-serif font-semibold text-[#4C1D95]">{project.title}</h3>
+                      <p className="text-base leading-relaxed text-[#1F2937] md:text-lg">{project.description}</p>
+                    </div>
+
+                    <div className={`relative overflow-hidden rounded-2xl ${imageOrderClass}`}>
+                      <div className="absolute inset-0 bg-gradient-to-tr from-[#B668A1]/20 via-transparent to-[#D4AF37]/20" />
+                      <Image
+                        src={project.image}
+                        alt={project.title}
+                        width={720}
+                        height={480}
+                        className="relative h-60 w-full object-cover transition-transform duration-500 hover:scale-105 md:h-72 lg:h-80"
+                      />
+                    </div>
+                  </motion.div>
+                </a>
+              ) : (
                 <motion.div
                   key={project.title}
                   variants={fadeUp}

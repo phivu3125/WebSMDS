@@ -160,14 +160,14 @@ export function Footer() {
             </h3>
             <div className="flex gap-3 mb-6">
               {[
-                { Icon: Facebook, href: "#", label: "Facebook" },
-                { Icon: Instagram, href: "#", label: "Instagram" },
-                { Icon: Youtube, href: "#", label: "Youtube" },
-                { Icon: Twitter, href: "#", label: "Twitter" },
+                { Icon: Facebook, href: "https://www.facebook.com/sacmaudisanvn?locale=vi_VN", label: "Facebook" },
+                { Icon: Youtube, href: "https://www.youtube.com/@S%E1%BA%AFcM%C3%A0uDiS%E1%BA%A3n_Santani", label: "Youtube" },
               ].map(({ Icon, href, label }) => (
                 <a
                   key={label}
                   href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
                   style={{
                     backgroundColor: "rgba(255, 255, 255, 0.1)",

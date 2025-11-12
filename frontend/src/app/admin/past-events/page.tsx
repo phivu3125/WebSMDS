@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { getAuthToken } from "@/lib/auth-cookies"
 import { Plus, Edit, Trash2, Eye } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { PastEventListItem } from "@/types/PastEvent"
 
 export default function PastEventsAdminPage() {
@@ -119,10 +120,12 @@ export default function PastEventsAdminPage() {
                             {/* Image */}
                             {event.thumbnailImage && (
                                 <div className="relative h-48 bg-gray-200">
-                                    <img
+                                    <Image
                                         src={event.thumbnailImage}
                                         alt={event.title}
-                                        className="w-full h-full object-cover"
+                                        fill
+                                        className="object-cover"
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                     />
                                 </div>
                             )}

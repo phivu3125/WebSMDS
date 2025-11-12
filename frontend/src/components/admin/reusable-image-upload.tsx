@@ -3,6 +3,7 @@
 import { useState, useRef, ChangeEvent, DragEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload, X, Plus } from "lucide-react"
+import Image from "next/image"
 
 interface SingleImageUploadProps {
   value?: string | File
@@ -138,10 +139,12 @@ export function SingleImageUpload({
       <div className="relative">
         {imageSrc ? (
           <div className={`relative ${sizeClasses[size].container} rounded-lg overflow-hidden border`}>
-            <img
+            <Image
               src={imageSrc}
               alt="Uploaded image"
-              className="w-full h-full object-contain"
+              fill
+              className="object-contain"
+              sizes="100vw"
             />
             {showRemoveButton && !disabled && (
               <Button
@@ -248,10 +251,12 @@ export function MultipleImageUpload({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {values.map((value, index) => (
           <div key={index} className={`relative ${sizeClasses[size].container} rounded-lg overflow-hidden border`}>
-            <img
+            <Image
               src={getImageSrc(value)}
               alt={`Image ${index + 1}`}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 50vw, 25vw"
             />
             {!disabled && (
               <Button
