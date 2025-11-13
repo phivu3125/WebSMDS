@@ -88,3 +88,7 @@ next-env.d.ts
 .vercel
 .turbo
 
+# Claude
+.claude/
+CLAUDE.md
+

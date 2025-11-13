@@ -31,8 +31,8 @@ export default function PastEventDetailClient({ event }: PastEventDetailClientPr
             <HeroSection event={event} />
             {event.intro?.content && <IntroSection event={event} />}
             {event.featureList?.items?.length > 0 && <FeatureListSection event={event} />}
-            {event.gallery?.images?.length > 0 && <GallerySection event={event} />}
-            {event.conclusion?.content && <ConclusionSection event={event} />}
+            {event.gallery && event.gallery.images?.length > 0 && <GallerySection event={event} />}
+            {event.conclusion && event.conclusion.content && <ConclusionSection event={event} />}
             <CTASection />
         </div>
     )

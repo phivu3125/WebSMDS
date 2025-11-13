@@ -8,45 +8,52 @@ Tài liệu tham khảo nhanh cho các lệnh và URLs thường dùng.
 |---------|-----|-------------|
 | Frontend | http://localhost:3000 | Public website |
 | Backend API | http://localhost:5000 | REST API |
-| Admin Panel | http://localhost:5000/admin | Payload CMS admin |
-| News API | http://localhost:5000/api/news | Public news endpoint |
+| Admin Panel | http://localhost:3000/admin | Custom admin dashboard |
+| Health Check | http://localhost:5000/health | API health status |
 | Uploads | http://localhost:5000/uploads/ | Static media files |
 
 ## 💻 Commands
 
-### Backend
+### Backend (Express + Prisma)
 
 ```bash
 cd backend
 
 # Development
-npm run dev          # Start with hot reload
+npm run dev              # Start with hot reload (tsx watch)
 
 # Production
-npm run build        # Compile TypeScript
-npm start            # Run production server
+npm run build            # Compile TypeScript
+npm start                # Run production server
 
-# Payload CLI
-npm run payload      # Access Payload CLI
+# Database Operations
+npm run prisma:generate  # Generate Prisma client
+npm run prisma:migrate   # Run database migrations
+npm run prisma:studio    # Open Prisma Studio (http://localhost:5555)
+npm run seed             # Seed database with initial data
+
+# Data Management
+npm run import-data      # Import data from scripts
+npm run dump-data        # Export data to backup file
 ```
 
-### Frontend
+### Frontend (Next.js 15)
 
 ```bash
 cd frontend
 
-# Development
-npm run dev          # Start Next.js dev server
+# Development with Turbopack
+npm run dev              # Start Next.js dev server
 
 # Production
-npm run build        # Build for production
-npm start            # Run production server
+npm run build            # Build for production
+npm start                # Run production server
 
 # Utilities
-npm run lint         # Run ESLint
+npm run lint             # Run ESLint
 ```
 
-### Database
+### Database (PostgreSQL)
 
 ```bash
 # Connect to PostgreSQL
@@ -76,13 +83,18 @@ psql -U postgres -c "SELECT 1 FROM pg_database WHERE datname='websmds';"
 backend/
 ├── .env                          # Environment variables (gitignored)
 ├── .env.example                  # Template for .env
-├── server.ts                     # Main server file
+├── server.ts                     # Main Express server file
+├── prisma/
+│   ├── schema.prisma             # Database schema
+│   └── seed.ts                   # Seed script
 ├── src/
-│   ├── payload.config.ts         # Payload configuration
-│   └── collections/
-│       ├── News.ts               # News collection schema
-│       ├── Media.ts              # Media collection schema
-│       └── Users.ts              # Users collection schema
+│   ├── lib/
+│   │   ├── prisma.ts             # Prisma client
+│   │   └── auth.ts               # Auth utilities
+│   ├── middleware/
+│   │   └── auth.ts               # JWT auth middleware
+│   ├── controllers/              # Business logic
+│   └── routes/                   # API routes
 └── uploads/                      # Media storage (gitignored)
 ```
 
@@ -91,13 +103,13 @@ backend/
 ```
 frontend/
 ├── .env.local                    # Environment variables (gitignored)
-├── .env.local.example            # Template
 └── src/
     ├── app/
+    │   ├── admin/                # Admin dashboard routes
     │   └── page.tsx              # Home page
     └── components/
-        └── home/
-            └── news-section.tsx  # News component (CMS connected)
+        ├── home/                 # Homepage components
+        └── admin/                # Admin UI components
 ```
 
 ## 🔑 Environment Variables
@@ -106,9 +118,13 @@ frontend/
 
 ```bash
 PORT=5000
-DATABASE_URI=postgresql://username:password@localhost:5432/websmds
-PAYLOAD_SECRET=your-secret-key-change-this
+DATABASE_URL=postgresql://username:password@localhost:5432/websmds
+JWT_SECRET=your-jwt-secret-key-change-this
+JWT_EXPIRES_IN=7d
+NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
+MAX_FILE_SIZE=10485760
+UPLOAD_PATH=./uploads
 ```
 
 ### Frontend (.env.local)
@@ -117,104 +133,126 @@ FRONTEND_URL=http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:5000
 ```
 
-## 📊 Collections Schema
+## 📊 Database Schema
 
-### News
+### Core Models
 
+**Users:**
 ```typescript
 {
-  title: string          // Required
-  slug: string           // Required, unique, auto-generated
-  excerpt: string        // Required
-  content: RichText      // Optional
-  image: Media           // Optional, relation to Media
-  category: 'su-kien' | 'hoat-dong' | 'doi-tac'
-  date: Date            // Required
-  status: 'draft' | 'published'
+  id: string        // UUID
+  email: string     // Unique
+  password: string  // Hashed with bcrypt
+  name: string
+  role: string      // "admin" | "user" | "editor"
   createdAt: Date
   updatedAt: Date
 }
 ```
 
-### Media
-
+**Events:**
 ```typescript
 {
-  filename: string
-  alt: string
-  mimeType: string
-  filesize: number
-  width: number
-  height: number
-  sizes: {
-    thumbnail: { url, width, height }
-    card: { url, width, height }
-    tablet: { url, width, height }
-  }
+  id: string
+  title: string
+  slug: string      // Unique
+  description: string
+  fullDescription: string
+  image: string
+  location: string
+  status: string    // "draft" | "published"
+  dateDisplay: string
+  // ... other fields
 }
 ```
 
-### Users
-
+**Products:**
 ```typescript
 {
-  email: string          // Required, unique
-  password: string       // Required, hashed
-  name: string          // Required
-  role: 'admin' | 'editor'
+  id: string
+  name: string
+  slug: string      // Unique
+  description: string
+  price: number
+  image: string
+  images: string[]  // Array of image URLs
+  categoryId: string
+  stock: number
+  inStock: boolean
+  // ... other fields
 }
 ```
 
 ## 🌐 API Endpoints
 
+### Authentication
+
+```bash
+# Login
+POST /api/auth/login
+Body: { email: string, password: string }
+
+# Get current user
+GET /api/auth/me
+Headers: { Authorization: Bearer <token> }
+```
+
 ### Public Endpoints
 
 ```bash
-# Get all published news
-GET /api/news
+# News
+GET /api/press                    # Get all published news
+GET /api/press/:slug              # Get news by slug
 
-# Get specific news by slug
-GET /api/news/:slug
+# Events
+GET /api/events                   # Get published events
+GET /api/events/:slug             # Get event by slug
 
-# Get media file
-GET /uploads/:filename
+# Products
+GET /api/products                 # Get all products
+GET /api/products/:id             # Get product by ID
 
-# Health check
-GET /api/hello
+# Past Events
+GET /api/past-events              # Get all past events
+GET /api/past-events/:slug        # Get past event by slug
+GET /api/past-events/years        # Get years with event counts
+
+# Health Check
+GET /health                       # API health status
 ```
 
 ### Admin Endpoints (Require Auth)
 
 ```bash
-# Login
-POST /api/users/login
-Body: { email: string, password: string }
+# Press/News Management
+GET /api/press/admin/all          # Get all news (including drafts)
+POST /api/press                   # Create news
+PATCH /api/press/:id              # Update news
+DELETE /api/press/:id             # Delete news
 
-# Get all news (including drafts)
-GET /api/news
-Headers: { Authorization: Bearer <token> }
+# Events Management
+GET /api/events/admin/all         # Get all events (including drafts)
+POST /api/events                  # Create event
+PATCH /api/events/:id             # Update event
+DELETE /api/events/:id            # Delete event
 
-# Create news
-POST /api/news
-Headers: { Authorization: Bearer <token> }
-Body: { title, excerpt, category, date, status, ... }
+# Products Management
+GET /api/products/admin/all       # Get all products
+POST /api/products                # Create product
+PATCH /api/products/:id           # Update product
+DELETE /api/products/:id          # Delete product
 
-# Update news
-PATCH /api/news/:id
-Headers: { Authorization: Bearer <token> }
+# Past Events Management
+GET /api/past-events/admin/all    # Get all past events
+POST /api/past-events             # Create past event
+PATCH /api/past-events/:id        # Update past event
+DELETE /api/past-events/:id       # Delete past event
 
-# Delete news
-DELETE /api/news/:id
+# File Upload
+POST /api/uploads                 # Upload image/file
 Headers: { Authorization: Bearer <token> }
+Content-Type: multipart/form-data
 ```
-
-## 🎨 Category Values
-
-| Category Value | Display Label |
-|----------------|---------------|
-| `su-kien` | Sự Kiện |
-| `hoat-dong` | Hoạt Động |
-| `doi-tac` | Đối Tác |
 
 ## 🔧 Common Tasks
 
@@ -225,45 +263,52 @@ Headers: { Authorization: Bearer <token> }
 dropdb websmds
 createdb websmds
 
-# Restart backend - Payload will auto-create tables
+# Run migrations
 cd backend
-npm run dev
+npm run prisma:migrate
+
+# Seed data
+npm run seed
 ```
 
 ### Add New Admin User
 
-1. Go to http://localhost:5000/admin
-2. Login as existing admin
-3. Navigate to Users collection
-4. Click "Create New"
-5. Fill in email, password, name, role
-6. Save
+```bash
+# Method 1: Via API
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"admin123"}'
 
-### Change Admin Password
+# Method 2: Via Prisma Studio
+npm run prisma:studio
+# Navigate to Users table and add record
+```
 
-1. Login to admin panel
-2. Click on your email (top right)
-3. Click "Account"
-4. Change password
-5. Save
+### Database Operations
 
-### Deploy News to Published
+```bash
+# View all tables
+psql -U postgres -d websmds -c "\dt"
 
-1. Go to News collection
-2. Edit the news item
-3. Change Status to "Đã xuất bản"
-4. Save
-5. Will appear on frontend within 60 seconds (ISR)
+# Check specific table
+psql -U postgres -d websmds -c "SELECT * FROM users LIMIT 5;"
 
-### Upload Multiple Images
+# Reset sequence
+psql -U postgres -d websmds -c "ALTER SEQUENCE users_id_seq RESTART WITH 1;"
+```
 
-1. Go to Media collection
-2. Click "Create New"
-3. Upload image
-4. Add alt text
-5. Save
-6. Repeat for more images
-7. Use in News via the Image field
+### File Uploads
+
+```bash
+# Upload directory location
+backend/uploads/
+
+# File size limit (from .env)
+MAX_FILE_SIZE=10485760  # 10MB
+
+# Access uploaded files
+http://localhost:5000/uploads/filename.jpg
+```
 
 ## 🐛 Debug Tips
 
@@ -271,99 +316,109 @@ npm run dev
 
 ```bash
 # Terminal where backend is running
-# Will show all requests and errors
+# Shows all API requests, errors, and database queries
 ```
 
 ### Check Frontend Logs
 
 ```bash
 # Browser DevTools Console (F12)
-# Will show fetch errors, component errors
+# Shows fetch errors, component errors, and warnings
 ```
 
-### Check Database
+### Database Debugging
 
 ```bash
+# Open Prisma Studio for visual database management
+cd backend && npm run prisma:studio
+# Opens at: http://localhost:5555
+
+# Direct database queries
 psql -U postgres -d websmds
-
-# List tables
-\dt
-
-# Check news table
-SELECT * FROM news;
-
-# Check users
-SELECT id, email, name, role FROM users;
-
-# Exit
-\q
 ```
 
-### Test API Manually
+### Test API Endpoints
 
 ```bash
 # Using curl
-curl http://localhost:5000/api/news
+curl http://localhost:5000/api/press
 
-# Using browser
-# Just open http://localhost:5000/api/news
+# With authentication
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+     http://localhost:5000/api/press/admin/all
 
 # Using Postman/Insomnia
-# Import API endpoints and test
+# Import collection and test endpoints
 ```
 
 ## 📦 Package Versions
 
 ### Backend
 
-- payload: ^3.60.0
-- @payloadcms/db-postgres: ^3.60.0
-- @payloadcms/richtext-lexical: ^3.60.0
-- express: ^5.1.0
-- pg: ^8.16.3
-- typescript: ^5.9.3
+```json
+{
+  "express": "^5.1.0",
+  "@prisma/client": "^6.17.1",
+  "prisma": "^6.17.1",
+  "bcryptjs": "^3.0.2",
+  "jsonwebtoken": "^9.0.2",
+  "multer": "^2.0.2",
+  "sharp": "^0.34.4",
+  "tsx": "^4.20.6"
+}
+```
 
 ### Frontend
 
-- next: Latest
-- react: Latest
-- typescript: Latest
-- tailwindcss: v4
+```json
+{
+  "next": "15.5.5",
+  "react": "19.1.0",
+  "typescript": "^5",
+  "tailwindcss": "^4",
+  "@tiptap/react": "^3.10.5",
+  "framer-motion": "^12.23.24"
+}
+```
 
 ## 🔄 Workflow
 
-### Typical Content Update Flow
-
-1. Admin logs in to `/admin`
-2. Creates/edits news in News collection
-3. Uploads images if needed
-4. Sets status to "published"
-5. Saves
-6. Frontend automatically shows new content (within 60s)
-7. Users see updated content
-
 ### Development Workflow
 
-1. Start backend: `cd backend && npm run dev`
-2. Start frontend: `cd frontend && npm run dev`
-3. Make changes to code
-4. Both auto-reload on save
-5. Test in browser
-6. Commit changes
+1. **Start Backend**: `cd backend && npm run dev`
+2. **Start Frontend**: `cd frontend && npm run dev`
+3. **Make Changes**: Both auto-reload on save
+4. **Test**: Check both frontend and backend
+5. **Database Changes**: Update schema, run migrations
+6. **Commit**: Git commit with meaningful messages
+
+### Content Management Flow
+
+1. **Login**: Use admin credentials via API
+2. **Create Content**: POST to appropriate endpoint
+3. **Upload Images**: Use `/api/uploads` endpoint
+4. **Publish**: Set status to "published"
+5. **Verify**: Check frontend display
+6. **Update**: Use PATCH endpoint for edits
 
 ## 🚀 Production Deployment
 
 ### Environment Setup
 
-**Backend:**
-- Set production `DATABASE_URI`
-- Generate strong `PAYLOAD_SECRET`
-- Set production `FRONTEND_URL`
+**Backend (.env):**
+```bash
+NODE_ENV=production
+DATABASE_URL=postgresql://user:pass@host:5432/db
+JWT_SECRET=strong-random-string
+FRONTEND_URL=https://yourdomain.com
+```
 
-**Frontend:**
-- Set production `NEXT_PUBLIC_API_URL`
+**Frontend (.env.local):**
+```bash
+NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+```
 
-### Build Commands
+### Build & Deploy
 
 ```bash
 # Backend
@@ -380,7 +435,6 @@ npm start
 ---
 
 **Need more help?** Check:
-- `PAYLOAD_SETUP.md` - Setup guide
-- `IMPLEMENTATION_SUMMARY.md` - Technical details
-- `SETUP_CHECKLIST.md` - Step-by-step checklist
-
+- `CLAUDE.md` - Development guidance
+- `REBUILD_SUMMARY.md` - Architecture overview
+- `PAST_EVENTS_GUIDE.md` - Past events feature documentation

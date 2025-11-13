@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ChevronDown, ChevronUp } from "lucide-react"
+import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react"
 import Image from "next/image"
 import { useInView } from "react-intersection-observer"
 
@@ -156,7 +156,7 @@ export default function HanhTrinhDanhThucDiSanSection() {
 
           <motion.div
             variants={fadeUp}
-            className="mt-12 flex justify-center"
+            className="mt-14   flex justify-center"
           >
             <div className="inline-flex items-center gap-3 rounded-full bg-white/80 px-6 py-2 font-serif font-semibold text-[#4C1D95] shadow-md ring-1 ring-[#D4AF37]/40 backdrop-blur-md md:px-8 md:py-3 md:text-base">
               <span className="h-1 w-6 rounded-full bg-[#D4AF37]" />
@@ -181,8 +181,20 @@ export default function HanhTrinhDanhThucDiSanSection() {
                 >
                   <motion.div
                     variants={fadeUp}
-                    className="grid grid-cols-1 items-center gap-8 rounded-3xl bg-white/80 p-6 shadow-xl ring-1 ring-[#B668A1]/10 md:p-10 lg:grid-cols-2 cursor-pointer"
+                    className="grid grid-cols-1 items-center gap-8 rounded-3xl bg-white/80 p-6 shadow-xl ring-1 ring-[#B668A1]/10 md:p-10 lg:grid-cols-2 cursor-pointer relative group"
                   >
+                    {/* Mobile indicator - visible only on mobile */}
+                    <div className="absolute top-4 right-4 z-10 flex items-center gap-1 rounded-full bg-[#B668A1]/90 px-3 py-1.5 text-white text-xs font-semibold md:hidden">
+                      <span>Xem thêm</span>
+                      <ExternalLink size={12} />
+                    </div>
+                    
+                    {/* Desktop hover effect - visible only on desktop */}
+                    <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:flex items-center gap-1 rounded-full bg-[#B668A1]/90 px-3 py-1.5 text-white text-xs font-semibold">
+                      <span>Xem thêm</span>
+                      <ExternalLink size={12} />
+                    </div>
+
                     <div className={`space-y-3 ${textOrderClass}`}>
                       <div className="inline-flex items-center gap-2 rounded-full bg-[#B668A1]/10 px-4 py-1 text-sm font-semibold uppercase tracking-wider text-[#B668A1]">
                         <span>{String(index + 1).padStart(2, "0")}</span>

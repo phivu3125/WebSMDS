@@ -1,14 +1,28 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import React from "react"
 import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { DataTable } from "@/components/admin/DataTable"
+import { useApiCall } from "@/hooks"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, ExternalLink, Star } from "lucide-react"
-import { adminApi } from "@/lib/api"
-import type { AdminPressItem } from "@/lib/api/admin/press"
-import { resolveMediaUrl } from "@/lib/media"
+import { Button } from "@/components/ui/button"
+import { Plus, ExternalLink, Star, Image as ImageIcon } from "lucide-react"
+import { getPress, deletePress, updatePress } from "@/lib/api/press"
+
+// Type definitions for Press items
+interface PressItem {
+  id: number
+  title: string
+  description: string
+  link: string
+  source: string
+  date: string
+  image?: string
+  type: string
+  featured: boolean
+  createdAt: string
+  updatedAt: string
+}
 
 const typeLabels: Record<string, string> = {
   article: "Bài viết",
@@ -19,56 +33,133 @@ const typeLabels: Record<string, string> = {
 }
 
 export default function PressAdminPage() {
-  const [press, setPress] = useState<AdminPressItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [pendingId, setPendingId] = useState<number | null>(null)
+  const {
+    data: pressItems = [],
+    loading,
+    error,
+    execute: fetchPress,
+  } = useApiCall<PressItem[]>()
 
-  useEffect(() => {
-    fetchPress()
+  // Load data on mount
+  React.useEffect(() => {
+    const loadPressData = async () => {
+      try {
+        const data = await getPress()
+        if (data.success) {
+          fetchPress(() => Promise.resolve(data.data))
+        }
+      } catch (error) {
+        console.error('Failed to load press:', error)
+      }
+    }
+    loadPressData()
   }, [])
 
-  const fetchPress = async () => {
-    try {
-      setLoading(true)
-      const items = await adminApi.getAllPress()
-      setPress(items)
-    } catch (error) {
-      console.error("Failed to fetch press:", error)
-    } finally {
-      setLoading(false)
-      setPendingId(null)
-    }
-  }
-
-  const deletePress = async (id: number) => {
-    if (!confirm("Bạn có chắc muốn xóa nội dung truyền thông này?")) {
-      return
-    }
+  const handleDelete = async (item: PressItem) => {
+    const confirmed = window.confirm("Bạn có chắc muốn xóa nội dung truyền thông này?")
+    if (!confirmed) return
 
     try {
-      setPendingId(id)
-      await adminApi.deletePress(id)
-      await fetchPress()
+      await deletePress(item.id)
+
+      // Refresh data
+      const data = await getPress()
+      if (data.success) {
+        fetchPress(() => Promise.resolve(data.data))
+      }
     } catch (error) {
-      console.error("Failed to delete press:", error)
-      setPendingId(null)
+      console.error('Failed to delete press item:', error)
     }
   }
 
-  const toggleFeatured = async (item: AdminPressItem) => {
+  const handleToggleFeatured = async (item: PressItem) => {
     try {
-      setPendingId(item.id)
-      await adminApi.updatePress(item.id, { featured: !item.featured })
-      await fetchPress()
+      await updatePress(item.id, { featured: !item.featured })
+
+      // Refresh data
+      const data = await getPress()
+      if (data.success) {
+        fetchPress(() => Promise.resolve(data.data))
+      }
     } catch (error) {
-      console.error("Failed to toggle featured state:", error)
-      setPendingId(null)
+      console.error('Failed to toggle featured:', error)
     }
   }
 
-  if (loading) {
-    return <div className="p-6">Đang tải dữ liệu...</div>
-  }
+  // Define table columns
+  const columns = [
+    {
+      key: "image",
+      label: "Hình ảnh",
+      render: (value: string, item: PressItem) => (
+        <div className="flex-shrink-0">
+          {value ? (
+            <img
+              src={value.startsWith('http') ? value : `/uploads/${value}`}
+              alt={item.title}
+              className="h-12 w-12 rounded-lg object-cover bg-gray-100"
+            />
+          ) : (
+            <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
+              <ImageIcon className="h-6 w-6 text-gray-400" />
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "title",
+      label: "Tiêu đề",
+      sortable: true,
+      render: (value: string, item: PressItem) => (
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium text-gray-900">{value}</span>
+            <Badge variant="outline" className="text-xs">
+              {typeLabels[item.type] ?? item.type}
+            </Badge>
+            {item.featured && (
+              <Badge variant="default" className="flex items-center gap-1 bg-amber-500 text-xs">
+                <Star className="h-3 w-3" fill="currentColor" />
+                Nổi bật
+              </Badge>
+            )}
+          </div>
+          <p className="mt-1 line-clamp-2 text-sm text-gray-600">{item.description}</p>
+        </div>
+      ),
+    },
+    {
+      key: "source",
+      label: "Nguồn",
+      sortable: true,
+    },
+    {
+      key: "date",
+      label: "Ngày đăng",
+      sortable: true,
+      render: (value: string) => (
+        <span className="text-sm text-gray-600">
+          {new Date(value).toLocaleDateString("vi-VN")}
+        </span>
+      ),
+    },
+    {
+      key: "link",
+      label: "Liên kết",
+      render: (value: string) => (
+        <a
+          href={value}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-sm font-semibold text-purple-600 hover:underline"
+        >
+          <ExternalLink className="h-3 w-3" />
+          Xem
+        </a>
+      ),
+    },
+  ]
 
   return (
     <div className="p-6">
@@ -79,107 +170,55 @@ export default function PressAdminPage() {
         </div>
         <Link href="/admin/press/create">
           <Button className="w-full md:w-auto">
-            <Plus className="mr-1 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" />
             Thêm nội dung
           </Button>
         </Link>
       </div>
 
-      <div className="space-y-4">
-        {press.map((item) => (
-          <Card key={item.id}>
-            <CardHeader>
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="flex flex-1 flex-col gap-3 sm:flex-row">
-                  {!!item.image && (
-                    <img
-                      src={resolveMediaUrl(item.image) || "/placeholder.svg"}
-                      alt={item.title}
-                      className="h-24 w-24 flex-shrink-0 rounded-lg object-cover bg-gray-100"
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <CardTitle className="text-lg">{item.title}</CardTitle>
-                      <Badge variant="outline">{typeLabels[item.type] ?? item.type}</Badge>
-                      {item.featured && (
-                        <Badge variant="default" className="flex items-center gap-1 bg-amber-500">
-                          <Star className="h-3 w-3" fill="currentColor" />
-                          Nổi bật
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-gray-600">{item.description}</p>
-                  </div>
-                </div>
-                <div className="flex flex-row gap-3 lg:flex-col lg:items-end">
-                  <p className="text-sm text-gray-500">
-                    <span className="font-medium">Nguồn:</span> {item.source}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    <span className="font-medium">Ngày:</span> {new Date(item.date).toLocaleDateString("vi-VN")}
-                  </p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div className="text-sm text-gray-500">
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm font-semibold text-purple-600 hover:underline"
-                  >
-                    Truy cập liên kết
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => toggleFeatured(item)}
-                    disabled={pendingId === item.id}
-                  >
-                    <Star className="mr-1 h-4 w-4" fill={item.featured ? "currentColor" : "none"} />
-                    {item.featured ? "Bỏ nổi bật" : "Đánh dấu nổi bật"}
-                  </Button>
-                  <Link href={`/admin/press/${item.id}/edit`}>
-                    <Button size="sm" variant="outline" disabled={pendingId === item.id}>
-                      <Edit className="mr-1 h-4 w-4" />
-                      Sửa
-                    </Button>
-                  </Link>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => deletePress(item.id)}
-                    disabled={pendingId === item.id}
-                  >
-                    <Trash2 className="mr-1 h-4 w-4" />
-                    {pendingId === item.id ? "Đang xử lý..." : "Xóa"}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {press.length === 0 && (
-          <Card>
-            <CardContent className="py-10 text-center text-gray-500">
-              <p>Chưa có nội dung truyền thông nào.</p>
-              <Link href="/admin/press/create" className="mt-4 inline-block">
-                <Button>
-                  <Plus className="mr-1 h-4 w-4" />
-                  Thêm nội dung đầu tiên
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      <DataTable
+        data={pressItems || []}
+        columns={columns}
+        loading={loading}
+        error={error}
+        search={{
+          placeholder: "Tìm kiếm theo tiêu đề, nguồn...",
+          onSearch: (query) => {
+            // Implement client-side search through the DataTable component
+          },
+        }}
+        actions={{
+          add: {
+            label: "Thêm nội dung",
+            onClick: () => window.location.href = "/admin/press/create",
+          },
+          edit: (item: PressItem) => {
+            window.location.href = `/admin/press/${item.id}/edit`
+          },
+          delete: handleDelete,
+          custom: (item: PressItem) => (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleToggleFeatured(item)}
+            >
+              <Star className="mr-1 h-3 w-3" fill={item.featured ? "currentColor" : "none"} />
+              {item.featured ? "Bỏ nổi bật" : "Nổi bật"}
+            </Button>
+          ),
+        }}
+        emptyState={
+          <div className="py-10 text-center text-gray-500">
+            <p>Chưa có nội dung truyền thông nào.</p>
+            <Link href="/admin/press/create" className="mt-4 inline-block">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Thêm nội dung đầu tiên
+              </Button>
+            </Link>
+          </div>
+        }
+      />
     </div>
   )
 }

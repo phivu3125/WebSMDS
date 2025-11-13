@@ -44,7 +44,7 @@ const navigationGroups = [
   {
     label: "Dịch vụ",
     dropdown: [
-      // { id: "events", label: "Sự kiện" },
+      { id: "events", label: "Sự kiện" },
       // { id: "products", label: "Sản phẩm" },
       { id: "partners", label: "Đối tác" }
     ]
@@ -181,13 +181,15 @@ export default function Navigation({ isScrolled, mode = "home" }: NavigationProp
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
-            <Image
-              src="/images/logo2.png"
-              alt="Sắc Màu Di Sản"
-              width={300}
-              height={300}
-              className="h-10 w-auto md:h-12 scale-110"
-            />
+            <Link href={mode === "home" ? "#hero" : "/"}>
+              <Image
+                src="/images/logo2.png"
+                alt="Sắc Màu Di Sản"
+                width={300}
+                height={300}
+                className="h-10 w-auto md:h-12 scale-110 cursor-pointer"
+              />
+            </Link>
           </div>
 
           <div className="hidden md:flex items-center space-x-1" ref={dropdownRef}>

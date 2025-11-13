@@ -42,8 +42,8 @@ export interface PastEvent {
     hero: PastEventHero
     intro: PastEventIntro
     featureList: PastEventFeatureList
-    gallery: PastEventGallery
-    conclusion: PastEventConclusion
+    gallery?: PastEventGallery
+    conclusion?: PastEventConclusion
     createdAt: string
     updatedAt: string
 }

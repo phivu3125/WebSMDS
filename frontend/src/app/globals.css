@@ -123,4 +123,9 @@
   body {
     @apply bg-background text-foreground overflow-x-hidden;
   }
+  
+  /* Custom aspect ratio for videos */
+  .aspect-video {
+    aspect-ratio: 16 / 9;
+  }
 }

@@ -7,6 +7,7 @@ import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { PastEventListItem } from "@/types/PastEvent"
+import { huongSacCoDoEvent, sacHoiTrangThuEvent } from "@/data/past-events"
 
 interface EventsByYear {
     [year: number]: PastEventListItem[]
@@ -18,22 +19,47 @@ export default function PastEventsSection() {
     const [selectedYear, setSelectedYear] = useState<number | "all">("all")
     const [events, setEvents] = useState<PastEventListItem[]>([])
     const [loading, setLoading] = useState(true)
+    
+    // Định nghĩa các sự kiện tĩnh bên ngoài hàm
+    const choLonFoodStoryEvent = {
+        id: "cho-lon-food-story-2023",
+        slug: "cho-lon-food-story",
+        title: "Chợ Lớn Food Story - Chiến dịch quảng bá ẩm thực độc đáo",
+        description: "Lễ hội ẩm thực lần đầu tiên của Quận 5 nhằm tôn vinh và quảng bá văn hóa ẩm thực Hoa-Việt đặc trưng vùng \"Chợ Lớn\".",
+        year: 2023,
+        thumbnailImage: "/images/past-events/cho-lon-food-story.jpg",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    }
+    
+    const myViChoNoiEvent = {
+        id: "my-vi-cho-noi-2023",
+        slug: "my-vi-cho-noi",
+        title: "Có một chợ nổi miền Tây giữa trung tâm thành phố | NTV News",
+        description: "Mỹ Vị Chợ Nổi – Hương vị sông nước giữa lòng phố thị, nơi thực khách hòa mình với văn hóa chợ nổi truyền thống.",
+        year: 2023,
+        thumbnailImage: "/images/past-events/my-vi-cho-noi.jpg",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    }
+    
+    const ngoanThuVietEvent = {
+        id: "ngoan-thu-viet-2024",
+        slug: "ngoan-thu-viet",
+        title: "Ngoạn Thu Việt",
+        description: "Cùng ngoạn Trung thu Việt - Vũ mùa lễ",
+        year: 2024,
+        thumbnailImage: "/images/past-events/ngoan-thu-viet/heroImg.jpg",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    }
 
     useEffect(() => {
-        fetchEvents()
+        // Chỉ sử dụng sự kiện tĩnh, không gọi API
+        const allEvents = [choLonFoodStoryEvent, myViChoNoiEvent, ngoanThuVietEvent, huongSacCoDoEvent, sacHoiTrangThuEvent]
+        setEvents(allEvents)
+        setLoading(false)
     }, [])
-
-    const fetchEvents = async () => {
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/past-events`)
-            const data = await res.json()
-            setEvents(data)
-        } catch (error) {
-            console.error("Error fetching events:", error)
-        } finally {
-            setLoading(false)
-        }
-    }
 
     // Group events by year
     const eventsByYear: EventsByYear = events.reduce((acc, event) => {
@@ -209,7 +235,14 @@ export default function PastEventsSection() {
                                 transition={{ duration: 0.4, delay: index * 0.05 }}
                                 className="break-inside-avoid"
                             >
-                                <Link href={`/past-events/${event.slug}`} className="block">
+                                <Link href={
+                                    event.slug === "cho-lon-food-story" ? "/past-events/cho-lon-food-story" :
+                                    event.slug === "my-vi-cho-noi" ? "/past-events/my-vi-cho-noi" :
+                                    event.slug === "ngoan-thu-viet" ? "/past-events/ngoan-thu-viet" :
+                                    event.slug === "huong-sac-co-do" ? "/past-events/huong-sac-co-do" :
+                                    event.slug === "sac-mau-di-san-sac-hoi-trang-thu-2025" ? "/past-events/sac-mau-di-san-sac-hoi-trang-thu-2025" :
+                                    `/past-events/${event.slug}`
+                                } className="block">
                                     <div className="group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 cursor-pointer border-2 border-transparent hover:border-[#B668A1]">
                                         <div className="relative h-52 w-full overflow-hidden">
                                             <Image

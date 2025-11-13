@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Playfair_Display } from 'next/font/google'
+import ErrorBoundary from '@/components/ErrorBoundary.client'
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -39,7 +40,9 @@ export default function RootLayout({
         />
       </head>
       <body className={`font-sans antialiased ${playfair.variable}`}>
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
       </body>
     </html>
   )

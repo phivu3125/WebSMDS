@@ -14,39 +14,37 @@ type EventsSectionProps = {
   initialEvents?: any[]
 }
 
+// Hardcoded events data - chỉ hiển thị 2 sự kiện cứng
+const hardcodedEvents = [
+  {
+    id: "trien-lam-dong-tien",
+    slug: "trien-lam-dong-tien",
+    title: "Triển Lãm Đồng Tiền Việt Nam – Hành Trình Theo Dòng Chảy Lịch Sử Dân Tộc",
+    description: "Khám phá hơn 1.300 hiện vật quý hiếm kể lại hành trình 80 năm đồng tiền Việt Nam tại Ngân hàng Nhà nước Việt Nam",
+    image: "/images/events/dong-tien-hero.png",
+    dateDisplay: "22/11/2025 – tháng 4/2026",
+    location: "Ngân hàng Nhà nước Việt Nam – Chi nhánh Khu vực 2, số 08 Võ Văn Kiệt, phường Sài Gòn, TP. Hồ Chí Minh",
+    status: "published"
+  },
+  {
+    id: "innoculture-2025",
+    slug: "innoculture-2025",
+    title: "Triển Lãm – Ngày Hội Công Nghiệp Văn Hóa Việt Nam 2025",
+    description: "Nơi Sáng Tạo Văn Hóa Giao Thoa Công Nghệ - Khai mạc từ 14-17/11/2025 tại SIHUB TP.HCM",
+    image: "/images/events/inno-thumbnail.png",
+    dateDisplay: "14 – 17/11/2025",
+    location: "SIHUB – 123 Trương Định, P. Xuân Hoà, TP.HCM",
+    status: "published"
+  }
+]
+
 export default function EventsSection({ initialEvents = [] }: EventsSectionProps) {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [events, setEvents] = useState<any[]>(initialEvents)
-  const [loading, setLoading] = useState(initialEvents.length === 0)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (initialEvents.length > 0) return
-
-    const fetchEvents = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await getEvents({ status: 'published' })
-
-        // Handle both direct array and wrapped response
-        const eventsArray = Array.isArray(data) ? data : (data.data || [])
-        setEvents(eventsArray)
-      } catch (error) {
-        console.error('Failed to fetch events:', error)
-        setError('Không thể tải sự kiện. Vui lòng thử lại sau.')
-        setEvents([]) // Set empty array on error
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    // Only fetch on client side
-    if (typeof window !== 'undefined') {
-      fetchEvents()
-    }
-  }, [initialEvents.length])
+  // Chỉ sử dụng hardcoded events, không gọi API
+  const events = hardcodedEvents
+  const loading = false
+  const error = null
 
   const nextEvent = () => {
     setCurrentIndex((prev) => (prev + 1) % events.length)
@@ -143,7 +141,7 @@ export default function EventsSection({ initialEvents = [] }: EventsSectionProps
             >
               <div className="w-full h-[28rem] relative overflow-hidden">
                 <Image
-                  src={resolveMediaUrl(currentEvent.image) || "/placeholder.svg"}
+                  src={currentEvent.image?.startsWith('http') ? resolveMediaUrl(currentEvent.image) : currentEvent.image || "/placeholder.svg"}
                   alt={currentEvent.title}
                   fill
                   sizes="(max-width: 768px) 100vw, 800px"

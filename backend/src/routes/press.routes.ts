@@ -11,6 +11,7 @@ router.get('/:id', pressController.getById)
 // Protected routes
 router.post('/', requireAuth, pressController.create)
 router.put('/:id', requireAuth, pressController.update)
+router.patch('/:id', requireAuth, pressController.update)
 router.delete('/:id', requireAuth, pressController.delete)
 
 export default router

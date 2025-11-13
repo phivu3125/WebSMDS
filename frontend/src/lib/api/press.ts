@@ -10,6 +10,8 @@ export interface PressItem {
   link: string
   image: string
   featured: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export async function getPress(filters?: { type?: string; featured?: boolean }) {
@@ -21,4 +23,19 @@ export async function getPress(filters?: { type?: string; featured?: boolean }) 
   const response = await apiFetch(`press${query ? `?${query}` : ""}`)
   if (!response.ok) throw new Error("Failed to fetch press coverage")
   return (await response.json()) as { success: boolean; data: PressItem[] }
+}
+
+export async function deletePress(id: number) {
+  const response = await apiFetch(`press/${id}`, { method: 'DELETE' })
+  if (!response.ok) throw new Error("Failed to delete press item")
+  return { success: true }
+}
+
+export async function updatePress(id: number, data: Partial<PressItem>) {
+  const response = await apiFetch(`press/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data)
+  })
+  if (!response.ok) throw new Error("Failed to update press item")
+  return (await response.json()) as { success: boolean; data: PressItem }
 }

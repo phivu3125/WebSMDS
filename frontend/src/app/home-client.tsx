@@ -49,6 +49,8 @@ export type HomePress = {
   link: string
   image: string
   featured: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export type HomeClientProps = {
@@ -81,7 +83,7 @@ export default function HomeClient({ events = [], press = [], talkSection }: Hom
     <main className="min-h-screen overflow-x-hidden">
       <Navigation isScrolled={isScrolled} />
       <HeroSection />
-      {/* <EventsSection initialEvents={events} /> */}
+      <EventsSection initialEvents={events} />
       <LazySection id="about">
         <AboutSection />
       </LazySection>

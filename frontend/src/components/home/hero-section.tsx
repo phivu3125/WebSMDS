@@ -10,6 +10,7 @@ const HERO_POSTER = "/images/hero-section/hero-poster.png"
 export default function HeroSection() {
   const [isVisible, setIsVisible] = useState(false)
   const [playVideo, setPlayVideo] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     setIsVisible(true)
@@ -19,6 +20,10 @@ export default function HeroSection() {
     const updatePreference = () => {
       if (typeof window === "undefined") return
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      const isMobileDevice = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      
+      setIsMobile(isMobileDevice)
+      // Keep video enabled on all devices unless user prefers reduced motion
       setPlayVideo(!prefersReducedMotion)
     }
 
@@ -55,15 +60,27 @@ export default function HeroSection() {
     }
 
     return (
-      <iframe
-        src="https://www.youtube.com/embed/6CtljF3b9hw?autoplay=1&mute=1&loop=1&playlist=6CtljF3b9hw&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&cc_load_policy=0&fs=0&disablekb=1"
-        allow="autoplay; encrypted-media"
-        allowFullScreen
-        className="absolute inset-0 w-full h-full"
-        style={{ backgroundColor: "#1f2937" }}
-      />
+      <div className="absolute inset-0 overflow-hidden">
+        <iframe
+          src="https://www.youtube.com/embed/6CtljF3b9hw?autoplay=1&mute=1&loop=1&playlist=6CtljF3b9hw&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&cc_load_policy=0&fs=0&disablekb=1"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            width: "100vw",
+            height: "56.25vw", // 16:9 aspect ratio (9/16 = 0.5625)
+            minWidth: "177.78vh", // Ensure video is wide enough for tall screens
+            minHeight: "100vh", // Ensure video covers full height
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "#1f2937",
+            objectFit: "cover"
+          }}
+        />
+      </div>
     )
-  }, [playVideo])
+  }, [playVideo, isMobile])
 
   return (
     <section

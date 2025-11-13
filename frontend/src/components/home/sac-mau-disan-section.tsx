@@ -101,7 +101,7 @@ export default function SacMauDiSanSection({ images = [] }) { // Pass array 3 im
                 className="w-full h-64 lg:h-80 object-cover select-none"
               />
             </motion.div>
-            <div className="space-y-4 p-6 bg-white/80 backdrop-blur-sm rounded-xl border border-[#D4AF37]/20 shadow-lg order-1 lg:order-1">
+            <div className="space-y-4 p-6 bg-white/80 backdrop-blur-sm rounded-xl border border-[#D4AF37]/20 shadow-lg order-1 lg:order-1 flex flex-col justify-center">
               <div className="flex items-center space-x-3">
                 {/* Icon bản đồ đa sắc */}
                 {/* <svg className="w-10 h-10" fill="none" stroke="#D4AF37" viewBox="0 0 24 24">
@@ -121,7 +121,7 @@ export default function SacMauDiSanSection({ images = [] }) { // Pass array 3 im
 
           {/* Block 3: Tầng MÀU - Text trái, Hình phải */}
           <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            <div className="space-y-4 p-6 bg-white/80 backdrop-blur-sm rounded-xl border border-[#B668A1]/30 shadow-lg order-1 lg:order-2" style={{ background: 'linear-gradient(to bottom, rgba(182,104,161,0.05), transparent)' }}>
+            <div className="space-y-4 p-6 bg-white/80 backdrop-blur-sm rounded-xl border border-[#B668A1]/30 shadow-lg order-1 lg:order-2 flex flex-col justify-center" style={{ background: 'linear-gradient(to bottom, rgba(182,104,161,0.05), transparent)' }}>
               <div className="flex items-center space-x-3">
                 {/* Icon cọ vẽ + công nghệ */}
                 {/* <svg className="w-10 h-10" fill="none" stroke="#D4AF37" viewBox="0 0 24 24">
@@ -166,7 +166,7 @@ export default function SacMauDiSanSection({ images = [] }) { // Pass array 3 im
                 className="w-full h-64 lg:h-80 object-cover select-none"
               />
             </motion.div>
-            <div className="space-y-4 p-6 bg-white/80 backdrop-blur-sm rounded-xl border border-[#D4AF37]/20 shadow-lg order-1 lg:order-1" style={{ background: 'linear-gradient(to bottom, rgba(212,175,55,0.05), transparent)' }}>
+            <div className="space-y-4 p-6 bg-white/80 backdrop-blur-sm rounded-xl border border-[#D4AF37]/20 shadow-lg order-1 lg:order-1 flex flex-col justify-center" style={{ background: 'linear-gradient(to bottom, rgba(212,175,55,0.05), transparent)' }}>
               <div className="flex items-center space-x-3">
                 {/* Icon cây sen */}
                 {/* <svg className="w-10 h-10" fill="none" stroke="#B668A1" viewBox="0 0 24 24">
