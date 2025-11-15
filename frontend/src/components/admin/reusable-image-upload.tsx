@@ -51,9 +51,9 @@ const validateImageFile = (file: File): string | null => {
     return "Chỉ cho phép file hình ảnh có định dạng: JPG, PNG, WebP"
   }
 
-  const maxSize = 5 * 1024 * 1024 // 5MB
+  const maxSize = 25 * 1024 * 1024 // 25MB
   if (file.size > maxSize) {
-    return "Kích thước file không được vượt quá 5MB"
+    return "Kích thước file không được vượt quá 25MB"
   }
 
   return null

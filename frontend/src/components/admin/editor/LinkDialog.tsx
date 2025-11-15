@@ -142,7 +142,7 @@ export function QuickLinkButton({ editor, onOpenDialog }: QuickLinkButtonProps) 
       type="button"
       onClick={handleToggleLink}
       className={cn(
-        'relative h-8 w-8 p-0 rounded-sm border border-border bg-background hover:bg-accent hover:text-accent-foreground',
+        'relative h-8 w-8 p-0 rounded-sm border border-border bg-background hover:bg-accent hover:text-accent-foreground flex items-center justify-center',
         isLinkActive && 'bg-accent text-accent-foreground'
       )}
       title={isLinkActive ? 'Remove link' : 'Add link'}

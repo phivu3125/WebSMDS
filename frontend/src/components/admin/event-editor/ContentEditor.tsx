@@ -20,7 +20,6 @@ import { Image as ImageIcon, Heading1, Heading2, Heading3, Quote, Minus } from '
 interface ContentEditorProps {
   value: string
   onChange: (value: string) => void
-  placeholder?: string
   className?: string
   editable?: boolean
 }
@@ -41,6 +40,8 @@ const CustomKeyboardShortcuts = Extension.create({
         }
         return true
       },
+      // Removed Enter handler completely to let TipTap handle default behavior
+      'Shift-Enter': () => this.editor.chain().focus().setHardBreak().run(),
     }
   },
 })
@@ -48,7 +49,6 @@ const CustomKeyboardShortcuts = Extension.create({
 export function ContentEditor({
   value,
   onChange,
-  placeholder = 'Bắt đầu viết nội dung chi tiết về sự kiện...',
   className = '',
   editable = true,
 }: ContentEditorProps) {
@@ -58,7 +58,22 @@ export function ContentEditor({
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        paragraph: {
+          HTMLAttributes: {
+            class: 'mb-3'
+          }
+        },
+        heading: {
+          HTMLAttributes: {
+            class: 'mb-3'
+          }
+        }
+      }).configure({
+        heading: {
+          levels: [1, 2, 3, 4, 5, 6],
+        },
+      }),
       Underline,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
@@ -86,10 +101,14 @@ export function ContentEditor({
           'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl max-w-none',
           'focus:outline-none min-h-[300px] p-6',
           '[&_.ProseMirror]:min-h-[300px] [&_.ProseMirror_focus]:outline-none',
-          '[&_p]:mb-4 [&_h1]:mb-4 [&_h2]:mb-4 [&_h3]:mb-4',
-          '[&_h1]:text-3xl [&_h1]:font-serif [&_h1]:font-bold [&_h1]:text-purple-800 [&_h1]:mt-8',
-          '[&_h2]:text-2xl [&_h2]:font-serif [&_h2]:font-semibold [&_h2]:text-purple-700 [&_h2]:mt-6',
-          '[&_h3]:text-xl [&_h3]:font-serif [&_h3]:font-semibold [&_h3]:text-purple-600 [&_h3]:mt-4',
+          '[&_.ProseMirror_*]:cursor-text [&_.ProseMirror_*]:select-none',
+          '[&_.ProseMirror img]:cursor-default [&_.ProseMirror img]:select-none [&_.ProseMirror img]:pointer-events-none',
+          '[&_.ProseMirror *]:cursor-text [&&_.ProseMirror *]:select-none',
+          '[&_.ProseMirror_img]:max-w-full [&_.ProseMirror_img]:h-auto',
+          '[&_p]:mb-3 [&_h1]:mb-3 [&_h2]:mb-3 [&_h3]:mb-3',
+          '[&_h1]:text-3xl [&_h1]:font-serif [&_h1]:font-bold [&_h1]:text-purple-800 [&_h1]:mt-4',
+          '[&_h2]:text-2xl [&_h2]:font-serif [&_h2]:font-semibold [&_h2]:text-purple-700 [&_h2]:mt-3',
+          '[&_h3]:text-xl [&_h3]:font-serif [&_h3]:font-semibold [&_h3]:text-purple-600 [&_h3]:mt-2',
           '[&_ul]:list-disc [&_ol]:list-decimal [&_li]:ml-6',
           '[&_blockquote]:border-l-4 [&_blockquote]:border-purple-400 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:bg-purple-50 [&_blockquote]:py-2 [&_blockquote]:my-4 [&_blockquote]:font-serif'
         ),
@@ -117,17 +136,16 @@ export function ContentEditor({
 
   const handleLinkDialogOpen = () => {
     const selection = editor?.state.selection
-    const selectedText = editor?.state.doc.textBetween(
-      selection.from,
-      selection.to
-    )
+    const selectedText = selection
+      ? editor?.state.doc.textBetween(selection.from, selection.to)
+      : ''
 
     setLinkText(selectedText || '')
     setLinkUrl('')
     setShowLinkDialog(true)
   }
 
-  const insertHeading = (level: number) => {
+  const insertHeading = (level: 1 | 2 | 3 | 4 | 5 | 6) => {
     editor?.chain().focus().toggleHeading({ level }).run()
   }
 
@@ -140,11 +158,16 @@ export function ContentEditor({
   }
 
   const insertImage = () => {
-    editor?.chain().focus().setCustomImage({
-      src: '',
-      alt: '',
-      title: '',
-      align: 'center'
+    editor?.chain().focus().insertContent({
+      type: 'customImage',
+      attrs: {
+        src: '',
+        alt: '',
+        title: '',
+        align: 'center',
+        width: '100%',
+        height: 'auto'
+      }
     }).run()
   }
 
@@ -236,12 +259,6 @@ export function ContentEditor({
             editor={editor}
             className="prose prose-sm max-w-none [&_.ProseMirror]:min-h-[300px]"
           />
-
-          {!editor.getText() && (
-            <div className="absolute top-[140px] left-6 pointer-events-none text-muted-foreground">
-              {placeholder}
-            </div>
-          )}
 
           <LinkDialog
             isOpen={showLinkDialog}

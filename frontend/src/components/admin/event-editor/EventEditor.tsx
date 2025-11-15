@@ -201,7 +201,6 @@ export function EventEditor({
               <ContentEditor
                 value={formData.fullDescription}
                 onChange={(value) => handleFieldChange("fullDescription", value)}
-                placeholder="Viết nội dung chi tiết về sự kiện ở đây. Bạn có thể thêm headings, hình ảnh, quotes và nhiều hơn nữa..."
               />
             </div>
 

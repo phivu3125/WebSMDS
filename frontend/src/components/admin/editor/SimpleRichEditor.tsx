@@ -39,6 +39,8 @@ const CustomKeyboardShortcuts = Extension.create({
         }
         return true
       },
+      // Removed Enter handler completely to let TipTap handle default behavior
+      'Shift-Enter': () => this.editor.chain().focus().setHardBreak().run(),
     }
   },
 })
@@ -57,7 +59,22 @@ export default function SimpleRichEditor({
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        paragraph: {
+          HTMLAttributes: {
+            class: 'mb-3'
+          }
+        },
+        heading: {
+          HTMLAttributes: {
+            class: 'mb-3'
+          }
+        }
+      }).configure({
+        heading: {
+          levels: [1, 2, 3, 4, 5, 6],
+        },
+      }),
       Underline,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
@@ -83,7 +100,11 @@ export default function SimpleRichEditor({
         class: cn(
           'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl max-w-none',
           'focus:outline-none min-h-[150px] p-4',
-          ' [&_p]:mb-3 [&_h1]:mb-3 [&_h2]:mb-3 [&_h3]:mb-3',
+          '[&_.ProseMirror]:min-h-[150px] [&_.ProseMirror_focus]:outline-none',
+          '[&_.ProseMirror_*]:cursor-text [&_.ProseMirror_*]:select-none',
+          '[&_.ProseMirror img]:cursor-default [&_.ProseMirror img]:select-none [&_.ProseMirror img]:pointer-events-none',
+          '[&_.ProseMirror *]:cursor-text [&&_.ProseMirror *]:select-none',
+          '[&_p]:mb-3 [&_h1]:mb-3 [&_h2]:mb-3 [&_h3]:mb-3',
           '[&_ul]:list-disc [&_ol]:list-decimal [&_li]:ml-6'
         ),
       },

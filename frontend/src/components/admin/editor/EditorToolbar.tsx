@@ -13,7 +13,7 @@ import {
   Undo,
   Redo,
 } from 'lucide-react'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
 interface EditorToolbarProps {
   editor: any
@@ -21,6 +21,28 @@ interface EditorToolbarProps {
 }
 
 export function EditorToolbar({ editor, onLinkDialogOpen }: EditorToolbarProps) {
+  const [forceUpdate, setForceUpdate] = useState(0)
+
+  useEffect(() => {
+    if (!editor) return
+
+    const handleSelectionUpdate = () => {
+      setForceUpdate(prev => prev + 1)
+    }
+
+    const handleTransaction = () => {
+      setForceUpdate(prev => prev + 1)
+    }
+
+    editor.on('selectionUpdate', handleSelectionUpdate)
+    editor.on('transaction', handleTransaction)
+
+    return () => {
+      editor.off('selectionUpdate', handleSelectionUpdate)
+      editor.off('transaction', handleTransaction)
+    }
+  }, [editor])
+
   if (!editor) {
     return null
   }
