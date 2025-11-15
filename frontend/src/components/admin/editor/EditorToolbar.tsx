@@ -1,11 +1,8 @@
 import { EditorButton, EditorButtonGroup } from './EditorButton'
-import { FontFamilyDropdown, FontSizeDropdown } from './EditorDropdown'
-import { ColorPicker } from './ColorPicker'
 import { QuickLinkButton } from './LinkDialog'
 import {
   Bold,
   Italic,
-  Strikethrough,
   Underline,
   List,
   ListOrdered,
@@ -15,8 +12,6 @@ import {
   AlignJustify,
   Undo,
   Redo,
-  Superscript as SuperscriptIcon,
-  Subscript as SubscriptIcon,
 } from 'lucide-react'
 import React from 'react'
 
@@ -29,22 +24,6 @@ export function EditorToolbar({ editor, onLinkDialogOpen }: EditorToolbarProps) 
   if (!editor) {
     return null
   }
-
-  const setFontFamily = (fontFamily: string) => {
-    editor.chain().focus().setFontFamily(fontFamily).run()
-  }
-
-  const setFontSize = (fontSize: string) => {
-    editor.chain().focus().setFontSize(fontSize).run()
-  }
-
-  const setColor = (color: string) => {
-    editor.chain().focus().setColor(color).run()
-  }
-
-  const currentFontFamily = editor.getAttributes('textStyle').fontFamily
-  const currentFontSize = editor.getAttributes('textStyle').fontSize
-  const currentColor = editor.getAttributes('textStyle').color || '#000000'
 
   return (
     <div className="flex flex-wrap items-center gap-1 p-2 border-b border-border bg-muted/50">
@@ -83,44 +62,6 @@ export function EditorToolbar({ editor, onLinkDialogOpen }: EditorToolbarProps) 
           isActive={editor.isActive('underline')}
           icon={Underline}
           title="Underline (Ctrl+U)"
-        />
-        <EditorButton
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          isActive={editor.isActive('strike')}
-          icon={Strikethrough}
-          title="Strikethrough (Ctrl+Shift+X)"
-        />
-      </EditorButtonGroup>
-
-      {/* Superscript/Subscript */}
-      <EditorButtonGroup>
-        <EditorButton
-          onClick={() => editor.chain().focus().toggleSuperscript().run()}
-          isActive={editor.isActive('superscript')}
-          icon={SuperscriptIcon}
-          title="Superscript (Ctrl+.)"
-        />
-        <EditorButton
-          onClick={() => editor.chain().focus().toggleSubscript().run()}
-          isActive={editor.isActive('subscript')}
-          icon={SubscriptIcon}
-          title="Subscript (Ctrl+,)"
-        />
-      </EditorButtonGroup>
-
-      {/* Text Styles */}
-      <EditorButtonGroup>
-        <FontFamilyDropdown
-          value={currentFontFamily}
-          onChange={setFontFamily}
-        />
-        <FontSizeDropdown
-          value={currentFontSize}
-          onChange={setFontSize}
-        />
-        <ColorPicker
-          value={currentColor}
-          onChange={setColor}
         />
       </EditorButtonGroup>
 

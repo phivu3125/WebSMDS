@@ -3,15 +3,11 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
-import Strike from '@tiptap/extension-strike'
 import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Extension } from '@tiptap/core'
 import Color from '@tiptap/extension-color'
-import FontFamily from '@tiptap/extension-font-family'
 import Link from '@tiptap/extension-link'
-import Superscript from '@tiptap/extension-superscript'
-import Subscript from '@tiptap/extension-subscript'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { EditorToolbar } from './EditorToolbar'
@@ -34,9 +30,6 @@ const CustomKeyboardShortcuts = Extension.create({
       'Mod-b': () => this.editor.chain().focus().toggleBold().run(),
       'Mod-i': () => this.editor.chain().focus().toggleItalic().run(),
       'Mod-u': () => this.editor.chain().focus().toggleUnderline().run(),
-      'Mod-shift-x': () => this.editor.chain().focus().toggleStrike().run(),
-      'Mod-.': () => this.editor.chain().focus().toggleSuperscript().run(),
-      'Mod-,': () => this.editor.chain().focus().toggleSubscript().run(),
       'Mod-l': () => {
         if (this.editor.isActive('link')) {
           this.editor.chain().focus().unsetLink().run()
@@ -45,50 +38,6 @@ const CustomKeyboardShortcuts = Extension.create({
           this.editor.commands.setLink({ href: '' })
         }
         return true
-      },
-    }
-  },
-})
-
-// Font size extension
-const FontSize = Extension.create({
-  name: 'fontSize',
-  addOptions() {
-    return {
-      types: ['textStyle'],
-    }
-  },
-  addGlobalAttributes() {
-    return [
-      {
-        types: this.options.types,
-        attributes: {
-          fontSize: {
-            default: null,
-            parseHTML: element => element.style.fontSize.replace(/['"]+/g, ''),
-            renderHTML: attributes => {
-              if (!attributes.fontSize) {
-                return {}
-              }
-              return {
-                style: `font-size: ${attributes.fontSize}`,
-              }
-            },
-          },
-        },
-      },
-    ]
-  },
-  addCommands() {
-    return {
-      setFontSize: fontSize => ({ chain }) => {
-        return chain().setMark('textStyle', { fontSize }).run()
-      },
-      unsetFontSize: () => ({ chain }) => {
-        return chain()
-          .setMark('textStyle', { fontSize: null })
-          .removeEmptyTextStyle()
-          .run()
       },
     }
   },
@@ -110,26 +59,22 @@ export default function SimpleRichEditor({
     extensions: [
       StarterKit,
       Underline,
-      Strike,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
       TextStyle,
       Color,
-      FontFamily,
-      FontSize,
       Link.configure({
         openOnClick: false,
         autolink: true,
         defaultProtocol: 'https',
         linkOnPaste: true,
       }),
-      Superscript,
-      Subscript,
       CustomKeyboardShortcuts,
     ],
     content: value,
     editable,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
     },
@@ -165,10 +110,9 @@ export default function SimpleRichEditor({
 
   const handleLinkDialogOpen = () => {
     const selection = editor?.state.selection
-    const selectedText = editor?.state.doc.textBetween(
-      selection.from,
-      selection.to
-    )
+    const selectedText = selection
+      ? editor?.state.doc.textBetween(selection.from, selection.to)
+      : ''
 
     setLinkText(selectedText || '')
     setLinkUrl('')
@@ -223,4 +167,3 @@ export { EditorToolbar } from './EditorToolbar'
 export { LinkDialog } from './LinkDialog'
 export { EditorButton } from './EditorButton'
 export { FontFamilyDropdown, FontSizeDropdown } from './EditorDropdown'
-export { ColorPicker } from './ColorPicker'
