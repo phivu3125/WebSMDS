@@ -24,103 +24,6 @@ export interface SimpleRichEditorProps {
   rows?: number  // Add this for backward compatibility
 }
 
-// Enhanced heading detection function
-const detectHeading = (line: string, index: number, allLines: string[]): 'h1' | 'h2' | 'h3' | null => {
-  // Skip empty lines
-  if (!line || line.length === 0) return null
-
-  const trimmedLine = line.trim()
-  const lineLength = trimmedLine.length
-
-  // Check for Vietnamese and other Unicode characters
-  const hasUnicodeChars = /[^\x00-\x7F]/.test(trimmedLine)
-
-  // Check if line is in ALL CAPS (likely a heading)
-  const isAllCaps = trimmedLine === trimmedLine.toUpperCase() && trimmedLine.length > 0 && /[A-ZÀ-Ỹ]/.test(trimmedLine)
-
-  // Check if line starts with heading indicators
-  const startsWithHeadingIndicator = /^(Chương|Chapter|Phần|Section|Mục|PHẦN|CHƯƠNG|DANH MỤC|ĐỀ MỤC|PHẦN \d+|CHƯƠNG \d+)/i.test(trimmedLine)
-
-  // Check for Roman numerals (I, II, III, IV, V, etc.)
-  const hasRomanNumeral = /^(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX|[IVX]+)\.?\s*/i.test(trimmedLine)
-
-  // Check for number patterns (1., 2., 3., etc.)
-  const hasNumberPattern = /^(\d+\.|\d+\))\s*/.test(trimmedLine)
-
-  // Line length criteria (shorter lines are more likely to be headings)
-  const isShort = lineLength < 80
-  const isMedium = lineLength < 120
-
-  // Position-based detection (first few lines more likely to be headings)
-  const isEarlyInContent = index < 5
-
-  // Enhanced heading detection logic
-  if (isAllCaps && (isShort || isMedium) && isEarlyInContent) {
-    // ALL CAPS lines are strong heading indicators
-    return lineLength < 50 ? 'h1' : 'h2'
-  }
-
-  if (startsWithHeadingIndicator) {
-    // Explicit heading markers
-    return 'h2'
-  }
-
-  if (hasRomanNumeral || hasNumberPattern) {
-    // Numbered lines
-    return 'h2'
-  }
-
-  // Vietnamese specific patterns - check for common Vietnamese heading words
-  const vietnameseHeadingWords = [
-    'GIỚI THIỆU', 'LỜI LỜI', 'ĐẦM BẮO', 'TỔNG QUAN', 'MỤT TIÊU',
-    'SƠ GIẢI', 'NỘI DUNG', 'TÓM TẮT', 'ĐẶC BIỆT',
-    'MỤC ĐÍCH', 'PHẦN PHẦN', 'ĐIỀM MỤC', 'GIỚI THIỆU',
-    'ĐỐNG TÁC', 'BỐ CỤC', 'LỊI THUỆT', 'CHỦNG MỤC',
-    'MỤC TIÊU', 'THIẾT KẾT', 'ĐIỀM KẾT', 'GIỚI THIỆU'
-  ]
-
-  const isVietnameseHeading = vietnameseHeadingWords.some(word =>
-    trimmedLine.toUpperCase().includes(word)
-  )
-
-  if (isVietnameseHeading && isShort && isEarlyInContent) {
-    return 'h2'
-  }
-
-  // Multi-language detection for common heading patterns
-  const headingPatterns = [
-    // English
-    /^(introduction|introduction|abstract|summary|conclusion|overview|background)/i,
-    // Vietnamese
-    /(?:giới thiệu|tổng quan|tóm tắt|kết luận|lời mở đầu|bối cảnh|sơ lược)/i,
-    // Chinese/Japanese (common characters)
-    /[第章第節引言结論]/,
-    // Russian
-    /^(введение|вывод|содержание|резюме)/i,
-    // German/French
-    /^(einleitung|conclusion|introduction|résumé)/i
-  ]
-
-  const isPatternHeading = headingPatterns.some(pattern => pattern.test(trimmedLine))
-
-  if (isPatternHeading && (isShort || isMedium)) {
-    return 'h3'
-  }
-
-  // Default heading detection for early content
-  if (isEarlyInContent && isShort && !trimmedLine.includes('.') && !trimmedLine.includes(',')) {
-    // Short, no punctuation, early in content - likely heading
-    return hasUnicodeChars ? 'h2' : 'h1'
-  }
-
-  if (isEarlyInContent && isMedium && isAllCaps) {
-    // Medium length, ALL CAPS, early in content
-    return 'h2'
-  }
-
-  return null
-}
-
 // Custom keyboard shortcuts extension
 const CustomKeyboardShortcuts = Extension.create({
   name: 'customKeyboardShortcuts',
@@ -251,23 +154,15 @@ export default function SimpleRichEditor({
           const lines = text.split('\n')
           let htmlContent = ''
 
-          lines.forEach((line, index) => {
+          lines.forEach((line) => {
             const trimmedLine = line.trim()
 
             if (trimmedLine === '') {
               // Empty line - just add a paragraph break
               htmlContent += '<p></p>'
             } else {
-              // Enhanced heading detection
-              const isHeading = detectHeading(trimmedLine, index, lines)
-
-              if (isHeading) {
-                const level = isHeading === 'h1' ? 1 : isHeading === 'h2' ? 2 : 3
-                htmlContent += `<h${level}>${trimmedLine}</h${level}>`
-              } else {
-                // Regular paragraph
-                htmlContent += `<p>${trimmedLine}</p>`
-              }
+              // Regular paragraph - simplified without complex heading detection
+              htmlContent += `<p>${trimmedLine}</p>`
             }
           })
 
