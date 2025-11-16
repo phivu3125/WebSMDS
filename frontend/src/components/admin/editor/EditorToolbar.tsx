@@ -1,26 +1,21 @@
 import { EditorButton, EditorButtonGroup } from './EditorButton'
 import { QuickLinkButton } from './LinkDialog'
 import {
-  Bold,
-  Italic,
-  Underline,
-  List,
-  ListOrdered,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
   Undo,
   Redo,
+  Heading1,
+  Heading2,
+  Heading3,
 } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 
 interface EditorToolbarProps {
   editor: any
   onLinkDialogOpen: () => void
+  showExtendedActions?: boolean // For event editor with headings only
 }
 
-export function EditorToolbar({ editor, onLinkDialogOpen }: EditorToolbarProps) {
+export function EditorToolbar({ editor, onLinkDialogOpen, showExtendedActions = false }: EditorToolbarProps) {
   const [forceUpdate, setForceUpdate] = useState(0)
 
   useEffect(() => {
@@ -65,71 +60,32 @@ export function EditorToolbar({ editor, onLinkDialogOpen }: EditorToolbarProps) 
         />
       </EditorButtonGroup>
 
-      {/* Text Formatting */}
-      <EditorButtonGroup>
-        <EditorButton
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          isActive={editor.isActive('bold')}
-          icon={Bold}
-          title="Bold (Ctrl+B)"
-        />
-        <EditorButton
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          isActive={editor.isActive('italic')}
-          icon={Italic}
-          title="Italic (Ctrl+I)"
-        />
-        <EditorButton
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          isActive={editor.isActive('underline')}
-          icon={Underline}
-          title="Underline (Ctrl+U)"
-        />
-      </EditorButtonGroup>
-
-      {/* Lists */}
-      <EditorButtonGroup>
-        <EditorButton
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          isActive={editor.isActive('bulletList')}
-          icon={List}
-          title="Bullet List"
-        />
-        <EditorButton
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          isActive={editor.isActive('orderedList')}
-          icon={ListOrdered}
-          title="Numbered List"
-        />
-      </EditorButtonGroup>
-
-      {/* Alignment */}
-      <EditorButtonGroup>
-        <EditorButton
-          onClick={() => editor.chain().focus().setTextAlign('left').run()}
-          isActive={editor.isActive({ textAlign: 'left' })}
-          icon={AlignLeft}
-          title="Align Left"
-        />
-        <EditorButton
-          onClick={() => editor.chain().focus().setTextAlign('center').run()}
-          isActive={editor.isActive({ textAlign: 'center' })}
-          icon={AlignCenter}
-          title="Align Center"
-        />
-        <EditorButton
-          onClick={() => editor.chain().focus().setTextAlign('right').run()}
-          isActive={editor.isActive({ textAlign: 'right' })}
-          icon={AlignRight}
-          title="Align Right"
-        />
-        <EditorButton
-          onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-          isActive={editor.isActive({ textAlign: 'justify' })}
-          icon={AlignJustify}
-          title="Justify"
-        />
-      </EditorButtonGroup>
+      {/* Extended Actions for Event Editor */}
+      {showExtendedActions && (
+        <>
+          {/* Headings */}
+          <EditorButtonGroup>
+            <EditorButton
+              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              isActive={editor.isActive('heading', { level: 1 })}
+              icon={Heading1}
+              title="Heading 1"
+            />
+            <EditorButton
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              isActive={editor.isActive('heading', { level: 2 })}
+              icon={Heading2}
+              title="Heading 2"
+            />
+            <EditorButton
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              isActive={editor.isActive('heading', { level: 3 })}
+              icon={Heading3}
+              title="Heading 3"
+            />
+          </EditorButtonGroup>
+        </>
+      )}
 
       {/* Link */}
       <EditorButtonGroup>
