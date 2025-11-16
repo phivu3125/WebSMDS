@@ -12,7 +12,6 @@ import { DOMParser } from 'prosemirror-model'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { EditorToolbar } from './EditorToolbar'
-import { LinkDialog } from './LinkDialog'
 import { BubbleMenuComponent } from './BubbleMenu'
 
 export interface SimpleRichEditorProps {
@@ -81,10 +80,7 @@ export default function SimpleRichEditor({
   editable = true,
   rows, // Accept rows prop for backward compatibility but don't use it
 }: SimpleRichEditorProps) {
-  const [showLinkDialog, setShowLinkDialog] = useState(false)
-  const [linkUrl, setLinkUrl] = useState('')
-  const [linkText, setLinkText] = useState('')
-
+  
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -194,28 +190,7 @@ export default function SimpleRichEditor({
     }
   }, [value, editor])
 
-  const handleAddLink = (url: string, text?: string) => {
-    if (url) {
-      editor?.chain().focus().setLink({ href: url }).run()
-      if (text && editor?.state.selection.empty) {
-        editor.chain().focus().insertContent(text).run()
-      }
-    } else {
-      editor?.chain().focus().unsetLink().run()
-    }
-  }
-
-  const handleLinkDialogOpen = () => {
-    const selection = editor?.state.selection
-    const selectedText = selection
-      ? editor?.state.doc.textBetween(selection.from, selection.to)
-      : ''
-
-    setLinkText(selectedText || '')
-    setLinkUrl('')
-    setShowLinkDialog(true)
-  }
-
+  
   if (!editor) {
     return (
       <div className="border rounded-md p-4">
@@ -233,7 +208,6 @@ export default function SimpleRichEditor({
       {editable && (
         <EditorToolbar
           editor={editor}
-          onLinkDialogOpen={handleLinkDialogOpen}
         />
       )}
 
@@ -250,19 +224,10 @@ export default function SimpleRichEditor({
 
       {/* Bubble Menu for selected text */}
       {editable && <BubbleMenuComponent editor={editor} />}
-
-      <LinkDialog
-        isOpen={showLinkDialog}
-        onClose={() => setShowLinkDialog(false)}
-        onAddLink={handleAddLink}
-        initialUrl={linkUrl}
-        initialText={linkText}
-      />
     </div>
   )
 }
 
 // Export components for standalone usage
 export { EditorToolbar } from './EditorToolbar'
-export { LinkDialog } from './LinkDialog'
 export { EditorButton } from './EditorButton'

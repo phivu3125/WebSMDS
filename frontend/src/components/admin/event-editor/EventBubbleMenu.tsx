@@ -6,6 +6,7 @@ import {
   Bold,
   Italic,
   Underline,
+  Link,
   List,
   ListOrdered,
   AlignLeft,
@@ -86,6 +87,7 @@ export function EventBubbleMenu({ editor }: EventBubbleMenuProps) {
     }
   }, [editor])
 
+  
   // Keep bubble menu open after formatting with enhanced heading precision
   const executeCommand = (command: () => void, isHeadingToggle = false) => {
     if (isHeadingToggle) {
@@ -166,6 +168,27 @@ export function EventBubbleMenu({ editor }: EventBubbleMenuProps) {
           isActive={editor.isActive('underline')}
           icon={Underline}
           title="Underline (Ctrl+U)"
+          size="sm"
+        />
+        <EditorButton
+          onClick={() => {
+            if (editor.isActive('link')) {
+              executeCommand(() => editor.chain().focus().unsetLink().run())
+            } else {
+              // Simple prompt for URL
+              const url = prompt('Enter URL:')
+              if (url) {
+                let finalUrl = url.trim()
+                if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                  finalUrl = `https://${finalUrl}`
+                }
+                executeCommand(() => editor.chain().focus().setLink({ href: finalUrl }).run())
+              }
+            }
+          }}
+          isActive={editor.isActive('link')}
+          icon={Link}
+          title="Add Link (Ctrl+K)"
           size="sm"
         />
       </EditorButtonGroup>

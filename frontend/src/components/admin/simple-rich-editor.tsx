@@ -5,7 +5,6 @@ export { default } from './editor/SimpleRichEditor'
 export type { SimpleRichEditorProps } from './editor/SimpleRichEditor'
 export {
   EditorToolbar,
-  LinkDialog,
   EditorButton,
   FontFamilyDropdown,
   FontSizeDropdown,

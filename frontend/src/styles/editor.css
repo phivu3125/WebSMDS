@@ -43,4 +43,32 @@
     blockquote {
         border-left: 4px solid rgb(253, 224, 71); padding: 1.5rem; margin: 2rem 0; background-color: #fef9e7; border-radius: 8px;
     }
+
+    /* Link styles - purple theme */
+    a {
+        color: #9333ea !important;
+        text-decoration: underline;
+        text-decoration-color: #c084fc !important;
+        text-underline-offset: 3px;
+        transition: all 0.2s ease;
+        font-style: italic;
+    }
+
+    a:hover {
+        color: #7c3aed !important;
+        text-decoration-color: #9333ea !important;
+    }
+
+    /* Custom purple link styling for editor links */
+    a.text-purple-600 {
+        color: #9333ea !important;
+        text-decoration: underline !important;
+        text-decoration-color: #c084fc !important;
+        text-underline-offset: 3px;
+    }
+
+    a.text-purple-600:hover {
+        color: #7c3aed !important;
+        text-decoration-color: #9333ea !important;
+    }
 }

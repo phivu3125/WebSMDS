@@ -1,5 +1,4 @@
 import { EditorButton, EditorButtonGroup } from './EditorButton'
-import { QuickLinkButton } from './LinkDialog'
 import {
   Undo,
   Redo,
@@ -11,11 +10,10 @@ import React, { useState, useEffect } from 'react'
 
 interface EditorToolbarProps {
   editor: any
-  onLinkDialogOpen: () => void
   showExtendedActions?: boolean // For event editor with headings only
 }
 
-export function EditorToolbar({ editor, onLinkDialogOpen, showExtendedActions = false }: EditorToolbarProps) {
+export function EditorToolbar({ editor, showExtendedActions = false }: EditorToolbarProps) {
   const [forceUpdate, setForceUpdate] = useState(0)
 
   useEffect(() => {
@@ -86,11 +84,6 @@ export function EditorToolbar({ editor, onLinkDialogOpen, showExtendedActions = 
           </EditorButtonGroup>
         </>
       )}
-
-      {/* Link */}
-      <EditorButtonGroup>
-        <QuickLinkButton editor={editor} onOpenDialog={onLinkDialogOpen} />
-      </EditorButtonGroup>
     </div>
   )
 }

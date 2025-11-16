@@ -4,7 +4,6 @@ import { Editor } from '@tiptap/core'
 import {
   Plus,
   Image,
-  Link,
   Quote,
   Minus
 } from 'lucide-react'
@@ -13,10 +12,9 @@ import { useState, useEffect, useRef } from 'react'
 interface FloatingActionMenuProps {
   editor: Editor | null
   onInsertImage: () => void
-  onOpenLinkDialog: () => void
 }
 
-export function FloatingActionMenu({ editor, onInsertImage, onOpenLinkDialog }: FloatingActionMenuProps) {
+export function FloatingActionMenu({ editor, onInsertImage }: FloatingActionMenuProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [showFab, setShowFab] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -54,13 +52,7 @@ export function FloatingActionMenu({ editor, onInsertImage, onOpenLinkDialog }: 
         const nodeText = parentNode.textContent || ''
         const isBlockEmpty = nodeText.trim().length === 0
 
-        console.log('FAB Debug:', {
-          nodeType,
-          nodeText: `"${nodeText}"`,
-          isBlockEmpty,
-          nodeSize: parentNode.content.size
-        })
-
+        
         if (isBlockEmpty) {
           setShowFab(true)
           setShowMenu(false)
@@ -181,16 +173,6 @@ export function FloatingActionMenu({ editor, onInsertImage, onOpenLinkDialog }: 
               title="Chèn hình ảnh"
             >
               <Image className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => {
-                onOpenLinkDialog()
-                setShowMenu(false)
-              }}
-              className="flex items-center justify-center w-7 h-7 rounded hover:bg-accent transition-colors"
-              title="Thêm liên kết"
-            >
-              <Link className="h-4 w-4" />
             </button>
             <button
               onClick={() => {

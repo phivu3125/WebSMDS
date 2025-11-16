@@ -9,10 +9,9 @@ import { TextStyle } from '@tiptap/extension-text-style'
 import { Extension } from '@tiptap/core'
 import Color from '@tiptap/extension-color'
 import Link from '@tiptap/extension-link'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { EditorToolbar } from '../editor/EditorToolbar'
-import { LinkDialog } from '../editor/LinkDialog'
 import { CustomImage } from './ImageExtension'
 import { EventBubbleMenu } from './EventBubbleMenu'
 import { FloatingActionMenu } from '../editor/FloatingActionMenu'
@@ -76,10 +75,7 @@ export function ContentEditor({
   className = '',
   editable = true,
 }: ContentEditorProps) {
-  const [showLinkDialog, setShowLinkDialog] = useState(false)
-  const [linkUrl, setLinkUrl] = useState('')
-  const [linkText, setLinkText] = useState('')
-
+    
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -128,28 +124,8 @@ export function ContentEditor({
     }
   }, [value, editor])
 
-  const handleAddLink = (url: string, text?: string) => {
-    if (url) {
-      editor?.chain().focus().setLink({ href: url }).run()
-      if (text && editor?.state.selection.empty) {
-        editor.chain().focus().insertContent(text).run()
-      }
-    } else {
-      editor?.chain().focus().unsetLink().run()
-    }
-  }
-
-  const handleLinkDialogOpen = () => {
-    const selection = editor?.state.selection
-    const selectedText = selection
-      ? editor?.state.doc.textBetween(selection.from, selection.to)
-      : ''
-
-    setLinkText(selectedText || '')
-    setLinkUrl('')
-    setShowLinkDialog(true)
-  }
-
+  
+  
   const insertImage = () => {
     editor?.chain().focus().insertContent({
       type: 'customImage',
@@ -188,7 +164,6 @@ export function ContentEditor({
           {editable && (
             <EditorToolbar
               editor={editor}
-              onLinkDialogOpen={handleLinkDialogOpen}
               showExtendedActions={true}
             />
           )}
@@ -206,17 +181,8 @@ export function ContentEditor({
             <FloatingActionMenu
               editor={editor}
               onInsertImage={insertImage}
-              onOpenLinkDialog={handleLinkDialogOpen}
             />
           )}
-
-          <LinkDialog
-            isOpen={showLinkDialog}
-            onClose={() => setShowLinkDialog(false)}
-            onAddLink={handleAddLink}
-            initialUrl={linkUrl}
-            initialText={linkText}
-          />
         </div>
       </CardContent>
     </Card>
