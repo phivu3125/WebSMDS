@@ -156,29 +156,10 @@ const CustomKeyboardShortcuts = Extension.create({
           return $from.parentOffset === $from.parent.content.size
         }
 
-        // If we're inside a heading node
-        if (currentNode && currentNode.type.name === 'heading') {
-          if (isAtEndOfLine()) {
-            // At end of heading: create new paragraph without extra spacing
-            return this.editor.chain().focus().createParagraphNear().run()
-          } else {
-            // In middle of heading: create line break within heading
-            return this.editor.chain().focus().setHardBreak().run()
-          }
-        }
-
-        // Check parent nodes for heading context
-        for (let depth = currentDepth; depth >= 0; depth--) {
-          const node = $from.node(depth)
-          if (node && node.type.name === 'heading') {
-            if (isAtEndOfLine() || node.content.size === 0) {
-              // At end of heading or empty heading: create new paragraph without extra spacing
-              return this.editor.chain().focus().createParagraphNear().run()
-            } else {
-              // In middle of heading: split normally
-              return false // Let TipTap handle default behavior
-            }
-          }
+          // Simplified heading logic: only handle end of heading case
+        if (currentNode && currentNode.type.name === 'heading' && isAtEndOfLine()) {
+          // Use createParagraphNear instead of enter to avoid recursion
+          return this.editor.chain().focus().createParagraphNear().run()
         }
 
         // For all other cases, use default TipTap behavior
@@ -242,13 +223,21 @@ export default function SimpleRichEditor({
     editorProps: {
       attributes: {
         class: cn(
-          'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl max-w-none',
-          'focus:outline-none min-h-[150px] p-4',
+          'prose prose-sm max-w-none',
+          'focus:outline-none min-h-[150px] p-4 bg-white',
           '[&_.ProseMirror]:min-h-[150px] [&_.ProseMirror_focus]:outline-none',
           '[&_.ProseMirror]:cursor-text',
           '[&_.ProseMirror img]:cursor-default [&_.ProseMirror img]:pointer-events-none',
-          '[&_p]:mb-0 [&_h1]:mb-0 [&_h0]:mb-0 [&_h3]:mb-0',
-          '[&_ul]:list-disc [&_ol]:list-decimal [&_li]:ml-6'
+          // Override prose styles with !important to ensure our styles are applied
+          '[&_p]:!text-base [&_p]:!font-normal [&_p]:!text-gray-900 [&_p]:!leading-relaxed [&_p]:!mb-3',
+          // Heading styles with !important to override prose defaults
+          '[&_h1]:!text-3xl [&_h1]:!font-bold [&_h1]:!text-purple-800 [&_h1]:!mt-0 [&_h1]:!mb-1',
+          '[&_h2]:!text-2xl [&_h2]:!font-semibold [&_h2]:!text-purple-700 [&_h2]:!mt-0 [&_h2]:!mb-1',
+          '[&_h3]:!text-xl [&_h3]:!font-semibold [&_h3]:!text-purple-600 [&_h3]:!mt-0 [&_h3]:!mb-1',
+          // List styles
+          '[&_ul]:!list-disc [&_ol]:!list-decimal [&_li]:!ml-6',
+          // Blockquote styles
+          // '[&_blockquote]:!border-l-4 [&_blockquote]:!border-purple-400 [&_blockquote]:!pl-4 [&_blockquote]:!italic [&_blockquote]:!bg-purple-50 [&_blockquote]:!py-2 [&_blockquote]:!my-4 [&_blockquote]:!font-serif'
         ),
         spellcheck: "false",
       },
@@ -382,4 +371,3 @@ export default function SimpleRichEditor({
 export { EditorToolbar } from './EditorToolbar'
 export { LinkDialog } from './LinkDialog'
 export { EditorButton } from './EditorButton'
-export { FontFamilyDropdown, FontSizeDropdown } from './EditorDropdown'

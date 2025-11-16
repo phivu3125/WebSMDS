@@ -71,14 +71,6 @@ export function EventBubbleMenu({ editor }: EventBubbleMenuProps) {
       setTimeout(handleSelectionUpdate, 50)
     }
 
-    // Remove scroll handling - bubble menu should stay fixed relative to selected text
-    // const handleScroll = () => {
-    //   if (showBubbleMenu) {
-    //     const { from } = editor.state.selection
-    //     updateBubbleMenuPosition(from)
-    //   }
-    // }
-
     editor.on('selectionUpdate', handleSelectionUpdate)
     document.addEventListener('mousedown', handleClickOutside)
     document.addEventListener('touchstart', handleClickOutside)
@@ -145,7 +137,7 @@ export function EventBubbleMenu({ editor }: EventBubbleMenuProps) {
       ref={bubbleMenuRef}
       className="absolute z-50 flex items-center gap-1 bg-background border border-border rounded-md shadow-lg p-1 md:p-1"
       style={{
-        left: `${bubbleMenuPosition.x+220}px`,
+        left: `${bubbleMenuPosition.x + 250}px`,
         top: `${bubbleMenuPosition.y}px`,
         transform: 'translateX(-50%)',
         // Ensure bubble menu stays within viewport on mobile

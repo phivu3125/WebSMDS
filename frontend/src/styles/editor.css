@@ -1,0 +1,46 @@
+/* TipTap Editor Styles */
+.tiptap {
+
+    /* Heading styles - using Tailwind classes with @apply */
+    h1 {
+        /* @apply text-3xl font-serif font-bold mb-6 mt-4; */
+        color: #7342ba; 
+        font-size: 2rem; 
+        margin: 2rem 0 1rem 0; 
+        font-family: 'serif'; 
+        font-weight: 700;
+    }
+
+    h2 {
+        @apply text-2xl font-semibold mb-4 mt-3;
+        color: var(--heading-2) !important;
+    }
+
+    h3 {
+        @apply text-xl font-semibold mb-3 mt-2;
+        color: var(--heading-3) !important;
+    }
+
+    /* Paragraph styles */
+    p {
+        font-size: 1.125rem; line-height: 1.8;
+    }
+
+    /* List styles */
+    ul {
+        line-height: 1.8; padding-left: 1.5rem; list-style-type: disc;
+    }
+
+    ol {
+        @apply list-decimal;
+    }
+
+    li {
+        color: #000000;
+    }
+
+    /* Blockquote styles */
+    blockquote {
+        border-left: 4px solid rgb(253, 224, 71); padding: 1.5rem; margin: 2rem 0; background-color: #fef9e7; border-radius: 8px;
+    }
+}
