@@ -78,7 +78,8 @@ export function SingleImageUpload({
   const sizeClasses = {
     sm: { container: 'w-24 h-24', icon: 'h-6 w-6', button: 'h-5 w-5 top-0 right-0 rounded-full' },
     md: { container: 'w-32 h-32', icon: 'h-8 w-8', button: 'h-6 w-6 top-0 right-0 rounded-full' },
-    lg: { container: 'w-full h-48', icon: 'h-12 w-12', button: 'h-6 w-6 top-0 right-0 rounded-full' }
+    lg: { container: 'w-full h-full', icon: 'h-12 w-12', button: 'h-6 w-6 top-0 right-0 rounded-full' },
+    full: { container: 'w-full h-full', icon: 'h-12 w-12', button: 'h-6 w-6 top-0 right-0 rounded-full' }
   }
 
   const handleFileSelect = async (file: File) => {
@@ -160,13 +161,12 @@ export function SingleImageUpload({
           </div>
         ) : (
           <div
-            className={`border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${
-              disabled
+            className={`border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${disabled
                 ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
                 : dragActive
-                ? "border-blue-400 bg-blue-50"
-                : "border-gray-300 hover:border-gray-400"
-            } ${size === 'lg' ? 'p-6' : 'p-4'}`}
+                  ? "border-blue-400 bg-blue-50"
+                  : "border-gray-300 hover:border-gray-400"
+              } ${size === 'lg' ? 'p-6' : 'p-4'}`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -183,7 +183,7 @@ export function SingleImageUpload({
             />
             <Upload className={`mx-auto text-gray-400 ${sizeClasses[size].icon} mb-2`} />
             <p className="text-sm text-gray-600 mb-1">{placeholder}</p>
-            <p className="text-xs text-gray-500">JPG, PNG, WebP ≤5MB</p>
+            <p className="text-xs text-gray-500">JPG, PNG, WebP ≤25MB</p>
           </div>
         )}
       </div>

@@ -75,7 +75,7 @@ export function ContentEditor({
   className = '',
   editable = true,
 }: ContentEditorProps) {
-    
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -124,8 +124,8 @@ export function ContentEditor({
     }
   }, [value, editor])
 
-  
-  
+
+
   const insertImage = () => {
     editor?.chain().focus().insertContent({
       type: 'customImage',
@@ -153,12 +153,7 @@ export function ContentEditor({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Nội dung chi tiết</CardTitle>
-        </div>
-      </CardHeader>
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className={cn('border rounded-md overflow-hidden bg-background relative', className)}>
           {editable && (
