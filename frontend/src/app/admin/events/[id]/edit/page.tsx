@@ -401,7 +401,7 @@ export default function EditEventPage() {
                 className={`cursor-pointer ${
                   formData.status === "draft"
                     ? "bg-green-600 text-white hover:bg-green-700"
-                    : "text-white border-white hover:bg-white hover:text-purple-600"
+                    : "bg-yellow-300 text-purple-900 hover:bg-yellow-200 border-yellow-300 hover:border-yellow-200 font-semibold"
                 }`}
               >
                 {statusUpdating
@@ -644,6 +644,63 @@ export default function EditEventPage() {
           </div>
         </div>
       </section>
+
+      {/* Bottom Action Bar */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-4 shadow-lg z-30">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-sm text-gray-600 order-2 sm:order-1">
+            <span className="inline-flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                formData.status === "draft"
+                  ? "bg-gray-100 text-gray-800"
+                  : "bg-green-100 text-green-800"
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${
+                  formData.status === "draft"
+                    ? "bg-gray-400"
+                    : "bg-green-500"
+                }`}></span>
+                {formData.status === "draft" ? "Bản nháp" : "Đã đăng"}
+              </span>
+              Cập nhật lần cuối: {new Date().toLocaleDateString('vi-VN')}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 order-1 sm:order-2">
+            <Link href="/admin/events">
+              <Button variant="outline" className="cursor-pointer">
+                Quay lại
+              </Button>
+            </Link>
+
+            <Button
+              variant={formData.status === "draft" ? "default" : "outline"}
+              onClick={handleStatusClick}
+              disabled={statusUpdating}
+              className={`cursor-pointer ${
+                formData.status === "draft"
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-yellow-300 text-purple-900 hover:bg-yellow-200 border-yellow-300 hover:border-yellow-200 font-semibold"
+              }`}
+            >
+              {statusUpdating
+                ? "Đang cập nhật..."
+                : formData.status === "draft"
+                ? "Đăng bản nháp"
+                : "Chuyển thành nháp"}
+            </Button>
+
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full cursor-pointer text-purple-900 font-semibold bg-yellow-300 hover:bg-yellow-200 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Save size={16} />
+              {saving ? "Đang lưu..." : "Lưu sự kiện"}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Success/Error Messages */}
       {submitError && (
