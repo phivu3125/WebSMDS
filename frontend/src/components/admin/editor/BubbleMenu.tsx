@@ -35,10 +35,46 @@ export function BubbleMenuComponent({ editor }: BubbleMenuComponentProps) {
     const editorElement = editor.view.dom
     const editorRect = editorElement.getBoundingClientRect()
 
-    // Calculate position relative to viewport, but bubble menu will be positioned absolutely
+    // Calculate position relative to viewport first
+    const viewportX = coords.left
+    const viewportY = coords.top - 10 // Position above selection
+
+    // Convert to relative position for the container
+    let relativeX = viewportX - editorRect.left
+    let relativeY = viewportY - editorRect.top
+
+    // Smart positioning: avoid being too close to left edge (admin panel area)
+    const minDistanceFromLeft = 200 // Account for admin panel
+    if (relativeX < minDistanceFromLeft) {
+      relativeX = minDistanceFromLeft
+    }
+
+    // Avoid being too close to right edge
+    const maxDistanceFromRight = editorRect.width - 80
+    if (relativeX > maxDistanceFromRight) {
+      relativeX = maxDistanceFromRight
+    }
+
+    // Ensure minimum distance from top
+    if (relativeY < 20) {
+      relativeY = 20
+    }
+
+    console.log('Smart positioning calculation:', {
+      coords,
+      editorRect,
+      originalRelativeX: viewportX - editorRect.left,
+      originalRelativeY: viewportY - editorRect.top,
+      adjustedRelativeX: relativeX,
+      adjustedRelativeY: relativeY,
+      minDistanceFromLeft,
+      maxDistanceFromRight
+    })
+
+    // Calculate position relative to editor element with viewport safety
     setBubbleMenuPosition({
-      x: coords.left - editorRect.left, // Position relative to editor element
-      y: coords.top - editorRect.top - 10 // Position above selection relative to editor
+      x: relativeX,
+      y: relativeY
     })
   }
 
@@ -49,9 +85,12 @@ export function BubbleMenuComponent({ editor }: BubbleMenuComponentProps) {
       const { from, to } = editor.state.selection
       const hasSelection = from !== to
 
+      console.log('BubbleMenu selection update:', { from, to, hasSelection })
+
       if (hasSelection) {
         updateBubbleMenuPosition(from)
         setShowBubbleMenu(true)
+        console.log('BubbleMenu should show at position:', from)
       } else {
         setShowBubbleMenu(false)
       }
@@ -142,12 +181,12 @@ export function BubbleMenuComponent({ editor }: BubbleMenuComponentProps) {
   return (
     <div
       ref={bubbleMenuRef}
-      className="absolute z-[9999] flex items-center gap-1 bg-background border border-border rounded-md shadow-lg p-1 md:p-1"
+      className="absolute z-[9999] flex items-center gap-1 bg-white border border-gray-300 rounded-md shadow-lg p-1 md:p-1"
       style={{
         left: `${bubbleMenuPosition.x}px`,
         top: `${bubbleMenuPosition.y}px`,
         transform: 'translateX(-50%)',
-        // Ensure bubble menu stays within viewport on mobile
+        // Ensure bubble menu stays within viewport and avoids admin panel
         maxWidth: '90vw',
         overflow: 'auto'
       }}
