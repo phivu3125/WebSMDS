@@ -192,29 +192,19 @@ export default function CreateEventPage() {
         heroImageUrl = await adminApi.uploadImage(formData.heroImage)
       }
 
-      // Combine event intro and details for fullDescription
-      const fullDescription = `
-        <div class="event-intro">
-          <h2 style="color: #7342ba; font-size: 2rem; margin: 2rem 0 1rem 0; font-family: 'serif'; font-weight: 700;">Về sự kiện</h2>
-          ${formData.eventIntro}
-        </div>
-        <div class="event-details">
-          ${formData.eventDetails}
-        </div>
-      `
-
-      // Prepare payload for backend
+        // Prepare payload for backend
       const payload = {
         title: formData.title,
+        subtitle: formData.subtitle,
         slug: formData.slug,
         description: formData.description,
-        fullDescription: fullDescription,
+        eventIntro: formData.eventIntro,
+        eventDetails: formData.eventDetails,
         image: heroImageUrl, // Map heroImage to image field for backend compatibility
         location: formData.location,
         openingHours: formData.openingHours,
         dateDisplay: formData.dateDisplay,
-        status: "draft",
-        sections: [] // Empty sections array for now
+        status: "draft"
       }
 
       await adminApi.createEvent(payload)

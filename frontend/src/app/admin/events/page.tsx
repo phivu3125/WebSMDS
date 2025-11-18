@@ -13,6 +13,7 @@ import { resolveMediaUrl } from "@/lib/media"
 interface Event {
   id: string
   title: string
+  subtitle?: string
   slug: string
   description: string
   location?: string
@@ -149,6 +150,9 @@ export default function EventsAdmin() {
                       )}
                       <div className="flex-1">
                         <CardTitle className="text-lg">{event.title}</CardTitle>
+                        {event.subtitle && (
+                          <p className="text-sm text-purple-600 mt-1 font-medium line-clamp-1">{event.subtitle}</p>
+                        )}
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">{event.description}</p>
                       </div>
                     </div>
@@ -230,6 +234,9 @@ export default function EventsAdmin() {
                       )}
                       <div className="flex-1">
                         <CardTitle className="text-lg">{event.title}</CardTitle>
+                        {event.subtitle && (
+                          <p className="text-sm text-purple-600 mt-1 font-medium line-clamp-1">{event.subtitle}</p>
+                        )}
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">{event.description}</p>
                       </div>
                     </div>

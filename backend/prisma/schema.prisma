@@ -23,10 +23,15 @@ model User {
 model Event {
   id              String         @id @default(uuid())
   title           String
+  subtitle        String?        @db.Text
   slug            String         @unique
   description     String
-  fullDescription String?        @db.Text
-  content         String?        @db.Text
+
+  // Clean content structure matching frontend
+  eventIntro      String?        @db.Text  // "Về sự kiện" content
+  eventDetails    String?        @db.Text  // "Chi tiết sự kiện" content
+
+  // Event metadata
   image           String?
   location        String?
   openingHours    String?
@@ -34,7 +39,8 @@ model Event {
   venueMap        String?
   pricingImage    String?
   status          String         @default("draft")
-  sections        EventSection[]
+
+  // Keep only necessary relations
   registrations   EventRegistration[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -60,20 +66,7 @@ model EventRegistration {
   @@index([eventId, createdAt])
 }
 
-model EventSection {
-  id        String   @id @default(uuid())
-  eventId   String
-  title     String
-  items     String[] @default([])
-  position  Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-
-  @@map("event_sections")
-  @@index([eventId, position])
-}
+// EventSection model removed - using eventIntro and eventDetails fields instead
 
 model Product {
   id          String              @id @default(uuid())
@@ -93,7 +86,7 @@ model Product {
   featured    Boolean             @default(false)
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
-  productCategory product_categories? @relation(fields: [categoryId], references: [id])
+  productCategory ProductCategory? @relation(fields: [categoryId], references: [id])
   orderItems  OrderItem[]
 
   @@map("products")
@@ -219,11 +212,13 @@ model PastEvent {
   @@index([year])
 }
 
-model product_categories {
+model ProductCategory {
   id        String    @id @default(uuid())
   name      String
   slug      String    @unique
   createdAt DateTime  @default(now())
-  updatedAt DateTime
+  updatedAt DateTime  @updatedAt
   products  Product[]
+
+  @@map("product_categories")
 }

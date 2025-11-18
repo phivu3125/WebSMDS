@@ -39,10 +39,10 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* Custom heading colors */
-  --heading-1: #7342ba;
-  --heading-2: #7342ba;
-  --heading-3: #B668A1;
+  /* Custom heading colors - matching public event page */
+  --heading-1: rgb(115, 66, 186);
+  --heading-2: #5b21b6;
+  --heading-3: rgb(182, 104, 161);
 }
 
 .dark {

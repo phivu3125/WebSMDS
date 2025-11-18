@@ -17,7 +17,7 @@ async function main() {
     await prisma.press.deleteMany()
     await prisma.product.deleteMany()
     await prisma.pastEvent.deleteMany()
-    await prisma.eventSection.deleteMany()
+    // eventSection removed - using eventIntro and eventDetails fields instead
     await prisma.event.deleteMany()
     await prisma.talkSection.deleteMany()
     await prisma.user.deleteMany()
@@ -35,23 +35,28 @@ async function main() {
     })
     console.log('✅ Admin created:', admin.email)
 
-    // Seed Talk Section content
-    console.log('🎤 Seeding talk section content...')
-    await prisma.talkSection.upsert({
-        where: { key: 'default' },
-        update: {
-            title: 'TỌA ĐÀM TRỰC TUYẾN',
-            description: 'Cập nhật các buổi trò chuyện trực tuyến cùng chuyên gia và nghệ nhân văn hóa.',
-            liveInput: 'https://www.youtube.com/watch?v=NWys5zmK9wo',
-            replayInput: `<iframe src="https://www.facebook.com/plugins/video.php?height=476&href=https%3A%2F%2Fwww.facebook.com%2Freel%2F818742077735961%2F&show_text=false&width=476&t=0" width="476" height="476" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`
+    // Create editor user
+    const editorPassword = await bcrypt.hash('editor123', 10)
+    await prisma.user.create({
+        data: {
+            email: 'editor@sacmaudisan.vn',
+            password: editorPassword,
+            name: 'Editor User',
+            role: 'editor',
         },
-        create: {
+    })
+    console.log('✅ Editor created')
+
+    // Seeding talk section content
+    console.log('🎤 Seeding talk section content...')
+    await prisma.talkSection.create({
+        data: {
             key: 'default',
-            title: 'TỌA ĐÀM TRỰC TUYẾN',
-            description: 'Cập nhật các buổi trò chuyện trực tuyến cùng chuyên gia và nghệ nhân văn hóa.',
-            liveInput: 'https://www.youtube.com/watch?v=NWys5zmK9wo',
-            replayInput: `<iframe src="https://www.facebook.com/plugins/video.php?height=476&href=https%3A%2F%2Fwww.facebook.com%2Freel%2F818742077735961%2F&show_text=false&width=476&t=0" width="476" height="476" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`
-        }
+            title: 'Chương trình Talk Show',
+            description: 'Không gian đối thoại và chia sẻ về văn hóa, di sản và nghệ thuật Việt Nam.',
+            liveInput: 'Kính mời quý vị tham gia chương trình talkshow đặc biệt về văn hóa Việt Nam.',
+            replayInput: 'Video ghi lại các buổi talkshow đã diễn ra.',
+        },
     })
     console.log('✅ Talk section seeded')
 
@@ -63,51 +68,13 @@ async function main() {
                 title: 'Sắc Hội Trăng Thu - Mùa 2',
                 slug: 'sac-hoi-trang-thu-mua-2',
                 description: 'Chương trình Trung Thu xưa giữa phố - Kết nối thế hệ trẻ với giá trị truyền thống qua các hoạt động sáng tạo và ý nghĩa.',
-                fullDescription: 'Chương trình tái hiện không gian Trung Thu xưa với nhiều hoạt động trải nghiệm dành cho gia đình và giới trẻ yêu văn hóa Việt.',
-                content: `
-# Sắc Hội Trăng Thu - Mùa 2
-
-## Giới thiệu
-Chương trình "Sắc Hội Trăng Thu" mùa 2 là sự kiện văn hóa đặc biệt, tái hiện không gian Trung Thu xưa ngay giữa lòng thành phố. Với mong muốn kết nối thế hệ trẻ với những giá trị truyền thống, chương trình mang đến trải nghiệm độc đáo về văn hóa Trung Thu Việt Nam.
-
-## Hoạt động chính
-- Làm lồng đèn truyền thống
-- Trải nghiệm trò chơi dân gian
-- Thưởng thức bánh Trung Thu
-- Biểu diễn nghệ thuật truyền thống
-
-## Thông tin
-- **Thời gian:** 15/09/2024 - 17/09/2024
-- **Địa điểm:** Phố cổ Hà Nội
-- **Đối tượng:** Mọi lứa tuổi
-        `,
+                eventIntro: 'Chương trình "Sắc Hội Trăng Thu" mùa 2 là sự kiện văn hóa đặc biệt, tái hiện không gian Trung Thu xưa ngay giữa lòng thành phố. Với mong muốn kết nối thế hệ trẻ với những giá trị truyền thống, chương trình mang đến trải nghiệm độc đáo về văn hóa Trung Thu Việt Nam.',
+                eventDetails: '## Hoạt động chính\n- Làm lồng đèn truyền thống\n- Trải nghiệm trò chơi dân gian\n- Thưởng thức bánh Trung Thu\n- Biểu diễn nghệ thuật truyền thống\n\n## Các hoạt động trải nghiệm văn hóa\n- Làm lồng đèn truyền thống với nghệ nhân\n- Không gian trò chơi dân gian cho thiếu nhi\n- Workshop vẽ tranh dân gian và thư pháp\n\n## Các gian hàng đặc sắc\n- Gian hàng đồ thủ công Sắc Màu Di Sản\n- Không gian ẩm thực Trung Thu cổ truyền\n- Khu trưng bày ảnh ký ức Trung Thu',
                 image: '/events/sac-hoi-trang-thu.jpg',
                 location: 'Phố cổ Hà Nội',
                 openingHours: '09:00 - 21:00',
                 dateDisplay: '15/09/2024 - 17/09/2024',
                 status: 'published',
-                sections: {
-                    create: [
-                        {
-                            title: 'Các hoạt động trải nghiệm văn hóa',
-                            position: 0,
-                            items: [
-                                'Làm lồng đèn truyền thống với nghệ nhân',
-                                'Không gian trò chơi dân gian cho thiếu nhi',
-                                'Workshop vẽ tranh dân gian và thư pháp',
-                            ],
-                        },
-                        {
-                            title: 'Các gian hàng đặc sắc',
-                            position: 1,
-                            items: [
-                                'Gian hàng đồ thủ công Sắc Màu Di Sản',
-                                'Không gian ẩm thực Trung Thu cổ truyền',
-                                'Khu trưng bày ảnh ký ức Trung Thu',
-                            ],
-                        },
-                    ],
-                },
             },
         }),
         prisma.event.create({
@@ -115,378 +82,386 @@ Chương trình "Sắc Hội Trăng Thu" mùa 2 là sự kiện văn hóa đặc
                 title: 'Hương Sắc Cố Đô - Huế 2024',
                 slug: 'huong-sac-co-do-hue-2024',
                 description: 'Hành trình khám phá kiến trúc và ẩm thực cung đình Huế - Trải nghiệm văn hóa đậm chất hoàng gia.',
-                fullDescription: 'Chương trình đưa du khách trở về không gian văn hóa cung đình với các nghi thức truyền thống, ẩm thực và làng nghề đặc trưng của Huế.',
-                content: `
-# Hương Sắc Cố Đô - Huế 2024
-
-Khám phá vẻ đẹp kiến trúc và ẩm thực cung đình Huế qua các hoạt động trải nghiệm độc đáo.
-
-## Điểm nhấn
-- Tham quan di tích lịch sử
-- Thưởng thức ẩm thực cung đình
-- Trải nghiệm trang phục truyền thống
-- Workshop nghệ thuật dân gian
-        `,
+                eventIntro: 'Chương trình đưa du khách trở về không gian văn hóa cung đình với các nghi thức truyền thống, ẩm thực và làng nghề đặc trưng của Huế.',
+                eventDetails: '## Điểm nhấn\n- Tham quan di tích lịch sử\n- Thưởng thức ẩm thực cung đình\n- Trải nghiệm trang phục truyền thống\n- Workshop nghệ thuật dân gian\n\n## Trải nghiệm tiêu biểu\n- Tham quan Đại Nội cùng chuyên gia văn hóa\n- Thưởng thức thực đơn cung đình tái hiện\n- Workshop làm nón lá và tranh dân gian\n- Tiệc trà cung đình trong không gian hoàng gia',
                 image: '/events/huong-sac-co-do.jpg',
                 location: 'Thành phố Huế',
                 openingHours: '08:00 - 20:00',
                 dateDisplay: '20/03/2024 - 23/03/2024',
                 status: 'published',
-                sections: {
-                    create: [
-                        {
-                            title: 'Trải nghiệm tiêu biểu',
-                            position: 0,
-                            items: [
-                                'Tham quan Đại Nội cùng chuyên gia văn hóa',
-                                'Thưởng thức thực đơn cung đình tái hiện',
-                                'Khoác thử áo ngũ thân truyền thống',
-                            ],
-                        },
-                        {
-                            title: 'Không gian triển lãm',
-                            position: 1,
-                            items: [
-                                'Trưng bày cổ vật cung đình và thư tịch cổ',
-                                'Khu vực trình diễn nhã nhạc cung đình',
-                            ],
-                        },
-                    ],
-                },
             },
         }),
         prisma.event.create({
             data: {
-                title: 'Di Sản Sống - Hội An',
-                slug: 'di-san-song-hoi-an',
-                description: 'Trải nghiệm văn hóa làng nghề và phố cổ Hội An qua các hoạt động thực hành.',
-                fullDescription: 'Một hành trình khám phá di sản Hội An với làng nghề truyền thống, đêm phố cổ và các hoạt động kết nối cộng đồng.',
-                content: `
-# Di Sản Sống - Hội An
-
-Chương trình kết nối với di sản văn hóa Hội An qua trải nghiệm thực tế tại các làng nghề truyền thống.
-        `,
-                image: '/events/di-san-song.jpg',
-                location: 'Hội An, Quảng Nam',
-                openingHours: '09:00 - 22:00',
-                dateDisplay: '10/12/2024 - 12/12/2024',
+                title: 'Hội An - Đêm Phố Cổ',
+                slug: 'hoi-an-dem-pho-co',
+                description: 'Một hành trình khám phá di sản Hội An với làng nghề truyền thống, đêm phố cổ và các hoạt động kết nối cộng đồng.',
+                eventIntro: 'Khám phá vẻ đẹp kiến trúc và ẩm thực cung đình Huế qua các hoạt động trải nghiệm độc đáo.',
+                eventDetails: '## Làng nghề truyền thống\n- Làng gốm Thanh Hà\n- Làng rau Trà Quế\n- Làng mộc Kim Bồng\n- Làng bánh tráng Hội An\n\n## Hoạt động đặc sắc\n- Đêm phố cổ không gian\n- Workshop đèn lồng Hội An\n- Ẩm thực đường phố\n- Diễn nghệ truyền thống',
+                image: '/events/hoi-an-dem-pho-co.jpg',
+                location: 'Phố cổ Hội An',
+                openingHours: '10:00 - 22:00',
+                dateDisplay: '05/05/2024 - 07/05/2024',
                 status: 'published',
-                sections: {
-                    create: [
-                        {
-                            title: 'Lịch trình nổi bật',
-                            position: 0,
-                            items: [
-                                'Tham quan làng gốm Thanh Hà',
-                                'Workshop làm đèn lồng Hội An',
-                                'Đêm thả hoa đăng trên sông Hoài',
-                            ],
-                        },
-                        {
-                            title: 'Kết nối cộng đồng',
-                            position: 1,
-                            items: [
-                                'Giao lưu nghệ nhân và du khách quốc tế',
-                                'Triển lãm ảnh ký ức phố cổ Hội An',
-                            ],
-                        },
-                    ],
-                },
+            },
+        }),
+        prisma.event.create({
+            data: {
+                title: 'Sắc Màu Di Sản - Sắc Hội Trang Thu 2025',
+                slug: 'sac-mau-di-san-sac-hoi-trang-thu-2025',
+                description: 'Chương trình văn hóa đặc sắc tôn vinh giá trị di sản trang phục Việt Nam qua các không gian trưng bày và hoạt động trải nghiệm.',
+                eventIntro: 'Chương trình văn hóa đặc sắc tôn vinh giá trị di sản trang phục Việt Nam qua các không gian trưng bày và hoạt động trải nghiệm độc đáo.',
+                eventDetails: '## Các không gian trải nghiệm\n- Không gian trưng bày trang phục cung đình\n- Workshop kỹ thuật dệt may truyền thống\n- Sàn diễn thời trang di sản\n- Không gian ẩm thực và văn hóa\n\n## Hoạt động chính\n- Trưng bày hơn 100 bộ trang phục cổ\n- Workshop thử trang phục truyền thống\n- Diễn nghệ thời trang di sản\n- Giao lưu với các nghệ nhân',
+                image: '/events/sac-mau-di-san.jpg',
+                location: 'Hà Nội',
+                openingHours: '08:00 - 21:00',
+                dateDisplay: '10/01/2025 - 15/01/2025',
+                status: 'draft',
             },
         }),
     ])
     console.log(`✅ Created ${events.length} events`)
 
-    // Create Past Events
-    console.log('📚 Creating past events...')
-    const pastEventsData: Prisma.PastEventCreateInput[] = [
-        {
-                title: 'Sắc Hội Trăng Thu 2023',
-                slug: 'sac-hoi-trang-thu-2023',
-                subtitle: 'Hành trình đưa di sản trở lại trong một mùa Trung thu hiện đại',
-                description: 'Chương trình mang đến trải nghiệm Trung thu truyền thống với các hoạt động dành cho gia đình và giới trẻ.',
-                heroImage: '/past-events/sac-hoi-trang-thu-2023/hero.jpg',
-                year: 2023,
-                heroTitle: 'SẮC HỘI TRĂNG THU 2023',
-                heroQuote: '“Di sản không chỉ để ngắm nhìn, mà để sống cùng.”',
-                introContent: 'Sự kiện được tổ chức tại trung tâm thành phố với không gian tái hiện Trung thu xưa, kết hợp hoạt động tương tác hiện đại.',
-                activities: [
-                    {
-                        icon: '🎭',
-                        title: 'Không gian Trung thu xưa',
-                        subtitle: 'Tương tác đa giác quan',
-                        content: 'Khu phố đèn lồng, chợ đêm văn hóa, các góc trải nghiệm cho trẻ em và gia đình.',
-                        images: [
-                            '/past-events/sac-hoi-trang-thu-2023/activity-1.jpg',
-                            '/past-events/sac-hoi-trang-thu-2023/activity-2.jpg',
-                        ],
-                    },
-                    {
-                        icon: '🧑‍🎨',
-                        title: 'Workshop thủ công truyền thống',
-                        subtitle: 'Nghệ nhân đồng hành',
-                        content: 'Người tham gia tự tay làm lồng đèn, tô mặt nạ, nặn tò he cùng nghệ nhân lâu năm.',
-                        images: [
-                            '/past-events/sac-hoi-trang-thu-2023/workshop-1.jpg',
-                        ],
-                    },
-                ] as Prisma.JsonArray,
-                galleryImages: [
-                    '/past-events/sac-hoi-trang-thu-2023/gallery-1.jpg',
-                    '/past-events/sac-hoi-trang-thu-2023/gallery-2.jpg',
-                    '/past-events/sac-hoi-trang-thu-2023/gallery-3.jpg',
-                ],
-                conclusion: 'Chương trình khép lại với đêm thả đèn và sân khấu nghệ thuật truyền thống, ghi dấu cảm xúc khó quên cho người tham dự.',
-                status: 'published',
-                featured: true,
-        },
-        {
-                title: 'Lan Toả Di Sản 2022',
-                slug: 'lan-toa-di-san-2022',
-                subtitle: 'Cùng nhau kể những câu chuyện di sản qua trải nghiệm đa giác quan',
-                description: 'Chuỗi hoạt động triển lãm, workshop và tọa đàm về di sản văn hóa Việt Nam.',
-                heroImage: '/past-events/lan-toa-di-san-2022/hero.jpg',
-                year: 2022,
-                heroTitle: 'LAN TỎA DI SẢN 2022',
-                heroQuote: '“Mỗi câu chuyện di sản là một sợi dây nối quá khứ với hiện tại.”',
-                introContent: 'Diễn ra tại nhiều địa điểm văn hóa trọng điểm, sự kiện thu hút hàng nghìn lượt khách tham quan và trải nghiệm.',
-                activities: [
-                    {
-                        icon: '🏛️',
-                        title: 'Triển lãm tương tác',
-                        subtitle: 'Kể chuyện bằng công nghệ',
-                        content: 'Không gian triển lãm sử dụng AR/VR giúp du khách tương tác với hiện vật và câu chuyện di sản.',
-                        images: [
-                            '/past-events/lan-toa-di-san-2022/exhibit-1.jpg',
-                        ],
-                    },
-                    {
-                        icon: '🎤',
-                        title: 'Tọa đàm nghệ nhân',
-                        subtitle: 'Giao lưu truyền nghề',
-                        content: 'Các nghệ nhân chia sẻ hành trình giữ nghề, đồng thời giới thiệu sản phẩm thủ công đặc sắc.',
-                        images: [
-                            '/past-events/lan-toa-di-san-2022/talk-1.jpg',
-                        ],
-                    },
-                ] as Prisma.JsonArray,
-                galleryImages: [
-                    '/past-events/lan-toa-di-san-2022/gallery-1.jpg',
-                    '/past-events/lan-toa-di-san-2022/gallery-2.jpg',
-                ],
-                conclusion: 'Sự kiện góp phần tạo nên mạng lưới những người trẻ yêu di sản, tiếp nối các hoạt động bảo tồn trong năm tiếp theo.',
-                status: 'published',
-                featured: false,
-        },
-    ]
-
-    const pastEvents = await Promise.all(
-        pastEventsData.map((event) => prisma.pastEvent.create({ data: event }))
-    )
-    console.log(`✅ Created ${pastEvents.length} past events`)
+    // Create Categories
+    console.log('🏷️ Creating categories...')
+    const categories = await Promise.all([
+        prisma.productCategory.create({
+            data: {
+                name: 'Trang phục',
+                slug: 'trang-phuc',
+            },
+        }),
+        prisma.productCategory.create({
+            data: {
+                name: 'Đồ thủ công',
+                slug: 'do-thu-cong',
+            },
+        }),
+        prisma.productCategory.create({
+            data: {
+                name: 'Sản phẩm văn hóa',
+                slug: 'san-pham-van-hoa',
+            },
+        }),
+        prisma.productCategory.create({
+            data: {
+                name: 'Ẩm thực',
+                slug: 'am-thuc',
+            },
+        }),
+    ])
+    console.log(`✅ Created ${categories.length} categories`)
 
     // Create Products
     console.log('🛍️ Creating products...')
     const products = await Promise.all([
         prisma.product.create({
             data: {
-                name: 'Lồng Đèn Truyền Thống Handmade',
-                slug: 'long-den-truyen-thong-handmade',
-                description: 'Lồng đèn được làm thủ công từ giấy dó truyền thống, tái hiện vẻ đẹp của lồng đèn xưa.',
-                content: `
-# Lồng Đèn Truyền Thống Handmade
-
-## Đặc điểm
-- Làm thủ công 100%
-- Chất liệu giấy dó truyền thống
-- Họa tiết vẽ tay
-- Kích thước: 30cm x 40cm
-
-## Ý nghĩa
-Mỗi chiếc lồng đèn là một tác phẩm nghệ thuật, mang trong mình câu chuyện văn hóa Trung Thu truyền thống.
-        `,
-                price: 350000,
-                image: '/products/long-den-1.jpg',
-                images: ['/products/long-den-1.jpg', '/products/long-den-2.jpg'],
-                category: 'Handmade',
-                stock: 50,
-                status: 'published',
-                featured: true,
-            },
-        }),
-        prisma.product.create({
-            data: {
-                name: 'Phấn Nụ Hoàng Cung',
-                slug: 'phan-nu-hoang-cung',
-                description: 'Phấn nụ truyền thống được chế tác theo bí quyết cung đình, giữ nguyên tinh hoa làm đẹp của người xưa.',
-                content: `
-# Phấn Nụ Hoàng Cung
-
-Sản phẩm làm đẹp truyền thống, được nghiên cứu và tái hiện từ công thức cung đình.
-
-## Thành phần
-- 100% thiên nhiên
-- Không chất bảo quản
-- Hương thơm nhẹ nhàng
-        `,
-                price: 280000,
-                image: '/products/phan-nu.jpg',
-                images: ['/products/phan-nu.jpg'],
-                category: 'Mỹ phẩm',
-                stock: 100,
-                status: 'published',
-                featured: true,
-            },
-        }),
-        prisma.product.create({
-            data: {
-                name: 'Giấy Trúc Chỉ Nghệ Thuật',
-                slug: 'giay-truc-chi-nghe-thuat',
-                description: 'Giấy thủ công được làm từ tre trúc theo phương pháp truyền thống, mỗi tờ giấy là một tác phẩm nghệ thuật.',
-                price: 120000,
-                image: '/products/giay-truc-chi.jpg',
-                images: ['/products/giay-truc-chi.jpg'],
-                category: 'Văn phòng phẩm',
-                stock: 200,
-                status: 'published',
-                featured: true,
-            },
-        }),
-        prisma.product.create({
-            data: {
-                name: 'Áo Dài Truyền Thống',
+                name: 'Áo dài truyền thống',
                 slug: 'ao-dai-truyen-thong',
-                description: 'Áo dài may đo theo phong cách truyền thống, chất liệu vải lụa cao cấp.',
-                price: 1500000,
+                description: 'Áo dài Việt Nam cao cấp với chất liệu lụa tơ tằm truyền thống.',
+                content: 'Áo dài được làm thủ công bởi các nghệ nhân lành nghề với chất liệu lụa tơ tằm tự nhiên, giữ nguyên vẻ đẹp truyền thống.',
+                price: 2500000,
                 image: '/products/ao-dai.jpg',
-                images: ['/products/ao-dai.jpg'],
+                images: ['/products/ao-dai-1.jpg', '/products/ao-dai-2.jpg'],
+                categoryId: categories[0].id,
                 category: 'Trang phục',
-                stock: 30,
+                stock: 10,
+                inStock: true,
                 status: 'published',
                 featured: true,
             },
         }),
         prisma.product.create({
             data: {
-                name: 'Cờ Cá Ngựa Handmade',
-                slug: 'co-ca-ngua-handmade',
-                description: 'Bộ cờ cá ngựa được làm thủ công, tái hiện trò chơi dân gian truyền thống.',
-                price: 450000,
-                image: '/products/co-ca-ngua.jpg',
-                images: ['/products/co-ca-ngua.jpg'],
-                category: 'Đồ chơi',
-                stock: 40,
-                status: 'published',
-                featured: true,
-            },
-        }),
-        prisma.product.create({
-            data: {
-                name: 'Gốm Sứ Bát Tràng',
-                slug: 'gom-su-bat-trang',
-                description: 'Bộ ấm chén gốm sứ Bát Tràng, vẽ hoa văn truyền thống.',
-                price: 850000,
-                image: '/products/gom-su.jpg',
-                images: ['/products/gom-su.jpg'],
-                category: 'Gốm sứ',
+                name: 'Nón lá Bình Thuận',
+                slug: 'non-la-binh-thuan',
+                description: 'Nón lá thủ công từ làng nghề truyền thống Bình Thuận.',
+                content: 'Nón lá được đan thủ công từ lá cọ tự nhiên, mang đậm nét văn hóa Việt Nam.',
+                price: 150000,
+                image: '/products/non-la.jpg',
+                images: ['/products/non-la-1.jpg'],
+                categoryId: categories[1].id,
+                category: 'Đồ thủ công',
                 stock: 25,
+                inStock: true,
                 status: 'published',
                 featured: false,
+            },
+        }),
+        prisma.product.create({
+            data: {
+                name: 'Bộ trà đạo',
+                slug: 'bo-tra-dao',
+                description: 'Bộ trà đạo gốm sứ Bát Tràng truyền thống.',
+                content: 'Bộ trà đạo bao gồm ấm trà, tách, đĩa và khay được làm từ gốm sứ Bát Tràng.',
+                price: 850000,
+                image: '/products/tra-dao.jpg',
+                images: ['/products/tra-dao-1.jpg', '/products/tra-dao-2.jpg'],
+                categoryId: categories[3].id,
+                category: 'Ẩm thực',
+                stock: 15,
+                inStock: true,
+                status: 'published',
+                featured: true,
+            },
+        }),
+        prisma.product.create({
+            data: {
+                name: 'Tranh Đông Hồ',
+                slug: 'tranh-dong-ho',
+                description: 'Tranh dân gian Đông Hồ chính hiệu từ làng nghề truyền thống.',
+                content: 'Tranh được in trên giấy điệp bằng kỹ thuật in gỗ truyền thống của làng tranh Đông Hồ.',
+                price: 350000,
+                image: '/products/tranh-dong-ho.jpg',
+                images: ['/products/tranh-dong-ho-1.jpg'],
+                categoryId: categories[2].id,
+                category: 'Sản phẩm văn hóa',
+                stock: 20,
+                inStock: true,
+                status: 'published',
+                featured: false,
+            },
+        }),
+        prisma.product.create({
+            data: {
+                name: 'Lồng đèn Hội An',
+                slug: 'long-den-hoi-an',
+                description: 'Lồng đèn thủ công từ Hội An với thiết kế tinh xảo.',
+                content: 'Lồng đèn được làm thủ công từ tre và lụa, mang đậm nét văn hóa Hội An.',
+                price: 450000,
+                image: '/products/long-den.jpg',
+                images: ['/products/long-den-1.jpg', '/products/long-den-2.jpg'],
+                categoryId: categories[1].id,
+                category: 'Đồ thủ công',
+                stock: 30,
+                inStock: true,
+                status: 'published',
+                featured: true,
             },
         }),
     ])
     console.log(`✅ Created ${products.length} products`)
 
-    // Create Press coverage
-    console.log('📰 Creating press coverage...')
+    // Create Press articles
+    console.log('📰 Creating press articles...')
     const press = await Promise.all([
         prisma.press.create({
             data: {
-                source: 'NHÂN DÂN',
-                title: 'Trưởng thành cùng di sản',
-                description:
-                    'Mùa 2: Trung thu xưa giữa phố - Chương trình đã tạo nên không gian văn hóa độc đáo, kết nối thế hệ trẻ với những giá trị truyền thống qua các hoạt động sáng tạo và ý nghĩa.',
-                date: '15/09/2024',
-                type: 'article',
-                link: 'https://nhandan.vn/...',
-                image: '/press/nhan-dan-1.jpg',
+                source: 'VnExpress',
+                title: 'Sắc Màu Di Sản - Kết nối thế hệ trẻ với di sản Việt',
+                description: 'Chương trình văn hóa "Sắc Màu Di Sản" đã thu hút hàng ngàn người tham gia, đặc biệt là giới trẻ, qua các hoạt động trải nghiệm di sản độc đáo.',
+                date: '15/01/2025',
+                type: 'Bài viết',
+                link: 'https://vnexpress.net/sac-mau-di-san-ket-noi-the-he-voi-di-san-viet-1234567.html',
+                image: '/press/sac-mau-di-san-vnexpress.jpg',
                 featured: true,
             },
         }),
         prisma.press.create({
             data: {
-                source: 'ĐẠI BIỂU NHÂN DÂN',
-                title: "Chuỗi sự kiện 'Sắc màu di sản'",
-                description: 'Mùa 1: Hướng đến Ngày Gia đình Việt Nam',
-                date: '28/06/2024',
-                type: 'article',
-                link: 'https://daibieunhandan.vn/...',
-                image: '/press/dbnd.jpg',
+                source: 'Tuổi Trẻ',
+                title: 'Hành trình khám phá di sản cung đình Huế',
+                description: 'Chương trình "Hương Sắc Cố Đô" mang đến trải nghiệm độc đáo về văn hóa cung đình Huế cho du khách trong và ngoài nước.',
+                date: '25/03/2024',
+                type: 'Bài viết',
+                link: 'https://tuoitre.vn/hanh-trinh-kham-pha-di-san-cung-dinh-hue-1234567.html',
+                image: '/press/huong-sac-co-do-tre.jpg',
                 featured: false,
             },
         }),
         prisma.press.create({
             data: {
-                source: 'ANTV',
-                title: 'Thế hệ trẻ góp phần gìn giữ bản sắc Việt',
-                description: 'Mùa 1: Chương trình truyền hình',
-                date: '25/06/2024',
-                type: 'video',
-                link: 'https://www.youtube.com/watch?v=...',
-                image: '/press/antv.jpg',
+                source: 'Thanh Niên',
+                title: 'Đêm phố cổ Hội An - Không gian văn hóa di sản',
+                description: 'Sự kiện "Đêm phố cổ Hội An" tái hiện không gian văn hóa di sản qua các hoạt động trải nghiệm và trình diễn nghệ thuật.',
+                date: '08/05/2024',
+                type: 'Bài viết',
+                link: 'https://thanhnien.vn/dem-pho-co-hoi-an-khong-gian-van-hoa-di-san-1234567.html',
+                image: '/press/hoi-an-dem-pho-co-thanh-nien.jpg',
+                featured: false,
+            },
+        }),
+        prisma.press.create({
+            data: {
+                source: 'Công An Nhân Dân',
+                title: 'Sắc Hội Trăng Thu - Gìn giữ nét đẹp văn hóa truyền thống',
+                description: 'Chương trình "Sắc Hội Trăng Thu" mùa 2 đã thành công trong việc kết nối thế hệ trẻ với văn hóa truyền thống Trung thu Việt Nam.',
+                date: '18/09/2024',
+                type: 'Bài viết',
+                link: 'https://cand.vn/sac-hoi-trang-thu-gin-gu-net-dep-van-hoa-truyen-thong-1234567.html',
+                image: '/press/sac-hoi-trang-thu-cand.jpg',
                 featured: false,
             },
         }),
     ])
-    console.log(`✅ Created ${press.length} press records`)
+    console.log(`✅ Created ${press.length} press articles`)
+
+    // Create Past Events
+    console.log('📅 Creating past events...')
+    const pastEvents = await Promise.all([
+        prisma.pastEvent.create({
+            data: {
+                title: 'My Việt Cho Nơi - 2023',
+                slug: 'my-vi-cho-noi-2023',
+                subtitle: 'Hành trình khám phá văn hóa ẩm thực Việt',
+                description: 'Chuyến đi xuyên Việt khám phá văn hóa ẩm thực vùng miền.',
+                thumbnailImage: '/past-events/my-vi-cho-noi-2023.jpg',
+                year: 2023,
+                hero: {
+                    title: 'My Việt Cho Nơi',
+                    subtitle: 'Hành trình ẩm thực Việt Nam',
+                    image: '/past-events/my-vi-cho-noi-hero.jpg',
+                },
+                intro: {
+                    title: 'Giới thiệu',
+                    content: 'Chương trình "My Việt Cho Nơi" là hành trình khám phá văn hóa ẩm thực Việt Nam qua các vùng miền.',
+                    image: '/past-events/my-vi-cho-noi-intro.jpg',
+                },
+                featureList: {
+                    title: 'Điểm nhấn',
+                    features: [
+                        'Khám phá ẩm thực 3 miền',
+                        'Gặp gỡ các đầu bếp nổi tiếng',
+                        'Workshop nấu ăn truyền thống',
+                        'Thịnh thực đường phố',
+                    ],
+                },
+                gallery: {
+                    title: 'Hình ảnh',
+                    images: [
+                        '/past-events/my-vi-cho-noi-1.jpg',
+                        '/past-events/my-vi-cho-noi-2.jpg',
+                        '/past-events/my-vi-cho-noi-3.jpg',
+                    ],
+                },
+                conclusion: {
+                    title: 'Kết quả',
+                    content: 'Chương trình đã thành công trong việc quảng bá văn hóa ẩm thực Việt Nam.',
+                    image: '/past-events/my-vi-cho-noi-conclusion.jpg',
+                },
+            },
+        }),
+        prisma.pastEvent.create({
+            data: {
+                title: 'Hương Sắc Cố Đô - 2023',
+                slug: 'huong-sac-co-do-2023',
+                subtitle: 'Hành trình văn hóa di sản Cố đô Huế',
+                description: 'Chuyến đi khám phá văn hóa di sản Huế.',
+                thumbnailImage: '/past-events/huong-sac-co-do-2023.jpg',
+                year: 2023,
+                hero: {
+                    title: 'Hương Sắc Cố Đô',
+                    subtitle: 'Di sản Huế',
+                    image: '/past-events/huong-sac-co-do-hero.jpg',
+                },
+                intro: {
+                    title: 'Giới thiệu',
+                    content: 'Khám phá văn hóa di sản Huế qua các hoạt động trải nghiệm.',
+                    image: '/past-events/huong-sac-co-do-intro.jpg',
+                },
+                featureList: {
+                    title: 'Điểm nhấn',
+                    features: [
+                        'Tham quan Đại Nội',
+                        'Ẩm thực cung đình',
+                        'Nghệ thuật truyền thống',
+                        'Làng nghề Huế',
+                    ],
+                },
+                gallery: {
+                    title: 'Hình ảnh',
+                    images: [
+                        '/past-events/huong-sac-co-do-1.jpg',
+                        '/past-events/huong-sac-co-do-2.jpg',
+                        '/past-events/huong-sac-co-do-3.jpg',
+                    ],
+                },
+                conclusion: {
+                    title: 'Kết quả',
+                    content: 'Chương trình đã lan tỏa giá trị văn hóa di sản Huế.',
+                    image: '/past-events/huong-sac-co-do-conclusion.jpg',
+                },
+            },
+        }),
+        prisma.pastEvent.create({
+            data: {
+                title: 'Ngàn Thu Việt - 2023',
+                slug: 'ngan-thu-viet-2023',
+                subtitle: 'Festival văn hóa mùa thu Việt Nam',
+                description: 'Lễ hội văn hóa lớn tôn vinh mùa thu Việt Nam.',
+                thumbnailImage: '/past-events/ngan-thu-viet-2023.jpg',
+                year: 2023,
+                hero: {
+                    title: 'Ngàn Thu Việt',
+                    subtitle: 'Mùa thu Việt Nam',
+                    image: '/past-events/ngan-thu-viet-hero.jpg',
+                },
+                intro: {
+                    title: 'Giới thiệu',
+                    content: 'Festival văn hóa tôn vinh vẻ đẹp mùa thu Việt Nam.',
+                    image: '/past-events/ngan-thu-viet-intro.jpg',
+                },
+                featureList: {
+                    title: 'Điểm nhấn',
+                    features: [
+                        'Diễn nghệ văn hóa',
+                        'Không gian ẩm thực',
+                        'Trưng bày thủ công mỹ nghệ',
+                        'Tọa đàm văn hóa',
+                    ],
+                },
+                gallery: {
+                    title: 'Hình ảnh',
+                    images: [
+                        '/past-events/ngan-thu-viet-1.jpg',
+                        '/past-events/ngan-thu-viet-2.jpg',
+                        '/past-events/ngan-thu-viet-3.jpg',
+                    ],
+                },
+                conclusion: {
+                    title: 'Kết quả',
+                    content: 'Festival đã thành công rực rỡ với hàng ngàn lượt tham quan.',
+                    image: '/past-events/ngan-thu-viet-conclusion.jpg',
+                },
+            },
+        }),
+    ])
+    console.log(`✅ Created ${pastEvents.length} past events`)
 
     // Create Stories
-    console.log('📖 Creating stories...')
+    console.log('📝 Creating stories...')
     const stories = await Promise.all([
         prisma.story.create({
             data: {
-                title: 'Kỷ niệm đáng nhớ từ Sắc Hội Trăng Thu',
-                slug: 'ky-niem-dang-nho-tu-sac-hoi-trang-thu',
-                content: `
-Tôi vẫn nhớ như in ngày đầu tiên tham gia chương trình Sắc Hội Trăng Thu. Được tự tay làm lồng đèn, được nghe những câu chuyện về Trung Thu xưa từ các nghệ nhân, tôi như được quay về tuổi thơ.
-
-Đặc biệt, khi thắp sáng chiếc lồng đèn mình làm và treo lên cùng hàng trăm chiếc lồng đèn khác, tôi cảm nhận được sự kết nối sâu sắc với văn hóa dân tộc. Đó không chỉ là một chiếc lồng đèn, mà là cả một ký ức, một phần văn hóa được lưu giữ và truyền lại.
-
-Cảm ơn Sắc Màu Di Sản đã tạo ra những khoảnh khắc ý nghĩa như vậy!
-        `,
-                author: 'Nguyễn Minh Anh',
-                authorEmail: 'minhanh@example.com',
-                image: '/stories/story-1.jpg',
-                status: 'approved',
+                title: 'Hành trình khám phá văn hóa Việt Nam',
+                slug: 'hanh-trinh-kham-pha-van-hoa-viet-nam',
+                content: 'Chia sẻ về hành trình khám phá văn hóa Việt Nam qua các vùng miền với những trải nghiệm đáng nhớ.',
+                author: 'Nguyễn Văn A',
+                authorEmail: 'nguyenvana@example.com',
+                image: '/stories/hanh-trinh-van-hoa.jpg',
+                status: 'published',
             },
         }),
         prisma.story.create({
             data: {
-                title: 'Hành trình tìm về cội nguồn',
-                slug: 'hanh-trinh-tim-ve-coi-nguon',
-                content: `
-Là một người trẻ lớn lên trong môi trường thành thị, tôi ít có cơ hội tiếp xúc với văn hóa truyền thống. Tham gia các chương trình của Sắc Màu Di Sản, tôi như được mở ra một cánh cửa mới.
-
-Từ những buổi workshop làm phấn nụ truyền thống, đến việc học cách vẽ tranh dân gian, mỗi hoạt động đều mang lại cho tôi sự trân trọng sâu sắc hơn đối với di sản văn hóa của dân tộc.
-
-Giờ đây, tôi tự hào khi chia sẻ về văn hóa Việt với bạn bè quốc tế, và mong muốn tiếp tục đóng góp cho việc bảo tồn và phát huy những giá trị này.
-        `,
-                author: 'Trần Văn Nam',
-                authorEmail: 'vannam@example.com',
-                status: 'approved',
+                title: 'Ký ức về mùa Trung Thu xưa',
+                slug: 'ky-uc-ve-mua-trung-thu-xua',
+                content: 'Những kỷ niệm đẹp về mùa Trung Thu ngày xưa với đèn lồng, múa lân và những món ăn truyền thống.',
+                author: 'Trần Thị B',
+                authorEmail: 'tranthib@example.com',
+                image: '/stories/trung-thu-xua.jpg',
+                status: 'published',
             },
         }),
         prisma.story.create({
             data: {
-                title: 'Cảm nhận về văn hóa Huế',
-                slug: 'cam-nhan-ve-van-hoa-hue',
-                content: `
-Chuyến đi Huế cùng Sắc Màu Di Sản đã để lại trong tôi nhiều ấn tượng khó quên. Được trải nghiệm ẩm thực cung đình, tham quan các di tích lịch sử, và đặc biệt là được nghe các nghệ nhân kể về lịch sử của từng món ăn, từng công trình kiến trúc.
-
-Tôi nhận ra rằng di sản không chỉ là những tòa nhà cổ hay món ăn ngon, mà còn là những câu chuyện, những giá trị tinh thần được lưu truyền qua nhiều thế hệ.
-        `,
-                author: 'Lê Thị Hoa',
-                authorEmail: 'thihoa@example.com',
+                title: 'Làng nghề truyền thống Việt Nam',
+                slug: 'lang-nghe-truyen-thong-viet-nam',
+                content: 'Khám phá các làng nghề truyền thống của Việt Nam và những câu chuyện đằng sau chúng.',
+                author: 'Lê Văn C',
+                authorEmail: 'levanc@example.com',
+                image: '/stories/lang-nghe-viet-nam.jpg',
                 status: 'pending',
             },
         }),
@@ -498,172 +473,38 @@ Tôi nhận ra rằng di sản không chỉ là những tòa nhà cổ hay món 
     const ideas = await Promise.all([
         prisma.idea.create({
             data: {
-                title: 'Tổ chức workshop làm đồ gốm truyền thống',
-                description: `
-Tôi nghĩ sẽ rất thú vị nếu có thêm các workshop về gốm sứ truyền thống, đặc biệt là gốm Bát Tràng và gốm Chu Đậu. Người tham gia có thể tự tay nặn và trang trí sản phẩm của mình.
-
-Ngoài ra, có thể mời các nghệ nhân đến chia sẻ về lịch sử và kỹ thuật làm gốm để mọi người hiểu sâu hơn về nghề truyền thống này.
-        `,
-                submitter: 'Phạm Văn Đức',
-                email: 'vanduc@example.com',
-                phone: '0901234567',
+                title: 'Tổ chức Festival văn hóa trẻ',
+                submitter: 'Nguyễn Văn D',
+                email: 'nguyenvand@example.com',
+                phone: '0987654321',
+                description: 'Ý tưởng tổ chức festival văn hóa dành riêng cho giới trẻ với các hoạt động sáng tạo và trải nghiệm văn hóa.',
                 status: 'pending',
-                notes: 'Ý tưởng hay, cần tìm kiếm nghệ nhân và địa điểm phù hợp',
+                notes: 'Ý tưởng thú vị, cần nghiên cứu tính khả thi',
             },
         }),
         prisma.idea.create({
             data: {
-                title: 'Chương trình kết nối với làng nghề truyền thống',
-                description: `
-Đề xuất tổ chức các chuyến tham quan và trải nghiệm tại các làng nghề truyền thống như làng rèn Phú Định, làng tranh Đông Hồ, làng gốm Bát Tràng...
-
-Người tham gia sẽ được tìm hiểu quy trình sản xuất, tự tay thực hành và mua về những sản phẩm thủ công làm quà lưu niệm.
-        `,
-                submitter: 'Hoàng Thị Mai',
-                email: 'thimai@example.com',
-                phone: '0912345678',
-                status: 'in_review',
-                notes: 'Đã liên hệ với các làng nghề, chuẩn bị triển khai trong tháng tới',
-            },
-        }),
-        prisma.idea.create({
-            data: {
-                title: 'Ứng dụng AR để khám phá di sản',
-                description: `
-Xây dựng ứng dụng thực tế tăng cường (AR) cho phép người dùng khám phá các di sản văn hóa một cách sinh động hơn. Khi quét mã QR tại các điểm di sản, người dùng có thể xem thông tin lịch sử, hình ảnh 3D, và video giới thiệu.
-        `,
-                submitter: 'Đinh Quang Huy',
-                email: 'quanghuy@example.com',
-                phone: '0923456789',
-                status: 'pending',
+                title: 'Workshop di sản cho học sinh',
+                submitter: 'Trần Thị E',
+                email: 'tranthie@example.com',
+                phone: '0976543210',
+                description: 'Tổ chức các workshop về di sản dành cho học sinh THPT để nâng cao nhận thức về văn hóa truyền thống.',
+                status: 'approved',
+                notes: 'Sẽ triển khai thí điểm tại các trường THPT',
             },
         }),
     ])
     console.log(`✅ Created ${ideas.length} ideas`)
 
-    // Create email subscriptions
-    console.log('📧 Creating email subscriptions...')
-    const emailSubscriptions = await Promise.all([
-        prisma.emailSubscription.create({
-            data: {
-                email: 'nguyenvana@example.com',
-                status: 'subscribed',
-            },
-        }),
-        prisma.emailSubscription.create({
-            data: {
-                email: 'tranthib@example.com',
-                status: 'subscribed',
-            },
-        }),
-        prisma.emailSubscription.create({
-            data: {
-                email: 'levanc@example.com',
-                status: 'subscribed',
-            },
-        }),
-    ])
-    console.log(`✅ Created ${emailSubscriptions.length} email subscriptions`)
-
-    // Create sample orders
-    console.log('🛒 Creating sample orders...')
-    const orders = await Promise.all([
-        prisma.order.create({
-            data: {
-                orderNumber: `ORD-${Date.now()}-001`,
-                customerName: 'Nguyễn Văn Đạt',
-                customerEmail: 'vandat@example.com',
-                customerPhone: '0987654321',
-                shippingAddress: '123 Đường ABC, Quận 1, TP.HCM',
-                totalAmount: 980000,
-                status: 'delivered',
-                notes: 'Giao hàng giờ hành chính',
-                orderItems: {
-                    create: [
-                        {
-                            productId: products[0].id,
-                            quantity: 2,
-                            price: 350000,
-                        },
-                        {
-                            productId: products[1].id,
-                            quantity: 1,
-                            price: 280000,
-                        },
-                    ],
-                },
-            },
-        }),
-        prisma.order.create({
-            data: {
-                orderNumber: `ORD-${Date.now()}-002`,
-                customerName: 'Trần Thị Lan',
-                customerEmail: 'thilan@example.com',
-                customerPhone: '0976543210',
-                shippingAddress: '456 Đường XYZ, Quận 3, TP.HCM',
-                totalAmount: 1500000,
-                status: 'shipping',
-                notes: 'Gọi trước khi giao',
-                orderItems: {
-                    create: [
-                        {
-                            productId: products[3].id,
-                            quantity: 1,
-                            price: 1500000,
-                        },
-                    ],
-                },
-            },
-        }),
-        prisma.order.create({
-            data: {
-                orderNumber: `ORD-${Date.now()}-003`,
-                customerName: 'Lê Minh Tuấn',
-                customerEmail: 'minhtuan@example.com',
-                customerPhone: '0965432109',
-                shippingAddress: '789 Đường DEF, Quận 7, TP.HCM',
-                totalAmount: 690000,
-                status: 'confirmed',
-                orderItems: {
-                    create: [
-                        {
-                            productId: products[2].id,
-                            quantity: 3,
-                            price: 120000,
-                        },
-                        {
-                            productId: products[1].id,
-                            quantity: 1,
-                            price: 280000,
-                        },
-                    ],
-                },
-            },
-        }),
-    ])
-    console.log(`✅ Created ${orders.length} orders`)
-
-    console.log('✨ Seed completed successfully!')
-    console.log('\n📊 Summary:')
-    console.log(`- Users: ${1}`)
-    console.log(`- Events: ${events.length}`)
-    console.log(`- Products: ${products.length}`)
-    console.log(`- Press: ${press.length}`)
-    console.log(`- Past events: ${pastEvents.length}`)
-    console.log(`- Stories: ${stories.length}`)
-    console.log(`- Ideas: ${ideas.length}`)
-    console.log(`- Email subscriptions: ${emailSubscriptions.length}`)
-    console.log(`- Orders: ${orders.length}`)
-    console.log('\n🔑 Admin credentials:')
-    console.log('Email: admin@sacmaudisan.vn')
-    console.log('Password: admin123')
+    console.log('🎉 Database seeded successfully!')
 }
 
 main()
-    .catch((e) => {
-        console.error('❌ Error during seed:', e)
-        process.exit(1)
-    })
-    .finally(async () => {
+    .then(async () => {
         await prisma.$disconnect()
+    })
+    .catch(async (e) => {
+        console.error(e)
+        await prisma.$disconnect()
+        process.exit(1)
     })

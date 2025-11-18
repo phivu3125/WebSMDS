@@ -1,29 +1,40 @@
-/* TipTap Editor Styles */
-.tiptap {
+/* TipTap Editor Styles & Public Event Page Content */
+.tiptap,
+.prose {
+    /* Ensure proper font and base styling */
+    line-height: 1.8;
 
     /* Heading styles - using Tailwind classes with @apply */
     h1 {
-        /* @apply text-3xl font-serif font-bold mb-6 mt-4; */
-        color: #7342ba; 
-        font-size: 2rem; 
-        margin: 2rem 0 1rem 0; 
-        font-family: 'serif'; 
+        color: var(--heading-1) !important;
+        font-size: 2rem;
+        margin: 2rem 0 1rem 0;
+        font-family: 'serif';
         font-weight: 700;
     }
 
     h2 {
-        @apply text-2xl font-semibold mb-4 mt-3;
         color: var(--heading-2) !important;
+        font-size: 1.5rem;
+        margin: 1.5rem 0 1rem 0;
+        font-family: 'serif';
+        font-weight: 600;
     }
 
     h3 {
-        @apply text-xl font-semibold mb-3 mt-2;
         color: var(--heading-3) !important;
+        font-size: 1.25rem;
+        margin: 1rem 0 0.75rem 0;
+        font-family: 'serif';
+        font-weight: 600;
     }
 
     /* Paragraph styles */
     p {
-        font-size: 1.125rem; line-height: 1.8;
+        font-size: 1.125rem !important;
+        line-height: 1.8 !important;
+        margin-bottom: 1rem !important;
+        color: #374151 !important;
     }
 
     /* List styles */

@@ -3,9 +3,11 @@ import { adminApiFetch, handleAdminResponse } from "./base"
 interface Event {
   id: string
   title: string
+  subtitle?: string
   slug: string
   description: string
-  fullDescription?: string
+  eventIntro?: string
+  eventDetails?: string
   image?: string
   location?: string
   openingHours?: string
@@ -13,15 +15,7 @@ interface Event {
   venueMap?: string
   pricingImage?: string
   status: string
-  sections?: EventSection[]
   createdAt: string
-}
-
-interface EventSection {
-  id: string
-  title: string
-  items: string[]
-  position: number
 }
 
 interface EventRegistration {
