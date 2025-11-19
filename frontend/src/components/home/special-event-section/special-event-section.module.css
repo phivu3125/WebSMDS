@@ -1,0 +1,128 @@
+/* 3D Flip Animation Styles */
+.flipCard {
+  perspective: 1000px;
+}
+
+.flipCardInner {
+  transition: transform 0.7s;
+  transform-style: preserve-3d;
+}
+
+.flipCardFlipped {
+  transform: rotateY(180deg);
+}
+
+.flipCardFront,
+.flipCardBack {
+  backfaceVisibility: hidden;
+}
+
+.flipCardBack {
+  transform: rotateY(180deg);
+}
+
+/* Smooth transitions */
+.smoothTransition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Upload area hover effects */
+.uploadHover {
+  transition: all 0.3s ease;
+  border-color: rgb(251 191 36);
+  background-color: rgb(254 243 199);
+}
+
+.uploadHover:hover {
+  border-color: rgb(245 158 11);
+  background-color: rgb(254 240 138);
+}
+
+.uploadActive {
+  border-color: rgb(245 158 11) !important;
+  background-color: rgb(254 243 199) !important;
+  transform: scale(1.02);
+}
+
+/* Currency selection hover */
+.currencyCard {
+  transition: all 0.2s ease;
+}
+
+.currencyCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.currencySelected {
+  border-color: rgb(245 158 11);
+  background-color: rgb(254 243 199);
+}
+
+/* Button hover effects */
+.btnAmber {
+  background-color: rgb(245 158 11);
+  transition: all 0.2s ease;
+}
+
+.btnAmber:hover {
+  background-color: rgb(217 119 6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(245 158 11, 0.2);
+}
+
+.btnGray {
+  background-color: rgb(243 244 246);
+  transition: all 0.2s ease;
+}
+
+.btnGray:hover {
+  background-color: rgb(229 231 235);
+}
+
+/* Loading spinner */
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Subtle fade in animation */
+.fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .flipCard {
+    perspective: 800px;
+  }
+
+  .currencyGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .currencyGrid {
+    grid-template-columns: 1fr !important;
+  }
+}
