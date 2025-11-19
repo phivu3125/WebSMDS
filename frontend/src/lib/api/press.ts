@@ -22,7 +22,9 @@ export async function getPress(filters?: { type?: string; featured?: boolean }) 
   const query = params.toString()
   const response = await safeApiFetch(`press${query ? `?${query}` : ""}`)
   if (!response) {
-    console.warn("Press API not available, returning empty array")
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("Press API not available, returning empty array")
+    }
     return { success: false, data: [] }
   }
   return (await response.json()) as { success: boolean; data: PressItem[] }

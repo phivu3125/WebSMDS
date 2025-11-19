@@ -8,7 +8,9 @@ export async function getEvents(filters?: { status?: string; featured?: boolean 
   const query = params.toString()
   const response = await safeApiFetch(`events${query ? `?${query}` : ""}`)
   if (!response) {
-    console.warn("Events API not available, returning empty array")
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("Events API not available, returning empty array")
+    }
     return []
   }
   return response.json()
