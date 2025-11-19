@@ -2,22 +2,21 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 
-import authRoutes from './src/routes/auth'
-import pressRoutes from './src/routes/press.routes'
-import eventsRoutes from './src/routes/events.routes'
-import productsRoutes from './src/routes/products.routes'
-import storiesRoutes from './src/routes/stories.routes'
-import ideasRoutes from './src/routes/ideas.routes'
-import emailSubscriptionRoutes from './src/routes/email-subscription.routes'
-import ordersRoutes from './src/routes/orders.routes'
-import uploadsRoutes from './src/routes/uploads.routes'
-import talkSectionRoutes from './src/routes/talk-section.routes'
-import pastEventsRoutes from './src/routes/past-events.routes'
+import authRoutes from './routes/auth'
+import pressRoutes from './routes/press.routes'
+import eventsRoutes from './routes/events.routes'
+import productsRoutes from './routes/products.routes'
+import storiesRoutes from './routes/stories.routes'
+import ideasRoutes from './routes/ideas.routes'
+import emailSubscriptionRoutes from './routes/email-subscription.routes'
+import ordersRoutes from './routes/orders.routes'
+import uploadsRoutes from './routes/uploads.routes'
+import talkSectionRoutes from './routes/talk-section.routes'
+import pastEventsRoutes from './routes/past-events.routes'
 
 dotenv.config()
 
 const app = express()
-const PORT = process.env.PORT || 5000
 
 // Middleware
 app.use(cors({
@@ -50,7 +49,4 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() })
 })
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`)
-    console.log(`📝 API: http://localhost:${PORT}/api`)
-})
+export default app
