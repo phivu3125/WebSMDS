@@ -1,4 +1,4 @@
-import { apiFetch } from "./base"
+import { apiFetch, safeApiFetch } from "./base"
 
 export interface PressItem {
   id: number
@@ -20,8 +20,11 @@ export async function getPress(filters?: { type?: string; featured?: boolean }) 
   if (filters?.featured !== undefined) params.append("featured", String(filters.featured))
 
   const query = params.toString()
-  const response = await apiFetch(`press${query ? `?${query}` : ""}`)
-  if (!response.ok) throw new Error("Failed to fetch press coverage")
+  const response = await safeApiFetch(`press${query ? `?${query}` : ""}`)
+  if (!response) {
+    console.warn("Press API not available, returning empty array")
+    return { success: false, data: [] }
+  }
   return (await response.json()) as { success: boolean; data: PressItem[] }
 }
 

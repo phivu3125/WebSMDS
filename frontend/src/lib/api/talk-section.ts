@@ -1,4 +1,4 @@
-import { apiFetch } from "./base"
+import { safeApiFetch } from "./base"
 
 export interface TalkSectionResponse {
   success: boolean
@@ -14,7 +14,10 @@ export interface TalkSectionResponse {
 }
 
 export async function getTalkSection() {
-  const response = await apiFetch("talk-section")
-  if (!response.ok) throw new Error("Failed to fetch talk section")
+  const response = await safeApiFetch("talk-section")
+  if (!response) {
+    console.warn("Talk section API not available, returning default response")
+    return { success: false, data: null }
+  }
   return (await response.json()) as TalkSectionResponse
 }
