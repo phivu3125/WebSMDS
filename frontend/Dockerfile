@@ -32,7 +32,9 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nodejs
 
-COPY --from=builder /app/public ./public
+# Copy public directory if it exists
+RUN mkdir -p ./public && \
+    if [ -d /app/public ]; then cp -r /app/public/* ./public/ 2>/dev/null || true; fi
 
 # Set the correct permission for prerender cache
 RUN mkdir .next && chown nodejs:nodejs .next
