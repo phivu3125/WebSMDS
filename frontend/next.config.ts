@@ -15,16 +15,18 @@ const remotePatterns: RemotePattern[] = [
     protocol: "http",
     hostname: "**",
   }
-]
+];
 
 if (process.env.NEXT_PUBLIC_MEDIA_HOST) {
   remotePatterns.push({
     protocol: (process.env.NEXT_PUBLIC_MEDIA_PROTOCOL as RemotePattern["protocol"]) || "https",
     hostname: process.env.NEXT_PUBLIC_MEDIA_HOST,
-  })
+  });
 }
 
 const nextConfig: NextConfig = {
+  // Enable standalone output for Docker deployment
+  output: 'standalone',
   eslint: {
     ignoreDuringBuilds: true,
   },
