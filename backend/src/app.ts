@@ -1,7 +1,10 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import morgan from 'morgan';
+import helmet from 'helmet';
 
+import { prisma } from './lib/prisma'
 import authRoutes from './routes/auth'
 import pressRoutes from './routes/press.routes'
 import eventsRoutes from './routes/events.routes'
@@ -27,6 +30,9 @@ app.use(cors({
     credentials: true
 }))
 app.use(express.json())
+app.use(morgan('tiny'));
+app.use(helmet());
+
 
 // Routes
 app.use('/api/auth', authRoutes)
@@ -45,8 +51,32 @@ app.use('/api/past-events', pastEventsRoutes)
 app.use('/uploads', express.static('uploads'))
 
 // Health check
-app.get('/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString() })
+app.get('/health', async (req, res) => {
+    try {
+        // Kiểm tra kết nối database
+        await prisma.$queryRaw`SELECT 1`
+        res.json({
+            status: 'OK',
+            database: 'Connected',
+            timestamp: new Date().toISOString()
+        })
+    } catch (error) {
+        res.status(503).json({
+            status: 'ERROR',
+            database: 'Disconnected',
+            timestamp: new Date().toISOString(),
+            error: error instanceof Error ? error.message : 'Unknown error'
+        })
+    }
 })
+
+// Database connection check on startup
+prisma.$connect()
+    .then(() => {
+        console.log('✅ Database connected successfully')
+    })
+    .catch((error) => {
+        console.error('❌ Database connection failed:', error)
+    })
 
 export default app

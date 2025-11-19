@@ -1,58 +1,21 @@
-# Multi-stage build for production
-FROM node:18-alpine AS base
+FROM node:20-alpine
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
+WORKDIR /usr/src/app
+COPY package.json ./
 
-# Copy package files
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production && npm cache clean --force
+RUN yarn global add typescript
+RUN yarn install --frozen-lockfile
 
-# Build stage
-FROM base AS builder
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci
-
-# Copy source code
 COPY . .
 
-# Generate Prisma client
 RUN npx prisma generate
+RUN yarn build
 
-# Build TypeScript
-RUN npm run build
-
-# Production stage
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
-
-# Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nodejs
-
-# Copy built application
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
-
-# Create uploads directory with proper permissions
-RUN mkdir -p /app/uploads && chown nodejs:nodejs /app/uploads
-
-# Switch to non-root user
-USER nodejs
-
-# Expose port
+EXPOSE 5001
 EXPOSE 5000
+EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/health || exit 1
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
 
-# Start the application
-CMD ["npm", "start"]
+# docker build -t server .
+# docker run -p 3000:3000 server.

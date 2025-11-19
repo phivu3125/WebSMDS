@@ -7,3 +7,7 @@ uploads
 
 
 /generated/prisma
+
+yarn.lock
+
+package-lock.json
