@@ -81,6 +81,9 @@ pids/
 *.tsbuildinfo
 next-env.d.ts
 
+# Backend JS files in root
+backend/*.js
+
 # Debug
 .vscode/launch.json
 
