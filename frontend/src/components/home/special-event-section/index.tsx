@@ -16,74 +16,121 @@ export type CurrencyFilter = {
 
 const historicalCurrencies: CurrencyFilter[] = [
   {
-    id: "1",
-    name: "500.000₫",
-    year: "2003",
-    value: "500.000",
-    image: "/images/currency-500k.jpg",
+    id: "4",
+    name: "2 đồng",
+    year: "1958",
+    value: "50.000",
+    image: "Note4.jpg",
     description: ""
   },
   {
-    id: "2",
-    name: "200.000₫",
-    year: "2006",
-    value: "200.000",
-    image: "/images/currency-200k.jpg",
+    id: "1",
+    name: "100 đồng",
+    year: "1985",
+    value: "500.000",
+    image: "Note8.jpg",
     description: ""
   },
   {
     id: "3",
-    name: "100.000₫",
-    year: "2004",
-    value: "100.000",
-    image: "/images/currency-100k.jpg",
+    name: "5000 đồng",
+    year: "1987",
+    value: "200.000",
+    image: "Note1.jpg",
     description: ""
   },
-  {
-    id: "4",
-    name: "50.000₫",
-    year: "2003",
-    value: "50.000",
-    image: "/images/currency-50k.jpg",
-    description: ""
-  },
-  {
-    id: "5",
-    name: "20.000₫",
-    year: "2006",
-    value: "20.000",
-    image: "/images/currency-20k.jpg",
-    description: ""
-  },
-  {
-    id: "6",
-    name: "10.000₫",
-    year: "2006",
-    value: "10.000",
-    image: "/images/currency-10k.jpg",
-    description: ""
-  }
+
 ]
 
 type Screen = "upload" | "filter" | "result"
+
+// API Configuration
+const API_CONFIG = {
+  BASE_URL: process.env.NEXT_PUBLIC_GEMINI_API_URL || 'http://localhost:5000',
+  ENDPOINTS: {
+    PROCESS_IMAGE: '/run'
+  },
+  TIMEOUT: 300000 // 5 minutes
+}
+
+// Utility function to convert data URL to File
+const dataURLtoFile = (dataurl: string, filename: string): File => {
+  const arr = dataurl.split(',')
+  const mime = arr[0].match(/:(.*?);/)?.[1]
+  const bstr = atob(arr[1])
+  let n = bstr.length
+  const u8arr = new Uint8Array(n)
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n)
+  }
+  return new File([u8arr], filename, { type: mime })
+}
+
+// API service function for image processing
+const callImageProcessingAPI = async (
+  inputImage: File,
+  sampleChoice: string
+): Promise<string[]> => {
+  const formData = new FormData()
+  formData.append('input_image', inputImage)
+  formData.append('sample_choice', sampleChoice)
+
+  const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PROCESS_IMAGE}`, {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+
+  const result = await response.json()
+  if (result.error) {
+    throw new Error(result.error)
+  }
+
+  return result.outputs || []
+}
 
 export default function SpecialEventSection() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("upload")
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [selectedFilter, setSelectedFilter] = useState<CurrencyFilter | null>(null)
   const [processedImage, setProcessedImage] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleImageUpload = (imageDataUrl: string) => {
     setUploadedImage(imageDataUrl)
     setCurrentScreen("filter")
   }
 
-  const handleFilterSelect = (filter: CurrencyFilter) => {
+  const handleFilterSelect = async (filter: CurrencyFilter) => {
     setSelectedFilter(filter)
-    setTimeout(() => {
-      setProcessedImage(uploadedImage)
-      setCurrentScreen("result")
-    }, 2000)
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      // Convert uploaded image data URL to File
+      const inputImageFile = dataURLtoFile(uploadedImage!, 'user-photo.jpg')
+
+      // Call the API with the selected sample image
+      const processedImages = await callImageProcessingAPI(inputImageFile, filter.image)
+
+      if (processedImages.length > 0) {
+        // Construct full URL for the processed image
+        const fullImageUrl = `${API_CONFIG.BASE_URL}${processedImages[0]}`
+        setProcessedImage(fullImageUrl)
+        setCurrentScreen("result")
+      } else {
+        throw new Error("No processed image returned from API")
+      }
+    } catch (err) {
+      console.error('Error processing image:', err)
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleRestart = () => {
@@ -91,16 +138,20 @@ export default function SpecialEventSection() {
     setUploadedImage(null)
     setSelectedFilter(null)
     setProcessedImage(null)
+    setError(null)
+    setIsLoading(false)
   }
 
   const handleBack = () => {
     if (currentScreen === "filter") {
       setCurrentScreen("upload")
       setUploadedImage(null)
+      setError(null)
     } else if (currentScreen === "result") {
       setCurrentScreen("filter")
       setProcessedImage(null)
       setSelectedFilter(null)
+      setError(null)
     }
   }
 
@@ -113,7 +164,7 @@ export default function SpecialEventSection() {
             DI SẢN TIỀN TỆ
           </h2>
           <p className="text-base" style={{ color: '#855923' }}>
-            Khám phá vẻ đẹp tiền polymer qua công nghệ xử lý ảnh
+            Một hành trình thời gian qua những tờ tiền Việt, được tái hiện bằng công nghệ AI
           </p>
         </div>
       </div>
@@ -138,7 +189,7 @@ export default function SpecialEventSection() {
               <span className="text-sm font-bold">2</span>
             </div>
             <span className="text-xs font-medium" style={{ color: currentScreen === "filter" ? '#aa7638' : '#957048' }}>
-              Chọn mệnh giá
+              Chọn mẫu tiền
             </span>
           </div>
           <div className={`text-center transition-colors flex flex-col items-center ${currentScreen === "result" ? "" : "opacity-40"
@@ -167,6 +218,8 @@ export default function SpecialEventSection() {
                 currencies={historicalCurrencies}
                 onFilterSelect={handleFilterSelect}
                 onBack={() => handleBack()}
+                isLoading={isLoading}
+                error={error}
               />
             )}
             {currentScreen === "result" && (

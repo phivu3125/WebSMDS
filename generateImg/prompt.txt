@@ -1,0 +1,43 @@
+Note4:
+
+----- Có người -------
+Edit using two input images:
+Image 1: the selfie of the man.
+Image 2: the old Vietnamese 2-đồng banknote.
+Create one final image of the 2-đồng banknote where:
+Composition & placement
+Use Image 2 as the base.
+Completely remove the original group of people and flag inside the central picture area of the banknote.
+Insert only the man from Image 1 in that central area, scaled so his whole head, shoulders, and arm are fully inside the inner border of the banknote (no part of him may overlap or go outside the printed frame).
+Keep all original text, numbers, emblems, and outer ornamental borders of the banknote unchanged.
+Style
+Stylize the man so he looks like he was engraved on the banknote, not pasted on top.
+Use intaglio-style line engraving: dense cross-hatching, etched shading, no smooth gradients.
+Apply a uniform yellow / sepia color palette that exactly matches the ink and paper tone of the banknote.
+The entire image (man + banknote) must look like one mechanically printed note on fibrous old paper, with faded ink and fine texture.
+No modern photographic look, no visible city background from the selfie, no transparency of the original people behind him, no modern fonts.
+Identity
+Preserve the man’s face and features from Image 1 (no changes to identity), only converted into engraved line art.
+Goal: it should look as if this 2-đồng banknote was originally printed with the selfie man as the central portrait.
+
+
+
+
+--- Chỉ cảnh----
+Edit using two input images:
+Image 1: the selfie of the man.
+Image 2: the old Vietnamese 2-đồng banknote.
+Create one final image of the 2-đồng banknote where:
+Composition & placement
+Use Image 2 as the base.
+Completely remove the original group of people and flag inside the central picture area of the banknote.
+Insert exactly Image 1 inside the border of Image 2. Converted into engraved line art.
+Keep all original text, numbers, emblems, and outer ornamental borders of the banknote unchanged.
+Style
+Stylize the main content so it looks like it was engraved on the banknote, not pasted on top.
+Use intaglio-style line engraving: dense cross-hatching, etched shading, no smooth gradients.
+Apply a uniform yellow / sepia color palette that exactly matches the ink and paper tone of the banknote.
+The entire image must look like one mechanically printed note on fibrous old paper, with faded ink and fine texture.
+Identity
+
+Goal: it should look as if this 2-đồng banknote was originally printed with the Image 1 inside the border of Image 2 as the central portrait.

@@ -106,12 +106,12 @@ export default function HomeClient({ events = [], press = [], talkSection }: Hom
       <LazySection>
         <PartnersSection />
       </LazySection>
-      <LazySection>
+      {/* <LazySection>
         <NewsSection initialPress={press} />
-      </LazySection>
-      <LazySection id="talk">
+      </LazySection> */}
+      {/* <LazySection id="talk">
         <TalkSection {...talkSectionProps} />
-      </LazySection>
+      </LazySection> */}
       <LazySection id="contact">
         <ContactSection />
       </LazySection>
