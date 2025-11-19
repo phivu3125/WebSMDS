@@ -26,16 +26,27 @@ export default function ResultScreen({
     setIsDownloading(true)
 
     try {
+      // Fetch the image first
+      const response = await fetch(processedImage)
+      const blob = await response.blob()
+
+      // Create blob URL
+      const blobUrl = window.URL.createObjectURL(blob)
+
+      // Create download link
       const link = document.createElement('a')
-      link.href = processedImage
+      link.href = blobUrl
 
       const timestamp = new Date().toISOString().slice(0, 10)
-      const filename = `currency-filter-${selectedFilter.id}-${timestamp}.jpg`
+      const filename = `currency-filter-${selectedFilter.name.replace('₫', 'VND')}-${timestamp}.jpg`
 
       link.download = filename
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+
+      // Clean up blob URL
+      window.URL.revokeObjectURL(blobUrl)
     } catch (error) {
       console.error('Download failed:', error)
       alert('Không thể tải ảnh xuống. Vui lòng thử lại.')
