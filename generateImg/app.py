@@ -138,6 +138,9 @@ def serve_output(run_id, filename):
         abort(404)
     return send_from_directory(folder, safe)
 
+@app.route('/hello')
+def hello():
+    return jsonify({"message": "Hello, World!"})
 
 if __name__ == '__main__':
     # for development only
