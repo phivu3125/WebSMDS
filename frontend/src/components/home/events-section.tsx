@@ -11,7 +11,14 @@ import Image from "next/image"
 import { resolveMediaUrl } from "@/lib/media"
 
 type EventsSectionProps = {
-  initialEvents?: any[]
+  initialEvents?: Array<{
+    id: string
+    slug: string
+    title: string
+    description: string
+    dateDisplay?: string | null
+    image?: string | null
+  }>
 }
 
 // Hardcoded events data - chỉ hiển thị 2 sự kiện cứng

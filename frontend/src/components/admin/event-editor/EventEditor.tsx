@@ -250,7 +250,7 @@ export function EventEditor({
 
                       <div className="pt-4 border-t">
                         <p className="text-xs text-gray-500">
-                          💡 Nhấn "Xem preview" để xem trang sự kiện hoàn chỉnh
+                          💡 Nhấn &ldquo;Xem preview&rdquo; để xem trang sự kiện hoàn chỉnh
                         </p>
                       </div>
                     </div>

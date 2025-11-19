@@ -112,8 +112,8 @@ export default function EditProductPage() {
 
           const imageUrl = await uploadImage(formData.imageFile)
           formData.image = imageUrl
-          delete (formData as any).imageFile
-          delete (formData as any).removedImage
+          delete (formData as unknown as FormData & { imageFile?: File; removedImage?: boolean }).imageFile
+          delete (formData as unknown as FormData & { imageFile?: File; removedImage?: boolean }).removedImage
         } catch (error) {
           throw new Error("Failed to upload main image")
         }
@@ -132,7 +132,7 @@ export default function EditProductPage() {
           }
         }
         formData.image = ""
-        delete (formData as any).removedImage
+        delete (formData as unknown as FormData & { removedImage?: boolean }).removedImage
       }
 
       // Delete removed additional images
@@ -150,7 +150,7 @@ export default function EditProductPage() {
             }
           })
         )
-        delete (formData as any).removedImages
+        delete (formData as unknown as FormData & { removedImages?: string[] }).removedImages
       }
 
       // Upload new additional images
@@ -172,7 +172,7 @@ export default function EditProductPage() {
             return img
           })
 
-          delete (formData as any).newImages
+          delete (formData as unknown as FormData & { newImages?: File[] }).newImages
         } catch (error) {
           throw new Error("Failed to upload additional images")
         }

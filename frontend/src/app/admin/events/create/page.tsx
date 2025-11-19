@@ -214,9 +214,9 @@ export default function CreateEventPage() {
       setTimeout(() => {
         router.push("/admin/events")
       }, 2000)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to create event:", error)
-      const message = error?.message || "Không thể tạo sự kiện. Vui lòng thử lại."
+      const message = error instanceof Error ? error.message : "Không thể tạo sự kiện. Vui lòng thử lại."
       setSubmitError(message)
     } finally {
       setSaving(false)

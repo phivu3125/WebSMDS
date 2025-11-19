@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { getEvents, getProducts } from '@/lib/api'
 
 export default function TestAPIPage() {
-    const [events, setEvents] = useState<any[]>([])
-    const [products, setProducts] = useState<any[]>([])
+    const [events, setEvents] = useState<Array<{ id: string; title: string; description: string; status?: string }>>([])
+    const [products, setProducts] = useState<Array<{ id: string; name: string; price: number; description?: string; status?: string }>>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -27,9 +27,9 @@ export default function TestAPIPage() {
                 const productsArray = productsData.success ? productsData.data : (Array.isArray(productsData) ? productsData : [])
                 setProducts(productsArray)
 
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('API Error:', err)
-                setError(err.message || 'Failed to fetch data')
+                setError(err instanceof Error ? err.message : 'Failed to fetch data')
             } finally {
                 setLoading(false)
             }

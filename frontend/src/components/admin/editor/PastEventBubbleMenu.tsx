@@ -122,11 +122,11 @@ export function PastEventBubbleMenu({ editor }: PastEventBubbleMenuProps) {
 
     if (selectedText) {
       editor.chain().focus()
-        .toggleHeading({ level: level as any })
+        .toggleHeading({ level: level as 1 | 2 | 3 | 4 | 5 | 6 })
         .run()
     } else {
       editor.chain().focus()
-        .setHeading({ level: level as any })
+        .setHeading({ level: level as 1 | 2 | 3 | 4 | 5 | 6 })
         .insertContent('Heading')
         .run()
     }

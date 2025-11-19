@@ -56,7 +56,7 @@ export default function ProductsPage() {
                         transition={{ duration: 0.6 }}
                     >
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 text-white">
-                            "Chạm" Vào Di Sản & Sáng Tạo
+                            &ldquo;Chạm&rdquo; Vào Di Sản &amp; Sáng Tạo
                         </h1>
                         <div className="w-24 h-1 mx-auto mb-6" style={{ backgroundColor: "#fcd34d" }} />
                         <p className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">

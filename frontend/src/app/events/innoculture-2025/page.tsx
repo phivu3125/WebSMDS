@@ -174,8 +174,8 @@ export default function InnoCulture2025Page() {
             setSubmitSuccess("Đăng ký thành công! Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất.")
             setFormData({ fullName: "", email: "", phone: "", note: "" })
             handleCloseRegisterModal()
-        } catch (error: any) {
-            const message = error?.message || "Không thể gửi đăng ký. Vui lòng thử lại."
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Không thể gửi đăng ký. Vui lòng thử lại."
             setSubmitError(message)
         } finally {
             setIsSubmitting(false)

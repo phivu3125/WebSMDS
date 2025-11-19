@@ -247,9 +247,9 @@ export default function CreatePastEventPage() {
       } else {
         throw new Error("Không thể tạo sự kiện")
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to create past-event:", error)
-      const message = error?.message || "Không thể tạo sự kiện. Vui lòng thử lại."
+      const message = error instanceof Error ? error.message : "Không thể tạo sự kiện. Vui lòng thử lại."
       setSubmitError(message)
     } finally {
       setSaving(false)

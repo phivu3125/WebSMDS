@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, Twitter } from "lucide-react"
+import { Facebook, Youtube, Mail, Phone, MapPin } from "lucide-react"
 import { BambooPattern } from "../ui/bamboo-pattern"
 import Image from "next/image"
 import { subscribeNewsletter } from "@/lib/api/email-subcriptions"

@@ -5,13 +5,13 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Plus, Trash2, Upload, X } from "lucide-react"
 import SimpleRichEditor from "@/components/admin/simple-rich-editor"
-import { PastEvent, PastEventFeatureItem } from "@/types/PastEvent"
+import { PastEvent, PastEventFeatureItem, PastEventGalleryImage } from "@/types/PastEvent"
 import { adminApiFetch } from "@/lib/api/admin/base"
 import { uploadImage, deleteImage } from "@/lib/api/admin/uploads"
-import { SingleImageUpload, MultipleImageUpload, AddImageButton } from "@/components/admin/reusable-image-upload"
+import { SingleImageUpload, AddImageButton } from "@/components/admin/reusable-image-upload"
 
 type FeatureItem = PastEvent["featureList"]["items"][number]
-type GalleryImage = PastEvent["gallery"]["images"][number]
+type GalleryImage = PastEventGalleryImage
 
 type PastEventFormState = {
     title: string
@@ -190,9 +190,9 @@ const sanitizeFormData = (data: PastEventFormState): SanitizedPastEventPayload =
         gallery: {
             images: galleryImages,
         },
-        conclusion: {
+        conclusion: data.conclusion ? {
             content: data.conclusion.content,
-        },
+        } : undefined,
     }
 }
 
@@ -473,7 +473,7 @@ export default function PastEventForm({ eventId }: PastEventFormProps) {
             // Check if this is a new file or existing server image
             const newImages = item.newImages ?? []
             const existingImageCount = (item.images?.length ?? 0) - newImages.length
-            let removedImages = item.removedImages ?? []
+            const removedImages = item.removedImages ?? []
 
             if (imageIndex >= existingImageCount) {
                 // This is a new file, remove from newImages array
@@ -807,7 +807,7 @@ export default function PastEventForm({ eventId }: PastEventFormProps) {
             }
 
             // Validate conclusion content
-            if (isRichTextEmpty(formData.conclusion.content)) {
+            if (formData.conclusion && isRichTextEmpty(formData.conclusion.content)) {
                 newErrors.conclusion = "Vui lòng nhập nội dung kết luận"
             }
 
@@ -1321,7 +1321,7 @@ export default function PastEventForm({ eventId }: PastEventFormProps) {
                 <div className="bg-white rounded-lg shadow-md p-6 space-y-4">
                     <h2 className="text-xl font-bold text-gray-800">Kết luận</h2>
                     <SimpleRichEditor
-                        value={formData.conclusion.content}
+                        value={formData.conclusion?.content || ""}
                         onChange={(value) => {
                             handleConclusionChange(value)
                             if (errors.conclusion) {

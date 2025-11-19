@@ -1,8 +1,36 @@
-import { PastEvent, PastEventListItem } from '@/types/PastEvent';
+import { PastEvent, PastEventListItem, PastEventIntro, PastEventFeatureList, PastEventGallery, PastEventConclusion } from '@/types/PastEvent';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-const mapEvent = (event: any): PastEvent => ({
+interface PastEventApiResponse {
+    id: string;
+    slug: string;
+    title: string;
+    subtitle?: string;
+    description?: string;
+    year: number;
+    thumbnailImage?: string;
+    hero?: Record<string, unknown>;
+    intro?: { content: string; align: string };
+    featureList?: { items: unknown[] };
+    gallery?: { images: unknown[] };
+    conclusion?: { content: string };
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface PastEventListItemApiResponse {
+    id: string;
+    slug: string;
+    title: string;
+    description?: string;
+    year: number;
+    thumbnailImage?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+const mapEvent = (event: PastEventApiResponse): PastEvent => ({
     id: event.id,
     slug: event.slug,
     title: event.title,
@@ -13,18 +41,10 @@ const mapEvent = (event: any): PastEvent => ({
     hero: {
         ...(event.hero ?? {}),
     },
-    intro: {
-        ...(event.intro ?? { content: '', align: 'start' }),
-    },
-    featureList: {
-        ...(event.featureList ?? { items: [] }),
-    },
-    gallery: {
-        ...(event.gallery ?? { images: [] }),
-    },
-    conclusion: {
-        ...(event.conclusion ?? { content: '' }),
-    },
+    intro: (event.intro ?? { content: '', align: 'start' }) as PastEventIntro,
+    featureList: (event.featureList ?? { items: [] }) as PastEventFeatureList,
+    gallery: (event.gallery ?? { images: [] }) as PastEventGallery,
+    conclusion: (event.conclusion ?? { content: '' }) as PastEventConclusion,
     createdAt: event.createdAt,
     updatedAt: event.updatedAt,
 });
@@ -41,7 +61,7 @@ export async function getPastEvents(year?: number): Promise<PastEventListItem[]>
     }
 
     const data = await res.json();
-    return data.map((event: any) => ({
+    return data.map((event: PastEventListItemApiResponse) => ({
         id: event.id,
         slug: event.slug,
         title: event.title,

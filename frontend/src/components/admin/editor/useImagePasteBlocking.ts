@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { DOMParser } from 'prosemirror-model'
+import type { EditorView } from 'prosemirror-view'
 
 /**
  * Hook for blocking image paste with intelligent content filtering
@@ -76,13 +78,13 @@ export const useImagePasteBlocking = () => {
    */
   const handlePasteWithBlocking = (
     event: ClipboardEvent,
-    view: any,
+    view: EditorView,
     processContent: (html: string) => string
   ): boolean => {
     const clipboardData = event.clipboardData
 
     // Check for images in clipboard
-    const { hasImages, showNotification } = checkForImages(clipboardData)
+    const { hasImages } = checkForImages(clipboardData)
 
     // Get HTML content for structure detection
     event.preventDefault()
@@ -101,7 +103,6 @@ export const useImagePasteBlocking = () => {
       // Create a temporary div and parse with TipTap's DOM parser
       const tempDiv = document.createElement('div')
       tempDiv.innerHTML = processedHtml
-      const { DOMParser } = require('prosemirror-model')
       const parser = DOMParser.fromSchema(view.state.schema)
       const fragment = parser.parse(tempDiv, { preserveWhitespace: true })
 
@@ -133,7 +134,6 @@ export const useImagePasteBlocking = () => {
       // Create a temporary div and parse with TipTap's DOM parser
       const tempDiv = document.createElement('div')
       tempDiv.innerHTML = processedHtmlContent
-      const { DOMParser } = require('prosemirror-model')
       const parser = DOMParser.fromSchema(view.state.schema)
       const fragment = parser.parse(tempDiv, { preserveWhitespace: true })
 

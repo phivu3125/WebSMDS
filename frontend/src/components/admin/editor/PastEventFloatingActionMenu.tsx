@@ -28,21 +28,24 @@ export function PastEventFloatingActionMenu({ editor, onInsertImage }: PastEvent
     return node.type.name === 'paragraph' && node.content.size === 0
   }
 
-  // Update menu visibility
-  useEffect(() => {
-    const updateMenuVisibility = () => {
-      if (!editor) {
-        setMenuOpen(false)
-        return
-      }
-
-      const shouldShow = isEmptyLine()
-      setMenuOpen(shouldShow)
-
-      if (!shouldShow) {
-        setIsExpanded(false)
-      }
+  // Update menu visibility function
+  const updateMenuVisibility = () => {
+    if (!editor) {
+      setMenuOpen(false)
+      return
     }
+
+    const shouldShow = isEmptyLine()
+    setMenuOpen(shouldShow)
+
+    if (!shouldShow) {
+      setIsExpanded(false)
+    }
+  }
+
+  // Set up event listeners for menu visibility
+  useEffect(() => {
+    if (!editor) return
 
     editor.on('selectionUpdate', updateMenuVisibility)
     editor.on('transaction', updateMenuVisibility)
@@ -53,7 +56,7 @@ export function PastEventFloatingActionMenu({ editor, onInsertImage }: PastEvent
         editor.off('transaction', updateMenuVisibility)
       }
     }
-  }, [editor])
+  }, [editor, updateMenuVisibility, isEmptyLine])
 
   // Update menu position
   useEffect(() => {
@@ -62,7 +65,7 @@ export function PastEventFloatingActionMenu({ editor, onInsertImage }: PastEvent
 
       const { state } = editor
       const { $from } = state.selection
-      const coords = state.view.coordsAtPos($from.pos)
+      const coords = editor.view.coordsAtPos($from.pos)
 
       const menuEl = menuRef.current
       if (menuEl) {

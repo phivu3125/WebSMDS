@@ -15,24 +15,23 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  Download,
   Trash2,
   Edit,
   Eye
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface Column<T = any> {
+interface Column<T = Record<string, unknown>> {
   key: keyof T | string
   label: string
   sortable?: boolean
   searchable?: boolean
-  render?: (value: any, item: T, index: number) => React.ReactNode
+  render?: (value: unknown, item: T, index: number) => React.ReactNode
   width?: string
   className?: string
 }
 
-interface DataTableProps<T = any> {
+interface DataTableProps<T = Record<string, unknown>> {
   data: T[]
   columns: Column<T>[]
   loading?: boolean
@@ -78,7 +77,7 @@ interface DataTableProps<T = any> {
   emptyState?: React.ReactNode
 }
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends Record<string, unknown>>({
   data,
   columns,
   loading = false,

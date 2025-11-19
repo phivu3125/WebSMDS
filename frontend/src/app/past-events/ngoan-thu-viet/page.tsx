@@ -132,7 +132,7 @@ export default function NgoanThuVietPage() {
                                 ></iframe>
                             </div>
                             <p className="text-sm text-gray-600 mt-4 italic">
-                                Video tổng kết về Lễ hội Trung thu "Ngọạn Thu Việt"
+                                Video tổng kết về Lễ hội Trung thu &ldquo;Ngọạn Thu Việt&rdquo;
                             </p>
                         </div>
 

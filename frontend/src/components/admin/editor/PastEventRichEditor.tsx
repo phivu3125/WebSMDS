@@ -41,7 +41,7 @@ export default function PastEventRichEditor({
       showToolbar={showToolbar}
       toolbar={
         showToolbar && editable ? (
-          <EditorToolbar editor={undefined} showExtendedActions={false} />
+          <EditorToolbar editor={null} showExtendedActions={false} />
         ) : undefined
       }
     />
