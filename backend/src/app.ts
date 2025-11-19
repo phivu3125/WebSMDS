@@ -22,13 +22,15 @@ dotenv.config()
 const app = express()
 
 // Middleware
-app.use(cors({
-    origin: [
-        process.env.FRONTEND_URL || 'http://localhost:3000',
-        'http://localhost:3001', // Add port 3001 for development
-    ],
-    credentials: true
-}))
+app.use(
+    cors({
+        origin: '*',
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        credentials: true,
+        allowedHeaders: '*',
+        exposedHeaders: ['Content-Length', 'X-Requested-With', 'Authorization'],
+    }),
+);
 app.use(express.json())
 app.use(morgan('tiny'));
 app.use(helmet());
@@ -49,6 +51,9 @@ app.use('/api/past-events', pastEventsRoutes)
 
 // Static files
 app.use('/uploads', express.static('uploads'))
+app.use('/hello', async (req, res) => {
+    res.json({ message: 'Hello from WebSMDS Backend!' });
+})
 
 // Health check
 app.get('/health', async (req, res) => {

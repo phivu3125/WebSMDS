@@ -13,7 +13,7 @@ services:
     # environment:
     #   -
     ports:
-      - "80:3000"
+      - "3000:3000"
     depends_on:
       - backend
     networks:
@@ -30,7 +30,7 @@ services:
     # environment:
     #   -
     ports:
-      - "5001:5000"
+      - "5001:5001"
     networks:
       - websmds-network
 
