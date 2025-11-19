@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Image generation UI</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Arial; max-width:900px; margin:30px auto; }
+      .row{ display:flex; gap:12px; align-items:center }
+      img.preview{ max-width:200px; max-height:200px; border:1px solid #ddd; }
+      #results img{ max-width:320px; margin:8px; }
+      pre { background:#111; color:#eee; padding:12px; overflow:auto }
+    </style>
+  </head>
+  <body>
+    <h2>Upload input image and sample / target image</h2>
+
+    <form id="form">
+      <div>
+        <label>Input image (required)</label><br>
+        <input type="file" name="input_image" accept="image/*" required />
+      </div>
+
+      <div>
+        <label>Sample image (upload)</label><br>
+        <input type="file" name="sample_image" accept="image/*" />
+      </div>
+
+      <div>
+        <label>Or choose a sample from server</label><br>
+        <select name="sample_choice">
+          <option value="">-- none --</option>
+          {% for s in samples %}
+            <option value="{{ s }}">{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="margin-top:12px">
+        <button type="submit">Run generation</button>
+      </div>
+    </form>
+
+    <h3>Logs</h3>
+    <pre id="logs">No run yet.</pre>
+
+    <h3>Results</h3>
+    <div id="results"></div>
+
+    <script>
+      const form = document.getElementById('form');
+      const logs = document.getElementById('logs');
+      const results = document.getElementById('results');
+
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        logs.textContent = 'Uploading...';
+        results.innerHTML = '';
+
+        const data = new FormData(form);
+
+        try {
+          const res = await fetch('/run', { method: 'POST', body: data });
+          const json = await res.json();
+          logs.textContent = `Status: ${res.status}\nReturn code: ${json.returncode}\n\nSTDOUT:\n${json.stdout}\n\nSTDERR:\n${json.stderr}`;
+          if (json.outputs && json.outputs.length) {
+            for (const url of json.outputs) {
+              const img = document.createElement('img');
+              img.src = url;
+              results.appendChild(img);
+            }
+          } else {
+            results.textContent = 'No output images generated.';
+          }
+        } catch (err) {
+          logs.textContent = 'Error: ' + err.toString();
+        }
+      });
+    </script>
+  </body>
+</html>
