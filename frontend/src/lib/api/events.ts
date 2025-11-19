@@ -34,7 +34,7 @@ export async function submitEventRegistration(
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
     const message = error?.error || error?.message || "Không thể gửi đăng ký"
-    throw new Error("Failed to submit registration")
+    throw new Error(message)
   }
 
   return response.json()

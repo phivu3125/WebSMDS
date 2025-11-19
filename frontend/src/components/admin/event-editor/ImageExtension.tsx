@@ -1,12 +1,12 @@
 import { Node, mergeAttributes } from '@tiptap/core'
-import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
+import { ReactNodeViewRenderer, NodeViewWrapper, type ReactNodeViewProps } from '@tiptap/react'
 import React, { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { SingleImageUpload } from '@/components/admin/reusable-image-upload'
 import { X } from 'lucide-react'
 
 
-const ImageComponent = ({ node, updateAttributes, deleteNode }: any) => {
+const ImageComponent = ({ node, updateAttributes, deleteNode }: ReactNodeViewProps) => {
   const imgRef = useRef<HTMLImageElement>(null)
 
   const handleImageChange = (value: string | File | undefined) => {
@@ -68,8 +68,8 @@ const ImageComponent = ({ node, updateAttributes, deleteNode }: any) => {
         <img
           ref={imgRef}
           src={node.attrs.src}
-          alt={node.attrs.alt}
-          title={node.attrs.title}
+          alt={node.attrs.alt || undefined}
+          title={node.attrs.title || undefined}
           className="pointer-events-none select-none"
           draggable={false}
           style={{

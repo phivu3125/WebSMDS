@@ -157,7 +157,7 @@ export default function PastEventsSection() {
                                         mỗi lần dừng chân, ta lại tìm thấy thêm một sắc thái mới của văn hóa Việt.
                                         <br />
                                         <br />
-                                        Với chúng tôi, mỗi "mùa" của Sắc Màu Di Sản chính là một <span className="font-bold">chặng khám phá</span>, một
+                                        Với chúng tôi, mỗi &ldquo;mùa&rdquo; của Sắc Màu Di Sản chính là một <span className="font-bold">chặng khám phá</span>, một
                                         <span className="font-bold"> mảnh ghép sống động</span> trong bức tranh di sản chung.
                                     </p>
                                 </div>

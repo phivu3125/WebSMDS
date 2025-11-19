@@ -55,12 +55,13 @@ export default function PressAdminPage() {
     loadPressData()
   }, [])
 
-  const handleDelete = async (item: PressItem) => {
+  const handleDelete = async (item: Record<string, unknown>) => {
     const confirmed = window.confirm("Bạn có chắc muốn xóa nội dung truyền thông này?")
     if (!confirmed) return
 
     try {
-      await deletePress(item.id)
+      const pressItem = item as unknown as PressItem;
+      await deletePress(pressItem.id)
 
       // Refresh data
       const data = await getPress()
@@ -72,9 +73,10 @@ export default function PressAdminPage() {
     }
   }
 
-  const handleToggleFeatured = async (item: PressItem) => {
+  const handleToggleFeatured = async (item: Record<string, unknown>) => {
     try {
-      await updatePress(item.id, { featured: !item.featured })
+      const pressItem = item as unknown as PressItem;
+      await updatePress(pressItem.id, { featured: !pressItem.featured })
 
       // Refresh data
       const data = await getPress()
@@ -177,8 +179,8 @@ export default function PressAdminPage() {
       </div>
 
       <DataTable
-        data={pressItems || []}
-        columns={columns}
+        data={pressItems as unknown as Record<string, unknown>[] || []}
+        columns={columns as any}
         loading={loading}
         error={error}
         search={{
@@ -192,20 +194,23 @@ export default function PressAdminPage() {
             label: "Thêm nội dung",
             onClick: () => window.location.href = "/admin/press/create",
           },
-          edit: (item: PressItem) => {
-            window.location.href = `/admin/press/${item.id}/edit`
+          edit: (item: Record<string, unknown>) => {
+            window.location.href = `/admin/press/${(item as unknown as PressItem).id}/edit`
           },
           delete: handleDelete,
-          custom: (item: PressItem) => (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleToggleFeatured(item)}
-            >
-              <Star className="mr-1 h-3 w-3" fill={item.featured ? "currentColor" : "none"} />
-              {item.featured ? "Bỏ nổi bật" : "Nổi bật"}
-            </Button>
-          ),
+          custom: (item: Record<string, unknown>) => {
+            const pressItem = item as unknown as PressItem;
+            return (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleToggleFeatured(item)}
+              >
+                <Star className="mr-1 h-3 w-3" fill={pressItem.featured ? "currentColor" : "none"} />
+                {pressItem.featured ? "Bỏ nổi bật" : "Nổi bật"}
+              </Button>
+            );
+          },
         }}
         emptyState={
           <div className="py-10 text-center text-gray-500">

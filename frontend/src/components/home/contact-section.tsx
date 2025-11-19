@@ -233,7 +233,7 @@ export default function ContactSection() {
                                             className="text-base md:text-lg leading-relaxed text-justify"
                                             style={{ color: "white", lineHeight: 1.8 }}
                                         >
-                                            <span className="italic">Sắc Màu Di Sản </span> mong muốn trở thành <span className="font-bold">một không gian sáng tạo</span>, nơi mỗi người có thể góp một "gam màu" riêng vào bức tranh chung của văn hóa Việt. Ở đó, bạn có thể chia sẻ câu chuyện của mình, gửi gắm ý tưởng sáng tạo, hay đơn giản là cùng chúng tôi kể lại vẻ đẹp của di sản theo cách bạn cảm nhận.
+                                            <span className="italic">Sắc Màu Di Sản </span> mong muốn trở thành <span className="font-bold">một không gian sáng tạo</span>, nơi mỗi người có thể góp một &ldquo;gam màu&rdquo; riêng vào bức tranh chung của văn hóa Việt. Ở đó, bạn có thể chia sẻ câu chuyện của mình, gửi gắm ý tưởng sáng tạo, hay đơn giản là cùng chúng tôi kể lại vẻ đẹp của di sản theo cách bạn cảm nhận.
                                         </p>
 
                                         <p

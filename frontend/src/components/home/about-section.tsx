@@ -149,7 +149,7 @@ export default function AboutSection({ images = [] }) {
               <p className="leading-relaxed text-justify mb-4" style={{ color: "#1f2937", lineHeight: 1.7 }}>
                 Là những người trẻ đam mê văn hóa và bản sắc dân tộc, chúng tôi không chỉ đơn giản nghĩ rằng văn hóa là những
                 giá trị hiện diện trong xã hội, mà sâu xa hơn nữa, văn hóa chính là những gì thuộc căn tính, là tiếng vọng
-                từ trong cội nguồn, gốc rễ của mỗi con người, là một phần "nhân văn" trong tâm hồn của mỗi người dân Việt Nam.
+                từ trong cội nguồn, gốc rễ của mỗi con người, là một phần &ldquo;nhân văn&rdquo; trong tâm hồn của mỗi người dân Việt Nam.
               </p>
 
               {showFullText && (
@@ -163,7 +163,7 @@ export default function AboutSection({ images = [] }) {
                   </p>
 
                   <p className="leading-relaxed text-justify" style={{ color: "#1f2937", lineHeight: 1.7 }}>
-                    Tuy nhiên, qua những bước đi đầu tiên, chúng tôi nhận thấy rằng, để di sản thật sự "sống", cần phải có một
+                    Tuy nhiên, qua những bước đi đầu tiên, chúng tôi nhận thấy rằng, để di sản thật sự &ldquo;sống&rdquo;, cần phải có một
                     {boldText(' hệ sinh thái kết nối')}, nơi những giá trị truyền thống được tiếp sức bởi sáng tạo đương đại, nơi những nguồn lực
                     từ mọi miền mang bản sắc riêng, độc đáo hòa chung thành một hệ sinh thái sống động mang tên {italicText('Sắc Màu Di Sản')}.
                   </p>

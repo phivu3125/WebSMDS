@@ -158,7 +158,7 @@ export default function NewsSection({ initialPress = [] }: NewsSectionProps) {
             className="text-center text-lg md:text-xl italic mt-6 leading-relaxed max-w-3xl mx-auto"
             style={{ color: "#1f2937" }}
           >
-            "Sắc Màu Di Sản được đồng hành cùng các cơ quan truyền thông trong việc lan tỏa giá trị văn hóa."
+            &ldquo;Sắc Màu Di Sản được đồng hành cùng các cơ quan truyền thông trong việc lan tỏa giá trị văn hóa.&rdquo;
           </p>
         </motion.div>
 

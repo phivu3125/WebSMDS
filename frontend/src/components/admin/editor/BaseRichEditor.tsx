@@ -1,15 +1,14 @@
 'use client'
 
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle } from '@tiptap/extension-text-style'
-import { Extension } from '@tiptap/core'
+import { Extension, Node } from '@tiptap/core'
 import Color from '@tiptap/extension-color'
 import Link from '@tiptap/extension-link'
 import { useEffect } from 'react'
-import { DOMParser } from 'prosemirror-model'
 import { cn } from '@/lib/utils'
 import { processDocumentHtml } from './processDocumentHtml'
 import { useImagePasteBlocking } from './useImagePasteBlocking'
@@ -26,9 +25,9 @@ interface BaseRichEditorProps {
   theme?: EditorTheme
   minHeight?: string
   showToolbar?: boolean
-  extensions?: any[]
+  extensions?: (Extension | Node)[]
   toolbar?: React.ReactNode
-  onEditorReady?: (editor: any) => void
+  onEditorReady?: (editor: Editor) => void
 }
 
 // Theme configurations
@@ -91,7 +90,7 @@ const CustomKeyboardShortcuts = Extension.create({
 
         // Check if current node is a heading
         const currentDepth = $from.depth
-        let currentNode = $from.node(currentDepth)
+        const currentNode = $from.node(currentDepth)
 
         // Helper function to check if we're at the end of current line
         const isAtEndOfLine = () => {

@@ -1,25 +1,25 @@
 import { useState, useCallback, useRef } from 'react'
 
-export interface FormField {
-  value: any
+export interface FormField<T = unknown> {
+  value: T
   error: string | null
   touched: boolean
 }
 
-export interface FormState<T extends Record<string, any>> {
+export interface FormState<T extends Record<string, unknown>> {
   fields: T
   isSubmitting: boolean
   isValid: boolean
   isDirty: boolean
 }
 
-export interface UseFormOptions<T extends Record<string, any>> {
+export interface UseFormOptions<T extends Record<string, unknown>> {
   initialValues: T
-  validation?: Partial<Record<keyof T, (value: any) => string | null>>
+  validation?: Partial<Record<keyof T, (value: unknown) => string | null>>
   onSubmit?: (values: T) => Promise<void> | void
 }
 
-export interface UseFormReturn<T extends Record<string, any>> {
+export interface UseFormReturn<T extends Record<string, unknown>> {
   state: FormState<T>
   setFieldValue: <K extends keyof T>(field: K, value: T[K]) => void
   setFieldError: <K extends keyof T>(field: K, error: string | null) => void
@@ -31,15 +31,15 @@ export interface UseFormReturn<T extends Record<string, any>> {
   validateForm: () => boolean
 }
 
-export function useForm<T extends Record<string, any>>({
+export function useForm<T extends Record<string, unknown>>({
   initialValues,
   validation,
   onSubmit,
 }: UseFormOptions<T>): UseFormReturn<T> {
   const isMountedRef = useRef(true)
 
-  const createInitialFields = useCallback((values: T): Record<keyof T, FormField> => {
-    const fields = {} as Record<keyof T, FormField>
+  const createInitialFields = useCallback((values: T): Record<keyof T, FormField<T[keyof T]>> => {
+    const fields = {} as Record<keyof T, FormField<T[keyof T]>>
     Object.keys(values).forEach(key => {
       const k = key as keyof T
       fields[k] = {
@@ -51,7 +51,7 @@ export function useForm<T extends Record<string, any>>({
     return fields
   }, [])
 
-  const [fields, setFields] = useState<Record<keyof T, FormField>>(() => createInitialFields(initialValues))
+  const [fields, setFields] = useState<Record<keyof T, FormField<T[keyof T]>>>(() => createInitialFields(initialValues))
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const validateField = useCallback(
@@ -184,7 +184,7 @@ export function useForm<T extends Record<string, any>>({
 
 // Helper for common validation functions
 export const validators = {
-  required: (message = 'This field is required') => (value: any) => {
+  required: (message = 'This field is required') => (value: unknown) => {
     if (value === null || value === undefined || value === '') {
       return message
     }

@@ -1,6 +1,3 @@
-import { Category } from './Category';
-import { Brand } from './Brand';
-
 export interface Product {
     id: number
     name: string

@@ -11,14 +11,14 @@ interface UseApiCallReturn<T> extends ApiState<T> {
   reset: () => void
 }
 
-export function useApiCall<T = any>(): UseApiCallReturn<T> {
+export function useApiCall<T = unknown>(): UseApiCallReturn<T> {
   const [state, setState] = useState<ApiState<T>>({
     data: null,
     loading: false,
     error: null,
   })
 
-  const activeRequestRef = useRef<Promise<any> | null>(null)
+  const activeRequestRef = useRef<Promise<T> | null>(null)
 
   const execute = useCallback(async (apiCall: () => Promise<T>) => {
     // Cancel any existing request
@@ -76,7 +76,7 @@ interface UsePaginatedApiCallReturn<T> extends PaginatedState<T> {
   reset: () => void
 }
 
-export function usePaginatedApiCall<T = any>(): UsePaginatedApiCallReturn<T> {
+export function usePaginatedApiCall<T = unknown>(): UsePaginatedApiCallReturn<T> {
   const [state, setState] = useState<PaginatedState<T>>({
     data: null,
     loading: false,

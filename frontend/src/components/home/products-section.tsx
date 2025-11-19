@@ -64,14 +64,14 @@ export default function ProductsSection() {
                         className="text-4xl md:text-5xl font-serif font-bold mb-4 text-balance"
                         style={{ color: "#D4AF37" }}
                     >
-                        "CHẠM" VÀO DI SẢN VÀ SÁNG TẠO
+                        &ldquo;CHẠM&rdquo; VÀO DI SẢN VÀ SÁNG TẠO
                     </h2>
                     <div className="w-24 h-1 mx-auto" style={{ backgroundColor: "#D4AF37" }} />
                     <p
                         className="text-center text-lg md:text-xl italic mt-6 leading-relaxed max-w-3xl mx-auto"
                         style={{ color: "#1f2937" }}
                     >
-                        "Di sản vượt qua ranh giới bảo tồn và trở thành cảm hứng sáng tạo."
+                        &ldquo;Di sản vượt qua ranh giới bảo tồn và trở thành cảm hứng sáng tạo.&rdquo;
                     </p>
                 </motion.div>
 

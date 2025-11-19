@@ -57,7 +57,6 @@ export function AdminErrorFallback({ error, resetError }: AdminErrorBoundaryProp
 
 // Special error boundary for admin sections
 export function AdminSectionErrorBoundary({
-  children,
   section,
 }: {
   children: React.ReactNode

@@ -127,7 +127,7 @@ export default function PartnersSection() {
                         className="text-center text-xl md:text-2xl italic leading-relaxed mb-6"
                         style={{ color: "white" }}
                     >
-                        “Chúng tôi tin rằng di sản chỉ có thể "sống" khi được chung tay kể tiếp.”
+                        &ldquo;Chúng tôi tin rằng di sản chỉ có thể &ldquo;sống&rdquo; khi được chung tay kể tiếp.&rdquo;
                     </p>
 
                     <AnimatePresence>
@@ -150,7 +150,7 @@ export default function PartnersSection() {
                                         Trên hành trình lan tỏa giá trị văn hóa, <span className="italic">Sắc Màu Di Sản </span>
                                         không bước đi một
                                         mình, mà chúng tôi rất hạnh phúc khi được sánh vai cùng những người bạn đồng
-                                        hành — những "đồng đội" mang trong mình tình yêu sâu sắc với truyền thống và
+                                        hành — những &ldquo;đồng đội&rdquo; mang trong mình tình yêu sâu sắc với truyền thống và
                                         khát vọng đưa di sản trở lại trong đời sống hôm nay. Họ đến từ những miền giá
                                         trị khác nhau, cùng chung một niềm tin: di sản cần được sống, được cảm, và
                                         được kể tiếp bằng tình yêu và sáng tạo.

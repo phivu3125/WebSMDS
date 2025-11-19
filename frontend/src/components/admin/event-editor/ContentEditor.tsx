@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import { type Editor } from '@tiptap/react'
 import { BaseRichEditor } from '../editor/BaseRichEditor'
 import { EditorToolbar } from '../editor/EditorToolbar'
 import { CustomImage } from './ImageExtension'
@@ -22,7 +23,7 @@ export function ContentEditor({
   className = '',
   editable = true,
 }: ContentEditorProps) {
-  const [editor, setEditor] = useState<any>(null)
+  const [editor, setEditor] = useState<Editor | null>(null)
 
   const insertImage = () => {
     editor?.chain().focus().insertContent({

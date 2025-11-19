@@ -2,24 +2,13 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
 import { ArrowLeft, Save, Eye, X } from "lucide-react"
 import Link from "next/link"
 import { adminApi } from "@/lib/api"
-import { uploadImage, deleteImage } from "@/lib/api/admin/uploads"
 import { EventPreview } from "./components/EventPreview"
 import { SingleImageUpload } from "@/components/admin/reusable-image-upload"
 import { ContentEditor } from "@/components/admin/event-editor/ContentEditor"
-
-interface EventSection {
-  id: string
-  title: string
-  items: string[]
-  position: number
-}
 
 interface Event {
   id: string
@@ -288,9 +277,9 @@ export default function EditEventPage() {
       setTimeout(() => {
         router.push("/admin/events")
       }, 2000)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to update event:", error)
-      const message = error?.message || "Không thể cập nhật sự kiện. Vui lòng thử lại."
+      const message = error instanceof Error ? error.message : "Không thể cập nhật sự kiện. Vui lòng thử lại."
       setSubmitError(message)
     } finally {
       setSaving(false)
@@ -363,7 +352,7 @@ export default function EditEventPage() {
     id: event.id,
     image: typeof formData.heroImage === 'string' ? formData.heroImage : undefined,
     subtitle: formData.subtitle,
-    fullDescription: `
+    description: `
       <div class="event-intro">
         <h2 style="color: #7342ba; font-size: 2rem; margin: 2rem 0 1rem 0; font-family: 'serif'; font-weight: 700;">Về sự kiện</h2>
         ${formData.eventIntro}

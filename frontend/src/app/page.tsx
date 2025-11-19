@@ -9,7 +9,7 @@ async function fetchHomeEvents(): Promise<HomeEvent[]> {
     const response = await getEvents({ status: "published" })
     const data = Array.isArray(response) ? response : response?.data ?? []
 
-    return data.slice(0, 5).map((event: any) => ({
+    return data.slice(0, 5).map((event: { id: string; slug: string; title: string; description: string; dateDisplay?: string | null; image?: string | null }) => ({
       id: event.id,
       slug: event.slug,
       title: event.title,
@@ -38,6 +38,8 @@ async function fetchHomePress(): Promise<HomePress[]> {
       link: item.link,
       image: item.image,
       featured: item.featured,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
     }))
   } catch (error) {
     console.error("Failed to fetch home press:", error)

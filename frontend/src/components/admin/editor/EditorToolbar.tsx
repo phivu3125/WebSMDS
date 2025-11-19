@@ -7,9 +7,10 @@ import {
   Heading3,
 } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
+import { type Editor } from '@tiptap/react'
 
 interface EditorToolbarProps {
-  editor: any
+  editor: Editor | null
   showExtendedActions?: boolean // For event editor with headings only
 }
 
