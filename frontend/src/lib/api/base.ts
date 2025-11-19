@@ -31,4 +31,28 @@ export async function apiFetch(input: string, init?: RequestInit) {
   }
 }
 
+export async function safeApiFetch(input: string, init?: RequestInit) {
+  const isDev = process.env.NODE_ENV === 'development'
+
+  try {
+    const response = await apiFetch(input, init)
+
+    if (!response.ok) {
+      if (isDev) console.warn(`API request failed: ${response.status} ${response.statusText}`)
+      return null
+    }
+
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      if (isDev) console.warn('API response is not JSON')
+      return null
+    }
+
+    return response
+  } catch (error) {
+    if (isDev) console.warn('API fetch failed:', error)
+    return null
+  }
+}
+
 export { API_BASE_URL }

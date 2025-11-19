@@ -1,4 +1,4 @@
-import { apiFetch } from "./base"
+import { apiFetch, safeApiFetch } from "./base"
 
 export async function getEvents(filters?: { status?: string; featured?: boolean }) {
   const params = new URLSearchParams()
@@ -6,8 +6,11 @@ export async function getEvents(filters?: { status?: string; featured?: boolean 
   if (filters?.featured !== undefined) params.append("featured", String(filters.featured))
 
   const query = params.toString()
-  const response = await apiFetch(`events${query ? `?${query}` : ""}`)
-  if (!response.ok) throw new Error("Failed to fetch events")
+  const response = await safeApiFetch(`events${query ? `?${query}` : ""}`)
+  if (!response) {
+    console.warn("Events API not available, returning empty array")
+    return []
+  }
   return response.json()
 }
 
