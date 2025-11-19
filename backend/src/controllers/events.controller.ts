@@ -17,11 +17,6 @@ export const getAllEvents = async (req: Request, res: Response) => {
     const events = await prisma.event.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: {
-        sections: {
-          orderBy: { position: 'asc' },
-        },
-      },
     })
 
     res.json(events)
@@ -178,11 +173,6 @@ export const getEventBySlug = async (req: Request, res: Response) => {
     const { slug } = req.params
     const event = await prisma.event.findUnique({
       where: { slug },
-      include: {
-        sections: {
-          orderBy: { position: 'asc' }
-        }
-      }
     })
 
     if (!event || event.status !== 'published') {
@@ -201,11 +191,6 @@ export const getEventByIdAdmin = async (req: Request, res: Response) => {
     const { id } = req.params
     const event = await prisma.event.findUnique({
       where: { id },
-      include: {
-        sections: {
-          orderBy: { position: 'asc' }
-        }
-      }
     })
 
     if (!event) {
@@ -222,35 +207,50 @@ export const getEventByIdAdmin = async (req: Request, res: Response) => {
 export const createEvent = async (req: Request, res: Response) => {
   try {
     const body = req.body ?? {}
-    const { sections = [], ...rest } = body as any
-    const eventData = { ...rest }
+    const eventData = { ...body }
 
-    const normalizedSections = Array.isArray(sections)
-      ? sections.map((section: any, index: number) => ({
-        title: section?.title ?? '',
-        items: Array.isArray(section?.items) ? section.items : [],
-        position:
-          typeof section?.position === 'number' ? section.position : index,
-      }))
-      : []
+    // Validate required fields
+    if (!eventData.title?.trim()) {
+      return res.status(400).json({ error: 'Title is required' })
+    }
+
+    if (!eventData.description?.trim()) {
+      return res.status(400).json({ error: 'Description is required' })
+    }
+
+    if (!eventData.slug?.trim()) {
+      return res.status(400).json({ error: 'Slug is required' })
+    }
+
+    // Handle subtitle (optional field - trim if provided)
+    if (eventData.subtitle && typeof eventData.subtitle === 'string') {
+      eventData.subtitle = eventData.subtitle.trim()
+    }
+
+    // Handle eventIntro and eventDetails (optional fields - trim if provided)
+    if (eventData.eventIntro && typeof eventData.eventIntro === 'string') {
+      eventData.eventIntro = eventData.eventIntro.trim()
+    }
+
+    if (eventData.eventDetails && typeof eventData.eventDetails === 'string') {
+      eventData.eventDetails = eventData.eventDetails.trim()
+    }
 
     const event = await prisma.event.create({
       data: {
-        ...eventData,
-        sections: normalizedSections.length
-          ? {
-            create: normalizedSections.map((section) => ({
-              title: section.title,
-              items: section.items,
-              position: section.position,
-            })),
-          }
-          : undefined,
-      },
-      include: {
-        sections: {
-          orderBy: { position: 'asc' },
-        },
+        title: eventData.title,
+        subtitle: eventData.subtitle,
+        slug: eventData.slug,
+        description: eventData.description,
+        eventIntro: eventData.eventIntro,
+        eventDetails: eventData.eventDetails,
+        image: eventData.image,
+        location: eventData.location,
+        openingHours: eventData.openingHours,
+        dateDisplay: eventData.dateDisplay,
+        venueMap: eventData.venueMap,
+        pricingImage: eventData.pricingImage,
+        status: eventData.status || 'draft',
       },
     })
 
@@ -265,78 +265,53 @@ export const updateEvent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
     const body = req.body ?? {}
-    const { sections = [], ...rest } = body as any
-    const eventData: Record<string, any> = { ...rest }
+    const eventData: Record<string, any> = { ...body }
     delete eventData.id
 
-    const normalizedSections = Array.isArray(sections)
-      ? sections.map((section: any, index: number) => ({
-        id: typeof section?.id === 'string' ? section.id : undefined,
-        title: section?.title ?? '',
-        items: Array.isArray(section?.items) ? section.items : [],
-        position:
-          typeof section?.position === 'number' ? section.position : index,
-      }))
-      : []
+    // Validate required fields if provided
+    if (eventData.title !== undefined && !eventData.title?.trim()) {
+      return res.status(400).json({ error: 'Title is required' })
+    }
 
-    const updatedEvent = await prisma.$transaction(async (tx) => {
-      await tx.event.update({
-        where: { id },
-        data: eventData,
-      })
+    if (eventData.description !== undefined && !eventData.description?.trim()) {
+      return res.status(400).json({ error: 'Description is required' })
+    }
 
-      const existingSections = await tx.eventSection.findMany({
-        where: { eventId: id },
-        select: { id: true },
-      })
+    if (eventData.slug !== undefined && !eventData.slug?.trim()) {
+      return res.status(400).json({ error: 'Slug is required' })
+    }
 
-      const existingIds = new Set(existingSections.map((section) => section.id))
-      const incomingExistingIds = new Set(
-        normalizedSections
-          .filter((section) => section.id && existingIds.has(section.id))
-          .map((section) => section.id as string)
-      )
+    // Handle subtitle (optional field - trim if provided)
+    if (eventData.subtitle && typeof eventData.subtitle === 'string') {
+      eventData.subtitle = eventData.subtitle.trim()
+    }
 
-      const idsToDelete = existingSections
-        .filter((section) => !incomingExistingIds.has(section.id))
-        .map((section) => section.id)
+    // Handle eventIntro and eventDetails (optional fields - trim if provided)
+    if (eventData.eventIntro && typeof eventData.eventIntro === 'string') {
+      eventData.eventIntro = eventData.eventIntro.trim()
+    }
 
-      if (idsToDelete.length) {
-        await tx.eventSection.deleteMany({
-          where: { id: { in: idsToDelete } },
-        })
-      }
+    if (eventData.eventDetails && typeof eventData.eventDetails === 'string') {
+      eventData.eventDetails = eventData.eventDetails.trim()
+    }
 
-      for (const section of normalizedSections) {
-        const data = {
-          title: section.title,
-          items: section.items,
-          position: section.position,
-        }
-
-        if (section.id && existingIds.has(section.id)) {
-          await tx.eventSection.update({
-            where: { id: section.id },
-            data,
-          })
-        } else {
-          await tx.eventSection.create({
-            data: {
-              ...data,
-              eventId: id,
-            },
-          })
-        }
-      }
-
-      return tx.event.findUnique({
-        where: { id },
-        include: {
-          sections: {
-            orderBy: { position: 'asc' },
-          },
-        },
-      })
+    const updatedEvent = await prisma.event.update({
+      where: { id },
+      data: {
+        title: eventData.title,
+        subtitle: eventData.subtitle,
+        slug: eventData.slug,
+        description: eventData.description,
+        eventIntro: eventData.eventIntro,
+        eventDetails: eventData.eventDetails,
+        image: eventData.image,
+        location: eventData.location,
+        openingHours: eventData.openingHours,
+        dateDisplay: eventData.dateDisplay,
+        venueMap: eventData.venueMap,
+        pricingImage: eventData.pricingImage,
+        status: eventData.status,
+      },
     })
 
     res.json(updatedEvent)

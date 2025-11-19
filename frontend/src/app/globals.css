@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "../styles/editor.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -37,6 +38,11 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Custom heading colors - matching public event page */
+  --heading-1: rgb(115, 66, 186);
+  --heading-2: #5b21b6;
+  --heading-3: rgb(182, 104, 161);
 }
 
 .dark {
@@ -120,10 +126,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground overflow-x-hidden;
   }
-  
+
   /* Custom aspect ratio for videos */
   .aspect-video {
     aspect-ratio: 16 / 9;

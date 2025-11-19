@@ -29,6 +29,7 @@ const PartnersSection = dynamic(() => import("@/components/home/partners-section
 const NewsSection = dynamic(() => import("@/components/home/news-section"), { ssr: false })
 const TalkSection = dynamic(() => import("@/components/home/talk-section"), { ssr: false })
 const ContactSection = dynamic(() => import("@/components/home/contact-section"), { ssr: false })
+const SpecialEventSection = dynamic(() => import("@/components/home/special-event-section"), { ssr: false })
 
 export type HomeEvent = {
   id: string
@@ -84,6 +85,9 @@ export default function HomeClient({ events = [], press = [], talkSection }: Hom
       <Navigation isScrolled={isScrolled} />
       <HeroSection />
       <EventsSection initialEvents={events} />
+      <LazySection id="special-event">
+        <SpecialEventSection />
+      </LazySection>
       <LazySection id="about">
         <AboutSection />
       </LazySection>

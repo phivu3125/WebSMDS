@@ -1,13 +1,8 @@
-// Re-export the refactored SimpleRichEditor for backward compatibility
-export { default } from './editor/SimpleRichEditor'
+// Re-export PastEventRichEditor as SimpleRichEditor for backward compatibility
+import PastEventRichEditor from './editor/PastEventRichEditor'
+import type { SimpleRichEditorProps } from './editor/PastEventRichEditor'
+import { EditorToolbar, EditorButton } from './editor/PastEventRichEditor'
 
-// Re-export types and other components for convenience
-export type { SimpleRichEditorProps } from './editor/SimpleRichEditor'
-export {
-  EditorToolbar,
-  LinkDialog,
-  EditorButton,
-  FontFamilyDropdown,
-  FontSizeDropdown,
-  ColorPicker,
-} from './editor/SimpleRichEditor'
+export default PastEventRichEditor
+export type { SimpleRichEditorProps }
+export { EditorToolbar, EditorButton }

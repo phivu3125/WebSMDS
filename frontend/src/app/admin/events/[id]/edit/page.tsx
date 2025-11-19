@@ -12,6 +12,7 @@ import { adminApi } from "@/lib/api"
 import { uploadImage, deleteImage } from "@/lib/api/admin/uploads"
 import { EventPreview } from "./components/EventPreview"
 import { SingleImageUpload } from "@/components/admin/reusable-image-upload"
+import { ContentEditor } from "@/components/admin/event-editor/ContentEditor"
 
 interface EventSection {
   id: string
@@ -23,38 +24,35 @@ interface EventSection {
 interface Event {
   id: string
   title: string
+  subtitle?: string
   slug: string
   description: string
-  fullDescription?: string
+  eventIntro?: string
+  eventDetails?: string
   image?: string
   location?: string
   openingHours?: string
   dateDisplay?: string
   venueMap?: string
   pricingImage?: string
-  sections?: EventSection[]
   status: string
 }
 
 interface EventFormData {
   title: string
+  subtitle: string
   slug: string
   description: string
-  fullDescription: string
-  image: string
-  imageFile?: File
-  removedImage?: boolean
+  eventIntro: string    // "Về sự kiện" content
+  eventDetails: string  // "Chi tiết sự kiện" content
+  heroImage: string | File
   location: string
-  openingHours: string
   dateDisplay: string
-  venueMap: string
-  venueMapFile?: File
-  removedVenueMap?: boolean
-  pricingImage: string
-  pricingImageFile?: File
-  removedPricingImage?: boolean
+  openingHours: string
   status: string
 }
+
+type EditableStringFields = 'title' | 'subtitle' | 'dateDisplay' | 'location' | 'openingHours' | 'slug'
 
 export default function EditEventPage() {
   const params = useParams<{ id: string }>()
@@ -67,65 +65,50 @@ export default function EditEventPage() {
   const [statusConfirmOpen, setStatusConfirmOpen] = useState(false)
   const [statusUpdating, setStatusUpdating] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
+  const [slugError, setSlugError] = useState<string | null>(null)
+  const [slugTouched, setSlugTouched] = useState<boolean>(false)
+
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
+    subtitle: "",
     slug: "",
     description: "",
-    fullDescription: "",
-    image: "",
+    eventIntro: "",
+    eventDetails: "",
+    heroImage: "",
     location: "",
-    openingHours: "",
     dateDisplay: "",
-    venueMap: "",
-    pricingImage: "",
+    openingHours: "",
     status: "draft"
   })
-  const [sections, setSections] = useState<EventSection[]>([])
-  const [invalidSectionItems, setInvalidSectionItems] = useState<Record<string, number[]>>({})
-  const [invalidSectionTitles, setInvalidSectionTitles] = useState<Set<string>>(new Set())
+
+  const [editingField, setEditingField] = useState<EditableStringFields | null>(null)
+  const [tempValue, setTempValue] = useState("")
   const slugInputRef = useRef<HTMLInputElement>(null)
-  const [slugTouched, setSlugTouched] = useState(false)
 
-  const scrollToFirstInvalid = (invalidMap: Record<string, number[]>) => {
-    for (const section of sections) {
-      const indices = invalidMap[section.id]
-      if (indices && indices.length) {
-        const targetId = `section-${section.id}-item-${indices[0]}`
-        const element = document.getElementById(targetId)
-        if (element) {
-          setTimeout(() => {
-            element.scrollIntoView({ behavior: "smooth", block: "center" })
-          }, 0)
-        }
-        break
+  // No parsing needed - we use separate eventIntro and eventDetails fields directly
+
+  // Auto-generate slug from title (when title changes and slug not touched)
+  useEffect(() => {
+    if (formData.title && !slugTouched) {
+      const sanitized = sanitizeSlug(formData.title)
+      if (sanitized && sanitized !== formData.slug) {
+        setFormData(prev => ({ ...prev, slug: sanitized }))
       }
     }
-  }
+  }, [formData.title, slugTouched])
 
-  const scrollToFirstInvalidTitle = (invalidIds: Set<string>) => {
-    for (const section of sections) {
-      if (invalidIds.has(section.id)) {
-        const targetId = `section-${section.id}-title`
-        const element = document.getElementById(targetId)
-        if (element) {
-          setTimeout(() => {
-            element.scrollIntoView({ behavior: "smooth", block: "center" })
-          }, 0)
-        }
-        break
+  // Live update slug while editing the title input if slug not touched
+  useEffect(() => {
+    if (editingField === 'title' && !slugTouched && tempValue) {
+      const sanitized = sanitizeSlug(tempValue)
+      if (sanitized && sanitized !== formData.slug) {
+        setFormData(prev => ({ ...prev, slug: sanitized }))
       }
     }
-  }
-
-  const scrollToSlugError = () => {
-    if (slugInputRef.current) {
-      slugInputRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center' 
-      })
-      slugInputRef.current.focus()
-    }
-  }
+  }, [editingField, tempValue, slugTouched])
 
   const sanitizeSlug = (input: string) =>
     input
@@ -161,22 +144,20 @@ export default function EditEventPage() {
     try {
       const data = await adminApi.getEventById(id)
       setEvent(data)
-      
+
       setFormData({
         title: data.title || "",
+        subtitle: data.subtitle || "",
         slug: data.slug || "",
         description: data.description || "",
-        fullDescription: data.fullDescription || "",
-        image: data.image || "",
+        eventIntro: data.eventIntro || "",
+        eventDetails: data.eventDetails || "",
+        heroImage: data.image || "",
         location: data.location || "",
-        openingHours: data.openingHours || "",
         dateDisplay: data.dateDisplay || "",
-        venueMap: data.venueMap || "",
-        pricingImage: data.pricingImage || "",
+        openingHours: data.openingHours || "",
         status: data.status || "draft"
       })
-      
-      setSections(data.sections || [])
     } catch (error) {
       console.error("Failed to fetch event:", error)
     } finally {
@@ -184,322 +165,133 @@ export default function EditEventPage() {
     }
   }
 
-  const handleInputChange = (field: keyof EventFormData, value: string | File) => {
-    setValidationError(null)
-
-    if (field === "slug") {
+  const handleInlineEdit = (field: EditableStringFields, value: string) => {
+    setEditingField(field)
+    if (field === 'slug') {
+      setTempValue(sanitizeSlug(value))
+      setSlugError(null)
       setSlugTouched(true)
-    }
-
-    setFormData(prev => {
-      const updated = {
-        ...prev,
-        [field]: field === "slug" ? sanitizeSlug(value as string) : value,
-      }
-
-      if (field === "title") {
-        updated.slug = sanitizeSlug(value as string)
-        setSlugTouched(false)
-      }
-
-      return updated
-    })
-  }
-
-  const handleImageChange = (field: 'image' | 'venueMap' | 'pricingImage', value: string | File) => {
-    setValidationError(null)
-
-    setFormData(prev => {
-      const updated = { ...prev } as any // Use any to allow dynamic property access
-
-      if (value instanceof File) {
-        // New file uploaded
-        updated[field] = "" // Clear the URL since we have a new file
-        updated[`${field}File`] = value
-        updated[`removed${field.charAt(0).toUpperCase() + field.slice(1)}`] = false
-      } else if (value === "") {
-        // Image removed
-        if (prev[field]) {
-          // Had an existing image, mark for removal
-          updated[`removed${field.charAt(0).toUpperCase() + field.slice(1)}`] = true
-        }
-        updated[field] = ""
-        updated[`${field}File`] = undefined
-      } else {
-        // URL set (shouldn't happen in new system)
-        updated[field] = value
-      }
-
-      return updated as EventFormData
-    })
-  }
-
-  const addSection = () => {
-    const newSection: EventSection = {
-      id: Date.now().toString(),
-      title: "",
-      items: [""],
-      position: sections.length
-    }
-    setSections([...sections, newSection])
-    setInvalidSectionTitles(prev => new Set([...prev, newSection.id]))
-    setInvalidSectionItems(prev => ({ ...prev, [newSection.id]: [0] }))
-  }
-
-  const updateSection = (index: number, field: string, value: any) => {
-    const updatedSections = [...sections]
-    if (field === "title") {
-      updatedSections[index].title = value
-      const sectionId = updatedSections[index].id
-      setInvalidSectionTitles(prev => {
-        const next = new Set(prev)
-        if (!value.trim()) {
-          next.add(sectionId)
-        } else {
-          next.delete(sectionId)
-        }
-        return next
-      })
-    } else if (field === "items") {
-      updatedSections[index].items = value
-    }
-    setSections(updatedSections)
-  }
-
-  const addSectionItem = (sectionIndex: number) => {
-    const section = sections[sectionIndex]
-    if (!section) return
-
-    if (section.items.some(item => !item.trim())) {
-      setValidationError("Vui lòng điền nội dung cho các mục hiện có trước khi thêm mục mới.")
-      const nextInvalid = {
-        ...invalidSectionItems,
-        [section.id]: section.items
-          .map((item, idx) => (!item.trim() ? idx : null))
-          .filter((idx): idx is number => idx !== null),
-      }
-      setInvalidSectionItems(nextInvalid)
-      scrollToFirstInvalid(nextInvalid)
-      return
-    }
-
-    setValidationError(null)
-    setInvalidSectionItems(prev => ({ ...prev, [section.id]: [] }))
-    const updatedSections = [...sections]
-    updatedSections[sectionIndex] = {
-      ...section,
-      items: [...section.items, ""],
-    }
-    setSections(updatedSections)
-  }
-
-  const updateSectionItem = (sectionIndex: number, itemIndex: number, value: string) => {
-    const updatedSections = [...sections]
-    updatedSections[sectionIndex].items[itemIndex] = value
-    setSections(updatedSections)
-
-    const sectionId = updatedSections[sectionIndex].id
-    setInvalidSectionItems(prev => {
-      const current = prev[sectionId] || []
-      const filtered = current.filter(idx => idx !== itemIndex)
-      if (!value.trim()) {
-        return { ...prev, [sectionId]: [...filtered, itemIndex] }
-      }
-      const next = filtered.length ? { ...prev, [sectionId]: filtered } : { ...prev }
-      if (!filtered.length) {
-        delete next[sectionId]
-        return { ...next }
-      }
-      return next
-    })
-  }
-
-  const removeSectionItem = (sectionIndex: number, itemIndex: number) => {
-    const updatedSections = [...sections]
-    updatedSections[sectionIndex].items.splice(itemIndex, 1)
-    setSections(updatedSections)
-
-    const sectionId = updatedSections[sectionIndex].id
-    setInvalidSectionItems(prev => {
-      if (!prev[sectionId]) return prev
-      const filtered = prev[sectionId]
-        .filter(idx => idx !== itemIndex)
-        .map(idx => (idx > itemIndex ? idx - 1 : idx))
-      if (!filtered.length) {
-        const { [sectionId]: _, ...rest } = prev
-        return rest
-      }
-      return { ...prev, [sectionId]: filtered }
-    })
-  }
-
-  const removeSection = (index: number) => {
-    const updatedSections = sections.filter((_, i) => i !== index)
-    setSections(updatedSections)
-    const removedId = sections[index]?.id
-    if (removedId) {
-      setInvalidSectionTitles(prev => {
-        const next = new Set(prev)
-        next.delete(removedId)
-        return next
-      })
+    } else {
+      setTempValue(value)
     }
   }
 
-  const saveEvent = async () => {
-    const isMissingRequiredField = [
-      formData.title,
-      formData.slug,
-      formData.description,
-      formData.fullDescription,
-      formData.dateDisplay,
-      formData.location,
-      formData.openingHours,
-    ].some(value => !value.trim())
+  const handleInlineSave = async () => {
+    if (!editingField) return
 
-    if (isMissingRequiredField) {
-      setValidationError("Vui lòng nhập đầy đủ các trường bắt buộc.")
-      return
-    }
-
-    const emptyTitles = new Set(
-      sections.filter(section => !section.title.trim()).map(section => section.id)
-    )
-    if (emptyTitles.size) {
-      setValidationError("Mỗi phần cần có tiêu đề.")
-      setInvalidSectionTitles(emptyTitles)
-      scrollToFirstInvalidTitle(emptyTitles)
-      return
-    }
-
-    const hasEmptySectionItem = sections.some(section =>
-      section.items.some(item => !item.trim())
-    )
-
-    if (hasEmptySectionItem) {
-      setValidationError("Mỗi mục trong phần nội dung phải có nội dung trước khi lưu.")
-      const invalidMap = Object.fromEntries(
-        sections.map(section => [
-          section.id,
-          section.items
-            .map((item, idx) => (!item.trim() ? idx : null))
-            .filter((idx): idx is number => idx !== null),
-        ]).filter(([, indices]) => indices.length)
-      )
-      setInvalidSectionItems(invalidMap)
-      scrollToFirstInvalid(invalidMap)
-      return
-    }
-
-    const hasSectionTitleWithoutContent = sections.some(section => {
-      if (!section.title.trim()) return false
-      if (!section.items.length) return true
-      return section.items.every(item => !item.trim())
-    })
-
-    if (hasSectionTitleWithoutContent) {
-      setValidationError("Phần có tiêu đề phải chứa ít nhất một mục nội dung.")
-      const invalidMap = Object.fromEntries(
-        sections.map(section => [
-          section.id,
-          section.title.trim() && (!section.items.length || section.items.every(item => !item.trim()))
-            ? section.items.length
-              ? section.items.map((_, idx) => idx)
-              : [0]
-            : [],
-        ]).filter(([, indices]) => indices.length)
-      )
-      if (Object.keys(invalidMap).length) {
-        setInvalidSectionItems(invalidMap)
-        scrollToFirstInvalid(invalidMap)
+    // When saving slug, sanitize and validate uniqueness
+    if (editingField === 'slug') {
+      const sanitized = sanitizeSlug(tempValue)
+      if (!sanitized) {
+        setSlugError('Slug không được để trống')
+        return
       }
-      return
-    }
 
-    setInvalidSectionTitles(new Set())
-    setInvalidSectionItems({})
-    setSaving(true)
-    
-    try {
-      // Check for slug duplicates before saving
-      if (formData.slug.trim()) {
-        const slugExists = await checkSlugExists(formData.slug.trim())
-        if (slugExists) {
-          setValidationError("Slug đã tồn tại, vui lòng chọn slug khác.")
-          setSaving(false)
-          scrollToSlugError()
+      // Check for duplicate slug
+      try {
+        const exists = await checkSlugExists(sanitized)
+        if (exists) {
+          setSlugError('Slug đã tồn tại, vui lòng chọn slug khác.')
           return
         }
+      } catch (err) {
+        // If the API fails, allow saving but clear error
+        console.error('Error checking slug availability', err)
       }
 
-      // Upload new images and delete old ones
-      const imageFields: Array<{field: 'image' | 'venueMap' | 'pricingImage', fileField: 'imageFile' | 'venueMapFile' | 'pricingImageFile', removedField: 'removedImage' | 'removedVenueMap' | 'removedPricingImage'}> = [
-        { field: 'image', fileField: 'imageFile', removedField: 'removedImage' },
-        { field: 'venueMap', fileField: 'venueMapFile', removedField: 'removedVenueMap' },
-        { field: 'pricingImage', fileField: 'pricingImageFile', removedField: 'removedPricingImage' }
-      ]
+      setFormData(prev => ({ ...prev, slug: sanitized }))
+      setSlugError(null)
+      setSlugTouched(true)
+      setEditingField(null)
+      setTempValue("")
+      return
+    }
 
-      const updatedFormData = { ...formData }
+    // Fallback for other fields
+    setFormData(prev => ({ ...prev, [editingField]: tempValue }))
+    setEditingField(null)
+    setTempValue("")
+  }
 
-      for (const { field, fileField, removedField } of imageFields) {
-        const currentFile = updatedFormData[fileField]
-        const originalValue = event?.[field]
-        const isRemoved = updatedFormData[removedField]
+  const handleInlineCancel = () => {
+    // If user cancels slug editing and left it blank, we should not mark it touched
+    if (editingField === 'slug' && !formData.slug) setSlugTouched(false)
+    setEditingField(null)
+    setTempValue("")
+  }
 
-        if (currentFile instanceof File) {
-          // Upload new image
-          const uploadedUrl = await uploadImage(currentFile)
-          updatedFormData[field] = uploadedUrl
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleInlineSave()
+    } else if (e.key === 'Escape') {
+      handleInlineCancel()
+    }
+  }
 
-          // Delete old image if it exists
-          if (originalValue && typeof originalValue === 'string') {
-            try {
-              const url = new URL(originalValue)
-              const filename = url.pathname.split("/").filter(Boolean).pop()
-              if (filename) {
-                await deleteImage(filename)
-              }
-            } catch (deleteError) {
-              console.warn("Failed to delete old image:", deleteError)
-            }
-          }
-        } else if (isRemoved && originalValue && typeof originalValue === 'string') {
-          // Image was removed, delete old image
-          try {
-            const url = new URL(originalValue)
-            const filename = url.pathname.split("/").filter(Boolean).pop()
-            if (filename) {
-              await deleteImage(filename)
-            }
-          } catch (deleteError) {
-            console.warn("Failed to delete old image:", deleteError)
-          }
-          updatedFormData[field] = ""
-        }
+  const handleSave = async () => {
+    setSubmitError(null)
+    setSubmitSuccess(null)
+
+    // Validate required fields
+    if (!formData.title.trim() || formData.title === "Tên sự kiện") {
+      setSubmitError("Vui lòng nhập tên sự kiện")
+      return
+    }
+
+    if (!formData.slug.trim()) {
+      setSubmitError("Slug không được để trống")
+      return
+    }
+
+    if (!formData.description.trim()) {
+      setSubmitError("Vui lòng nhập mô tả sự kiện")
+      return
+    }
+
+    // Check for slug duplicates
+    const slugExists = await checkSlugExists(formData.slug.trim())
+    if (slugExists) {
+      setSubmitError("Slug đã tồn tại, vui lòng chọn slug khác.")
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      // Upload hero image if it's a File
+      let heroImageUrl = typeof formData.heroImage === 'string' ? formData.heroImage : undefined
+
+      if (formData.heroImage instanceof File) {
+        heroImageUrl = await adminApi.uploadImage(formData.heroImage)
       }
 
+    // Prepare payload for backend
       const payload = {
-        title: updatedFormData.title,
-        slug: updatedFormData.slug,
-        description: updatedFormData.description,
-        fullDescription: updatedFormData.fullDescription,
-        image: typeof updatedFormData.image === 'string' ? updatedFormData.image : undefined,
-        location: updatedFormData.location,
-        openingHours: updatedFormData.openingHours,
-        dateDisplay: updatedFormData.dateDisplay,
-        venueMap: typeof updatedFormData.venueMap === 'string' ? updatedFormData.venueMap : undefined,
-        pricingImage: typeof updatedFormData.pricingImage === 'string' ? updatedFormData.pricingImage : undefined,
-        status: updatedFormData.status,
-        sections: sections.map(section => ({
-          ...section,
-          position: sections.indexOf(section)
-        }))
+        title: formData.title,
+        subtitle: formData.subtitle,
+        slug: formData.slug,
+        description: formData.description,
+        eventIntro: formData.eventIntro,
+        eventDetails: formData.eventDetails,
+        image: heroImageUrl, // Map heroImage to image field for backend compatibility
+        location: formData.location,
+        openingHours: formData.openingHours,
+        dateDisplay: formData.dateDisplay,
+        status: formData.status
       }
-      
+
       await adminApi.updateEvent(id, payload)
-      router.push("/admin/events")
-    } catch (error) {
-      console.error("Failed to save event:", error)
+      setSubmitSuccess("Sự kiện đã được cập nhật thành công!")
+
+      // Redirect after a short delay
+      setTimeout(() => {
+        router.push("/admin/events")
+      }, 2000)
+    } catch (error: any) {
+      console.error("Failed to update event:", error)
+      const message = error?.message || "Không thể cập nhật sự kiện. Vui lòng thử lại."
+      setSubmitError(message)
     } finally {
       setSaving(false)
     }
@@ -532,6 +324,32 @@ export default function EditEventPage() {
     await updateStatus("published")
   }
 
+  const renderEditableText = (field: EditableStringFields, className: string = "", placeholder: string = "") => {
+    if (editingField === field) {
+      return (
+        <input
+          type="text"
+          value={tempValue}
+          onChange={(e) => setTempValue(e.target.value)}
+          onBlur={handleInlineSave}
+          onKeyDown={handleKeyDown}
+          className={`w-full px-2 py-1 border-2 border-purple-400 rounded focus:outline-none focus:ring-2 focus:ring-purple-300 ${className}`}
+          autoFocus
+        />
+      )
+    }
+
+    return (
+      <span
+        onDoubleClick={() => handleInlineEdit(field, formData[field])}
+        className={`cursor-text ${field !== 'slug' ? 'hover:bg-white hover:text-purple-400' : 'hover:bg-purple-50'} rounded px-2 py-1 transition-colors ${className}`}
+        title="Double-click to edit"
+      >
+        {formData[field] || placeholder}
+      </span>
+    )
+  }
+
   if (loading) {
     return <div className="p-6">Loading...</div>
   }
@@ -543,257 +361,377 @@ export default function EditEventPage() {
   const previewEvent: Event = {
     ...formData,
     id: event.id,
-    sections: sections,
-    image: formData.imageFile ? "" : formData.image || undefined,
-    venueMap: formData.venueMapFile ? "" : formData.venueMap || undefined,
-    pricingImage: formData.pricingImageFile ? "" : formData.pricingImage || undefined,
+    image: typeof formData.heroImage === 'string' ? formData.heroImage : undefined,
+    subtitle: formData.subtitle,
+    fullDescription: `
+      <div class="event-intro">
+        <h2 style="color: #7342ba; font-size: 2rem; margin: 2rem 0 1rem 0; font-family: 'serif'; font-weight: 700;">Về sự kiện</h2>
+        ${formData.eventIntro}
+      </div>
+      <div class="event-details">
+        ${formData.eventDetails}
+      </div>
+    `
   }
 
   return (
-    <div className="space-y-6 px-4 pb-10 pt-4 sm:px-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <Link href="/admin/events">
-            <Button variant="outline" size="sm" className="cursor-pointer w-full sm:w-auto">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Quay lại
-            </Button>
-          </Link>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Chỉnh sửa sự kiện</h1>
-            <p className="text-gray-600">Sửa thông tin sự kiện</p>
+    <main className="min-h-screen overflow-x-hidden bg-[#FAF9F6]">
+      {/* Hero Section */}
+      <section
+        className="relative w-full pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, rgb(115, 66, 186) 0%, #B668A1 100%)",
+        }}
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <Link
+              href="/admin/events"
+              className="inline-flex items-center gap-2 text-white hover:gap-3 transition-all duration-300 cursor-pointer group"
+            >
+              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+              <span className="font-semibold">Quay lại</span>
+            </Link>
+
+            <div className="flex items-center gap-4">
+              <Button
+                variant={formData.status === "draft" ? "default" : "outline"}
+                onClick={handleStatusClick}
+                disabled={statusUpdating}
+                className={`cursor-pointer ${
+                  formData.status === "draft"
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-yellow-300 text-purple-900 hover:bg-yellow-200 border-yellow-300 hover:border-yellow-200 font-semibold"
+                }`}
+              >
+                {statusUpdating
+                  ? "Đang cập nhật..."
+                  : formData.status === "draft"
+                  ? "Đăng bản nháp"
+                  : "Chuyển thành nháp"}
+              </Button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full cursor-pointer text-purple-900 font-semibold bg-yellow-300 hover:bg-yellow-200 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save size={16} />
+                {saving ? "Đang lưu..." : "Lưu sự kiện"}
+              </button>
+            </div>
+          </div>
+
+          <div className="text-white">
+            <div className="mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-6">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                <span className="text-sm font-medium">Đang chỉnh sửa sự kiện</span>
+              </div>
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold mb-4 leading-tight">
+              <span className="block bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
+                {renderEditableText("title", "inline-block", "Tên sự kiện")}
+              </span>
+            </h1>
+
+            <p className="text-xl sm:text-2xl font-serif italic mb-8 text-purple-200">
+              {renderEditableText("subtitle", "inline-block", "Phụ đề sự kiện")}
+            </p>
+
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm opacity-70">Thời gian</p>
+                  <p className="font-semibold">{renderEditableText("dateDisplay", "text-purple-100", "Ngày – tháng/2025")}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm opacity-70">Địa điểm</p>
+                  <p className="font-semibold">{renderEditableText("location", "text-purple-100", "Địa điểm sự kiện")}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm opacity-70">Giờ mở cửa</p>
+                  <p className="font-semibold">{renderEditableText("openingHours", "text-purple-100", "8h00 – 17h00")}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 sm:justify-end">
-          <Button
-            variant="outline"
-            onClick={() => setPreviewOpen(true)}
-            className="cursor-pointer w-full sm:w-auto"
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            Xem preview
-          </Button>
-          <Button
-            variant={formData.status === "draft" ? "default" : "outline"}
-            onClick={handleStatusClick}
-            disabled={statusUpdating}
-            className={`cursor-pointer w-full sm:w-auto ${
-              formData.status === "draft"
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : ""
-            }`}
-          >
-            {statusUpdating
-              ? "Đang cập nhật..."
-              : formData.status === "draft"
-              ? "Đăng bản nháp"
-              : "Chuyển thành nháp"}
-          </Button>
-          <Button onClick={saveEvent} disabled={saving} className="cursor-pointer w-full sm:w-auto">
-            <Save className="h-4 w-4 mr-1" />
-            {saving ? "Đang lưu..." : "Lưu"}
-          </Button>
+      </section>
+
+      {/* Content Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-3 gap-12">
+            {/* Main Content */}
+            <div className="lg:col-span-2">
+              {/* Hero Image Upload */}
+              <div className="w-full rounded-lg overflow-hidden shadow-lg mb-8 flex items-center justify-center bg-gray-100">
+                {formData.heroImage ? (
+                  <div className="relative w-full flex items-start justify-center">
+                    <img
+                      src={formData.heroImage instanceof File ? URL.createObjectURL(formData.heroImage) : formData.heroImage}
+                      alt={formData.title}
+                      className="w-full h-auto max-h-[28rem] object-contain block"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `
+                            <div class="flex items-center justify-center h-full min-h-[280px] bg-gray-100">
+                              <div class="text-center p-8">
+                                <svg class="w-24 h-24 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <p class="text-gray-600 font-medium">${formData.title}</p>
+                                <p class="text-gray-500 text-sm mt-2">Hình ảnh đang cập nhật</p>
+                              </div>
+                            </div>
+                          `;
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="absolute cursor-pointer top-2 right-2 z-10 h-8 w-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                      onClick={() => setFormData(prev => ({ ...prev, heroImage: "" }))}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-full bg-gray-100 flex items-center justify-center py-8 min-h-[28rem]">
+                    <SingleImageUpload
+                      value={formData.heroImage}
+                      onChange={(file) => setFormData(prev => ({ ...prev, heroImage: file || prev.heroImage }))}
+                      size="lg"
+                      className="w-full h-full"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Event Intro Section */}
+              <div className="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2
+                  className="text-3xl font-serif font-bold mb-4"
+                  style={{ color: "#7342ba" }}
+                >
+                  Về sự kiện
+                </h2>
+                <div className="min-h-[200px]">
+                  <ContentEditor
+                    value={formData.eventIntro}
+                    onChange={(content) => setFormData(prev => ({ ...prev, eventIntro: content }))}
+                    className="border-0 shadow-none"
+                  />
+                </div>
+              </div>
+
+              {/* Event Details Section */}
+              <div className="bg-white rounded-lg shadow-md p-8">
+                <div className="min-h-[200px]">
+                  <ContentEditor
+                    value={formData.eventDetails}
+                    onChange={(content) => setFormData(prev => ({ ...prev, eventDetails: content }))}
+                    className="border-0 shadow-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24">
+                {/* Event Info Card */}
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                  <h3
+                    className="text-xl font-serif font-bold mb-4"
+                    style={{ color: "#7342ba" }}
+                  >
+                    Thông tin sự kiện
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="text-gray-600 mb-1">Thời gian</p>
+                      <p className="font-semibold text-gray-800">
+                        {formData.dateDisplay || "Đang cập nhật"}
+                      </p>
+                    </div>
+                    {formData.openingHours && (
+                      <div>
+                        <p className="text-gray-600 mb-1">Giờ mở cửa</p>
+                        <p className="font-semibold text-gray-800">{formData.openingHours}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-gray-600 mb-1">Địa điểm</p>
+                      <p className="font-semibold text-gray-800">{formData.location}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Registration Card */}
+                <div
+                  className="bg-white rounded-lg shadow-md p-6 mb-6"
+                  style={{ borderTop: "4px solid #7342ba" }}
+                >
+                  <h3
+                    className="text-2xl font-serif font-bold mb-3"
+                    style={{ color: "#7342ba" }}
+                  >
+                    Đăng ký tham gia
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Để lại thông tin liên hệ, chúng tôi sẽ gửi lịch chi tiết và các quyền lợi tham dự.
+                  </p>
+                  <button
+                    className="w-full px-6 py-3 rounded-full text-white font-semibold transition-all duration-300 hover:shadow-lg cursor-pointer"
+                    style={{ backgroundColor: "#fcd34d" }}
+                  >
+                    Đăng ký ngay
+                  </button>
+                </div>
+
+                {/* Description Field */}
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <label className="block text-xs text-gray-500 mb-2">Mô tả sự kiện *</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400"
+                    rows={3}
+                    placeholder="Nhập mô tả ngắn về sự kiện..."
+                  />
+                </div>
+
+                {/* Slug Display */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-xs text-gray-500 mb-1">Slug (đường dẫn)</p>
+                  <div>
+                    <p className="text-sm font-mono text-gray-700 flex items-center gap-1">
+                      <span className="text-gray-500">/events/</span>
+                      {renderEditableText('slug', 'text-sm font-mono text-gray-700', 'ten-su-kien')}
+                    </p>
+                    {slugError && <p className="text-xs text-red-600 mt-2">{slugError}</p>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom Action Bar */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-4 shadow-lg z-30">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-sm text-gray-600 order-2 sm:order-1">
+            <span className="inline-flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                formData.status === "draft"
+                  ? "bg-gray-100 text-gray-800"
+                  : "bg-green-100 text-green-800"
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${
+                  formData.status === "draft"
+                    ? "bg-gray-400"
+                    : "bg-green-500"
+                }`}></span>
+                {formData.status === "draft" ? "Bản nháp" : "Đã đăng"}
+              </span>
+              Cập nhật lần cuối: {new Date().toLocaleDateString('vi-VN')}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 order-1 sm:order-2">
+            <Link href="/admin/events">
+              <Button variant="outline" className="cursor-pointer">
+                Quay lại
+              </Button>
+            </Link>
+
+            <Button
+              variant={formData.status === "draft" ? "default" : "outline"}
+              onClick={handleStatusClick}
+              disabled={statusUpdating}
+              className={`cursor-pointer ${
+                formData.status === "draft"
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-yellow-300 text-purple-900 hover:bg-yellow-200 border-yellow-300 hover:border-yellow-200 font-semibold"
+              }`}
+            >
+              {statusUpdating
+                ? "Đang cập nhật..."
+                : formData.status === "draft"
+                ? "Đăng bản nháp"
+                : "Chuyển thành nháp"}
+            </Button>
+
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full cursor-pointer text-purple-900 font-semibold bg-yellow-300 hover:bg-yellow-200 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Save size={16} />
+              {saving ? "Đang lưu..." : "Lưu sự kiện"}
+            </button>
+          </div>
         </div>
       </div>
 
-      {validationError && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {validationError}
+      {/* Success/Error Messages */}
+      {submitError && (
+        <div className="fixed bottom-6 right-6 z-40 max-w-sm rounded-xl border border-red-200 bg-white p-4 shadow-lg">
+          <div className="text-sm font-semibold text-red-700">
+            {submitError}
+          </div>
+          <button
+            onClick={() => setSubmitError(null)}
+            className="mt-3 text-xs font-medium text-red-600 hover:text-red-800"
+          >
+            Đóng
+          </button>
         </div>
       )}
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Thông tin cơ bản</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Tiêu đề *</label>
-              <Input
-                value={formData.title}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                placeholder="Nhập tiêu đề sự kiện"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Slug *</label>
-              <Input
-                value={formData.slug}
-                onChange={(e) => handleInputChange("slug", e.target.value)}
-                placeholder="slug-su-kiem"
-                required
-                ref={slugInputRef}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Mô tả ngắn *</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                placeholder="Mô tả ngắn về sự kiện"
-                className="w-full p-3 border rounded-md min-h-[100px]"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Mô tả chi tiết *</label>
-              <textarea
-                value={formData.fullDescription}
-                onChange={(e) => handleInputChange("fullDescription", e.target.value)}
-                placeholder="Mô tả chi tiết về sự kiện"
-                className="w-full p-3 border rounded-md min-h-[150px]"
-                required
-              />
-            </div>
-          </CardContent>
-        </Card>
+      {submitSuccess && (
+        <div className="fixed bottom-6 right-6 z-40 max-w-sm rounded-xl border border-green-200 bg-white p-4 shadow-lg">
+          <div className="text-sm font-semibold text-green-700">
+            {submitSuccess}
+          </div>
+          <button
+            onClick={() => setSubmitSuccess(null)}
+            className="mt-3 text-xs font-medium text-green-600 hover:text-green-800"
+          >
+            Đóng
+          </button>
+        </div>
+      )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Thông tin sự kiện</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Ngày diễn ra *</label>
-              <Input
-                value={formData.dateDisplay}
-                onChange={(e) => handleInputChange("dateDisplay", e.target.value)}
-                placeholder="Ví dụ: 15-17/12/2024"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Địa điểm *</label>
-              <Input
-                value={formData.location}
-                onChange={(e) => handleInputChange("location", e.target.value)}
-                placeholder="Địa điểm tổ chức"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Giờ mở cửa *</label>
-              <Input
-                value={formData.openingHours}
-                onChange={(e) => handleInputChange("openingHours", e.target.value)}
-                placeholder="Ví dụ: 8:00 - 22:00"
-                required
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Hình ảnh</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <SingleImageUpload
-              value={formData.imageFile ? formData.imageFile : formData.image || undefined}
-              onChange={(value) => handleImageChange("image", value || "")}
-              label="Hình ảnh sự kiện"
-              placeholder="Tải lên hình ảnh chính của sự kiện"
-              size="lg"
-            />
-            <SingleImageUpload
-              value={formData.venueMapFile ? formData.venueMapFile : formData.venueMap || undefined}
-              onChange={(value) => handleImageChange("venueMap", value || "")}
-              label="Sơ đồ địa điểm"
-              placeholder="Tải lên sơ đồ địa điểm sự kiện"
-              size="lg"
-            />
-            <SingleImageUpload
-              value={formData.pricingImageFile ? formData.pricingImageFile : formData.pricingImage || undefined}
-              onChange={(value) => handleImageChange("pricingImage", value || "")}
-              label="Bảng giá"
-              placeholder="Tải lên hình ảnh bảng giá"
-              size="lg"
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Các phần nội dung</CardTitle>
-              <Button onClick={addSection} size="sm" className="cursor-pointer w-full sm:w-auto">
-                Thêm phần
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {sections.map((section, index) => (
-              <div key={section.id} className="border rounded-lg p-4 space-y-3">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <Input
-                    id={`section-${section.id}-title`}
-                    value={section.title}
-                    onChange={(e) => updateSection(index, "title", e.target.value)}
-                    placeholder="Tiêu đề phần"
-                    className={cn(
-                      "w-full font-semibold sm:w-auto",
-                      invalidSectionTitles.has(section.id) && "border-red-500 focus-visible:ring-red-500"
-                    )}
-                  />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeSection(index)}
-                    className="cursor-pointer w-full sm:w-auto"
-                  >
-                    Xóa
-                  </Button>
-                </div>
-                {invalidSectionTitles.has(section.id) && (
-                  <p className="text-xs text-red-500">Tiêu đề phần không được để trống.</p>
-                )}
-                <div className="space-y-2">
-                  {section.items.map((item, itemIndex) => {
-                    const isInvalid = invalidSectionItems[section.id]?.includes(itemIndex)
-                    return (
-                      <div key={itemIndex} className="flex flex-col gap-1">
-                        <div
-                          id={`section-${section.id}-item-${itemIndex}`}
-                          className="flex flex-col gap-2 sm:flex-row sm:items-center"
-                        >
-                          <Input
-                            value={item}
-                            onChange={(e) => updateSectionItem(index, itemIndex, e.target.value)}
-                            placeholder="Nội dung mục"
-                            className={isInvalid ? "border-red-500 focus-visible:ring-red-500" : undefined}
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeSectionItem(index, itemIndex)}
-                            className="cursor-pointer w-full sm:w-auto"
-                          >
-                            Xóa
-                          </Button>
-                        </div>
-                        {isInvalid && (
-                          <p className="text-xs text-red-500">Mục này cần có nội dung.</p>
-                        )}
-                      </div>
-                    )
-                  })}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addSectionItem(index)}
-                    className="cursor-pointer w-full sm:w-auto"
-                  >
-                    Thêm mục
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
+      {/* Preview Modal */}
       {previewOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div
@@ -817,12 +755,13 @@ export default function EditEventPage() {
               </Button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <EventPreview event={previewEvent} sections={sections} />
+              <EventPreview event={previewEvent} sections={[]} />
             </div>
           </div>
         </div>
       )}
 
+      {/* Status Confirmation Modal */}
       {statusConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div
@@ -856,6 +795,6 @@ export default function EditEventPage() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   )
 }

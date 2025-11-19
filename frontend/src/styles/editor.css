@@ -1,0 +1,198 @@
+/* TipTap Editor Styles & Public Event Page Content */
+.tiptap,
+.prose {
+    /* Ensure proper font and base styling */
+    line-height: 1.8;
+
+    /* Heading styles - highest specificity to override all inline styles */
+    .ProseMirror h1,
+    .ProseMirror h2,
+    .ProseMirror h3,
+    .ProseMirror h4,
+    .ProseMirror h5,
+    .ProseMirror h6,
+    & h1,
+    & h2,
+    & h3,
+    & h4,
+    & h5,
+    & h6 {
+        color: inherit !important; /* Reset to allow CSS variables */
+        font-family: 'serif' !important;
+        font-weight: inherit !important; /* Reset to allow CSS below */
+        font-size: inherit !important; /* Reset to allow CSS below */
+        margin: inherit !important; /* Reset to allow CSS below */
+        line-height: inherit !important;
+    }
+
+    /* Additional override for Google Docs specific classes */
+    .ProseMirror [style*="font-family"],
+    .ProseMirror [style*="color"],
+    .ProseMirror [style*="font-size"],
+    & [style*="font-family"],
+    & [style*="color"],
+    & [style*="font-size"] {
+        /* Force override Google Docs inline styles */
+        font-family: 'serif' !important;
+        color: inherit !important;
+    }
+
+    /* Paragraph styles */
+    .ProseMirror p,
+    & p {
+        font-size: 1.125rem !important;
+        line-height: 1.8 !important;
+        margin-bottom: 1rem !important;
+        color: #374151 !important;
+    }
+
+    /* List styles */
+    .ProseMirror ul,
+    & ul {
+        line-height: 1.8 !important;
+        padding-left: 1.5rem !important;
+        list-style-type: disc !important;
+    }
+
+    .ProseMirror ol,
+    & ol {
+        list-style-type: decimal !important;
+    }
+
+    .ProseMirror li,
+    & li {
+        color: #374151 !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Blockquote styles */
+    blockquote {
+        border-left: 4px solid rgb(253, 224, 71); padding: 1.5rem; margin: 2rem 0; background-color: #fef9e7; border-radius: 8px;
+    }
+
+    /* Link styles - purple theme */
+    a {
+        color: #9333ea !important;
+        text-decoration: underline;
+        text-decoration-color: #c084fc !important;
+        text-underline-offset: 3px;
+        transition: all 0.2s ease;
+        font-style: italic;
+    }
+
+    a:hover {
+        color: #7c3aed !important;
+        text-decoration-color: #9333ea !important;
+    }
+
+    /* Custom purple link styling for editor links */
+    a.text-purple-600 {
+        color: #9333ea !important;
+        text-decoration: underline !important;
+        text-decoration-color: #c084fc !important;
+        text-underline-offset: 3px;
+    }
+
+    a.text-purple-600:hover {
+        color: #7c3aed !important;
+        text-decoration-color: #9333ea !important;
+    }
+}
+
+/* Event Theme (for regular events) */
+.tiptap.event-theme,
+.prose.event-theme {
+    /* Force override with higher specificity for event theme */
+    .ProseMirror h1,
+    & h1 {
+        color: var(--heading-1) !important;
+        font-size: 2rem !important;
+        margin: 2rem 0 1rem 0 !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+    }
+
+    .ProseMirror h2,
+    & h2 {
+        color: var(--heading-2) !important;
+        font-size: 1.5rem !important;
+        margin: 1.5rem 0 1rem 0 !important;
+        font-weight: 600 !important;
+        line-height: 1.3 !important;
+    }
+
+    .ProseMirror h3,
+    & h3 {
+        color: var(--heading-3) !important;
+        font-size: 1.25rem !important;
+        margin: 1rem 0 0.75rem 0 !important;
+        font-weight: 600 !important;
+        line-height: 1.4 !important;
+    }
+
+    .ProseMirror h4,
+    & h4 {
+        color: var(--heading-1) !important;
+        font-size: 1.125rem !important;
+        margin: 0.875rem 0 0.5rem 0 !important;
+        font-weight: 600 !important;
+    }
+
+    .ProseMirror h5,
+    & h5 {
+        color: var(--heading-2) !important;
+        font-size: 1rem !important;
+        margin: 0.75rem 0 0.5rem 0 !important;
+        font-weight: 600 !important;
+    }
+
+    .ProseMirror h6,
+    & h6 {
+        color: var(--heading-3) !important;
+        font-size: 0.875rem !important;
+        margin: 0.625rem 0 0.375rem 0 !important;
+        font-weight: 600 !important;
+    }
+}
+
+/* Past-Event Theme (for past events) - Inline styles handled in component */
+.tiptap.past-event-theme,
+.prose.past-event-theme {
+    /* Inline styles are handled by the BaseRichEditor component */
+    /* CSS variables fallbacks for past-event theme */
+    .ProseMirror h1,
+    & h1 {
+        color: rgb(147, 51, 234) !important; /* purple-800 */
+        font-size: 1.875rem !important;
+        margin: 0 0 0.25rem 0 !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+    }
+
+    .ProseMirror h2,
+    & h2 {
+        color: rgb(126, 34, 206) !important; /* purple-700 */
+        font-size: 1.5rem !important;
+        margin: 0 0 0.25rem 0 !important;
+        font-weight: 600 !important;
+        line-height: 1.3 !important;
+    }
+
+    .ProseMirror h3,
+    & h3 {
+        color: rgb(147, 51, 234) !important; /* purple-600 */
+        font-size: 1.25rem !important;
+        margin: 0 0 0.25rem 0 !important;
+        font-weight: 600 !important;
+        line-height: 1.4 !important;
+    }
+
+    /* Different paragraph styling for past-events */
+    .ProseMirror p,
+    & p {
+        font-size: 1rem !important;
+        line-height: 1.75 !important;
+        margin-bottom: 0.75rem !important;
+        color: rgb(55, 65, 81) !important; /* gray-900 */
+    }
+}

@@ -34,7 +34,7 @@ export function EditorButton({
       title={title}
       className={cn(
         'relative',
-        isActive && 'bg-accent text-accent-foreground',
+        isActive && 'bg-accent text-accent-foreground border-2 border-primary font-bold shadow-sm',
         'h-8 w-8 p-0'
       )}
     >

@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react"
+import { ChangeEvent, FormEvent, useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { ArrowLeft, X } from "lucide-react"
@@ -23,26 +23,21 @@ const Footer = dynamic(
     }
 )
 
-interface EventSection {
-    id: string
-    title: string
-    items: string[]
-    position: number
-}
 
 interface Event {
     id: string
     slug: string
     title: string
+    subtitle?: string
     description: string
-    fullDescription?: string
+    eventIntro?: string
+    eventDetails?: string
     image?: string
     location?: string
     openingHours?: string
     dateDisplay?: string
     venueMap?: string
     pricingImage?: string
-    sections?: EventSection[]
 }
 
 export default function EventDetailPage() {
@@ -63,10 +58,6 @@ export default function EventDetailPage() {
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
     const [phoneError, setPhoneError] = useState<string | null>(null)
-    const sortedSections = useMemo(() => {
-        if (!event?.sections?.length) return []
-        return [...event.sections].sort((a, b) => a.position - b.position)
-    }, [event?.sections])
 
     useEffect(() => {
         if ('scrollRestoration' in window.history) {
@@ -400,46 +391,35 @@ export default function EventDetailPage() {
                                         decoding="async"
                                     />
                                 </div>
-                                <div className="bg-white rounded-lg shadow-md p-8 mb-8">
-                                    <h2
-                                        className="text-3xl font-serif font-bold mb-4"
-                                        style={{ color: "#5b21b6" }}
-                                    >
-                                        Về sự kiện
-                                    </h2>
-                                    {event.fullDescription && (
-                                        <p className="text-gray-700 text-lg leading-relaxed mb-6">
-                                            {event.fullDescription}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {sortedSections.map((section, idx) => (
-                                    <div
-                                        key={section.id ?? `${section.title}-${idx}`}
-                                        className="bg-white rounded-lg shadow-md p-8 mb-8"
-                                    >
+                                {/* Event Introduction Section */}
+                                {event.eventIntro && (
+                                    <div className="bg-white rounded-lg shadow-md p-8 mb-8">
                                         <h2
-                                            className="text-3xl font-serif font-bold mb-6"
+                                            className="text-3xl font-serif font-bold mb-4"
                                             style={{ color: "#5b21b6" }}
                                         >
-                                            {section.title}
+                                            Về sự kiện
                                         </h2>
-                                        <div className="space-y-4">
-                                            {section.items.map((item, itemIdx) => (
-                                                <div key={itemIdx} className="flex items-start gap-3">
-                                                    <span
-                                                        className="mt-2 w-2 h-2 rounded-full flex-shrink-0"
-                                                        style={{ backgroundColor: "#fcd34d" }}
-                                                    />
-                                                    <p className="text-gray-700 text-lg leading-relaxed">
-                                                        {item}
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <div
+                                            className="prose prose-lg max-w-none mb-6"
+                                            dangerouslySetInnerHTML={{
+                                                __html: event.eventIntro
+                                            }}
+                                        />
                                     </div>
-                                ))}
+                                )}
+
+                                {/* Event Details Section */}
+                                {event.eventDetails && (
+                                    <div className="bg-white rounded-lg shadow-md p-8 mb-8">
+                                        <div
+                                            className="prose prose-lg max-w-none"
+                                            dangerouslySetInnerHTML={{
+                                                __html: event.eventDetails
+                                            }}
+                                        />
+                                    </div>
+                                )}
 
                                 {event.venueMap && (
                                     <div className="bg-white rounded-lg shadow-md p-8 mb-8">
