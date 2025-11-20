@@ -18,7 +18,7 @@ SAMPLES_FOLDER = Path("samples")  # optional: place pre-made sample images here
 ALLOWED_EXT = {"png","jpg","jpeg","webp"}
 
 API_KEY = os.environ.get("GEMINI_API_KEY")  # put your API key in .env or env var
-MODEL_NAME = os.environ.get("GEMINI_MODEL","imagen-4.0-generate-001")
+MODEL_NAME = os.environ.get("GEMINI_MODEL","gemini-2.5-flash-image")
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -86,8 +86,6 @@ def run_generation():
         sample_path = UPLOAD_FOLDER / sample_id
         sample_file.save(sample_path)
 
-        # resize sample image
-        resize_image(sample_path)
     else:
         # Option 2: sample chosen from existing samples by filename (form field 'sample_choice')
         choice = request.form.get('sample_choice')

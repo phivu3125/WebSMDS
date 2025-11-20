@@ -99,6 +99,8 @@ export default function SpecialEventSection() {
   const [processedImage, setProcessedImage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isRegenerating, setIsRegenerating] = useState(false)
+  const [generationCount, setGenerationCount] = useState(1)
 
   const handleImageUpload = (imageDataUrl: string) => {
     setUploadedImage(imageDataUrl)
@@ -121,6 +123,7 @@ export default function SpecialEventSection() {
         // Construct full URL for the processed image
         const fullImageUrl = `${API_CONFIG.BASE_URL}${processedImages[0]}`
         setProcessedImage(fullImageUrl)
+        setGenerationCount(1) // Reset generation count for new filter selection
         setCurrentScreen("result")
       } else {
         throw new Error("No processed image returned from API")
@@ -140,6 +143,8 @@ export default function SpecialEventSection() {
     setProcessedImage(null)
     setError(null)
     setIsLoading(false)
+    setIsRegenerating(false)
+    setGenerationCount(1)
   }
 
   const handleBack = () => {
@@ -147,11 +152,43 @@ export default function SpecialEventSection() {
       setCurrentScreen("upload")
       setUploadedImage(null)
       setError(null)
+      setGenerationCount(1)
     } else if (currentScreen === "result") {
       setCurrentScreen("filter")
       setProcessedImage(null)
       setSelectedFilter(null)
       setError(null)
+      setIsRegenerating(false)
+      setGenerationCount(1)
+    }
+  }
+
+  const handleRegenerate = async () => {
+    if (!selectedFilter || !uploadedImage) return
+
+    setIsRegenerating(true)
+    setError(null)
+
+    try {
+      // Convert uploaded image data URL to File
+      const inputImageFile = dataURLtoFile(uploadedImage, 'user-photo.jpg')
+
+      // Call the API with the same selected sample image
+      const processedImages = await callImageProcessingAPI(inputImageFile, selectedFilter.image)
+
+      if (processedImages.length > 0) {
+        // Construct full URL for the processed image
+        const fullImageUrl = `${API_CONFIG.BASE_URL}${processedImages[0]}`
+        setProcessedImage(fullImageUrl)
+        setGenerationCount(prev => prev + 1) // Increment generation count
+      } else {
+        throw new Error("No processed image returned from API")
+      }
+    } catch (err) {
+      console.error('Error regenerating image:', err)
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
+    } finally {
+      setIsRegenerating(false)
     }
   }
 
@@ -229,6 +266,9 @@ export default function SpecialEventSection() {
                 selectedFilter={selectedFilter!}
                 onRestart={handleRestart}
                 onBack={() => handleBack()}
+                onRegenerate={handleRegenerate}
+                generationCount={generationCount}
+                isRegenerating={isRegenerating}
               />
             )}
           </div>
