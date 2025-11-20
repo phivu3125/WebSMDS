@@ -8,6 +8,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from pathlib import Path
 from dotenv import load_dotenv
+from PIL import Image
 
 load_dotenv()
 
@@ -17,7 +18,7 @@ SAMPLES_FOLDER = Path("samples")  # optional: place pre-made sample images here
 ALLOWED_EXT = {"png","jpg","jpeg","webp"}
 
 API_KEY = os.environ.get("GEMINI_API_KEY")  # put your API key in .env or env var
-MODEL_NAME = os.environ.get("GEMINI_MODEL","gemini-2.5-flash-image")
+MODEL_NAME = os.environ.get("GEMINI_MODEL","imagen-4.0-generate-001")
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -30,6 +31,27 @@ SAMPLES_FOLDER.mkdir(exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXT
+
+
+def resize_image(image_path, target_size=(512, 512)):
+    """
+    Resize image to target size directly, may distort aspect ratio
+    Uses LANCZOS resampling for high quality
+    """
+    try:
+        with Image.open(image_path) as img:
+            # Convert RGBA to RGB if needed
+            if img.mode == 'RGBA':
+                img = img.convert('RGB')
+
+            # Resize directly to target size
+            img = img.resize(target_size, Image.Resampling.LANCZOS)
+
+            img.save(image_path, quality=95)
+            return True
+    except Exception as e:
+        print(f"Error resizing image {image_path}: {e}")
+        return False
 
 
 @app.route('/')
@@ -63,6 +85,9 @@ def run_generation():
         sample_id = f"{uuid.uuid4().hex}_{sample_fname}"
         sample_path = UPLOAD_FOLDER / sample_id
         sample_file.save(sample_path)
+
+        # resize sample image
+        resize_image(sample_path)
     else:
         # Option 2: sample chosen from existing samples by filename (form field 'sample_choice')
         choice = request.form.get('sample_choice')
@@ -79,6 +104,9 @@ def run_generation():
     input_id = f"{uuid.uuid4().hex}_{input_fname}"
     input_path = UPLOAD_FOLDER / input_id
     input_file.save(input_path)
+
+    # resize input image
+    resize_image(input_path)
 
     # Prepare unique output folder for this run
     run_id = uuid.uuid4().hex
