@@ -108,19 +108,6 @@ export default function FilterSelectionScreen({
                   src={`${process.env.NEXT_PUBLIC_GEMINI_API_URL || 'http://localhost:5000'}/samples/${currency.image}`}
                   alt={`${currency.name} - ${currency.year}`}
                   className="h-full w-full object-contain"
-                  onError={(e) => {
-                    // Fallback to colored placeholder if image fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    target.parentElement!.innerHTML = `
-                      <div class="h-full w-full flex items-center justify-center" style="background: linear-gradient(135deg, #aa7638 0%, #723d2c 100%);">
-                        <div class="text-center">
-                          <div class="text-white font-bold text-lg">${currency.value}</div>
-                          <div class="text-white/80 text-xs">${currency.year}</div>
-                        </div>
-                      </div>
-                    `;
-                  }}
                 />
               </div>
 

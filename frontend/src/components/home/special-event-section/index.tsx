@@ -49,9 +49,9 @@ const historicalCurrencies: CurrencyFilter[] = [
   },
   {
     id: "note_05",
-    name: "100 đồng",
-    year: "1947",
-    value: "100",
+    name: "5 đồng",
+    year: "1966",
+    value: "5",
     image: "Note5.jpg",
     description: ""
   },
