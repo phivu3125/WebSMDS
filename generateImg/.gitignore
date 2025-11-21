@@ -1,6 +1,6 @@
 .env
-output/*
+output
 outputs/*
-imgs/*
+/imgs
 uploads/*
 .venv/

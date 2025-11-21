@@ -16,30 +16,53 @@ export type CurrencyFilter = {
 
 const historicalCurrencies: CurrencyFilter[] = [
   {
-    id: "4",
+    id: "note_01",
+    name: "100 đồng",
+    year: "1980",
+    value: "100",
+    image: "Note1.jpg",
+    description: ""
+  },
+  {
+    id: "note_02",
+    name: "5000 đồng",
+    year: "1987",
+    value: "5000",
+    image: "Note2.jpg",
+    description: ""
+  },
+  {
+    id: "note_03",
+    name: "100000 đồng",
+    year: "1994",
+    value: "200.000",
+    image: "Note3.jpg",
+    description: ""
+  },
+  {
+    id: "note_04",
     name: "2 đồng",
     year: "1958",
-    value: "50.000",
+    value: "2",
     image: "Note4.jpg",
     description: ""
   },
   {
-    id: "1",
+    id: "note_05",
     name: "100 đồng",
-    year: "1985",
-    value: "500.000",
-    image: "Note8.jpg",
+    year: "1947",
+    value: "100",
+    image: "Note5.jpg",
     description: ""
   },
   {
-    id: "3",
-    name: "5000 đồng",
-    year: "1987",
-    value: "200.000",
-    image: "Note1.jpg",
+    id: "note_06",
+    name: "50 đồng",
+    year: "1950",
+    value: "50",
+    image: "Note6.jpg",
     description: ""
   },
-
 ]
 
 type Screen = "upload" | "filter" | "result"
@@ -69,11 +92,11 @@ const dataURLtoFile = (dataurl: string, filename: string): File => {
 // API service function for image processing
 const callImageProcessingAPI = async (
   inputImage: File,
-  sampleChoice: string
+  banknoteChoice: string
 ): Promise<string[]> => {
   const formData = new FormData()
   formData.append('input_image', inputImage)
-  formData.append('sample_choice', sampleChoice)
+  formData.append('banknote_choice', banknoteChoice)
 
   const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PROCESS_IMAGE}`, {
     method: 'POST',
@@ -116,8 +139,8 @@ export default function SpecialEventSection() {
       // Convert uploaded image data URL to File
       const inputImageFile = dataURLtoFile(uploadedImage!, 'user-photo.jpg')
 
-      // Call the API with the selected sample image
-      const processedImages = await callImageProcessingAPI(inputImageFile, filter.image)
+      // Call the API with the selected banknote choice (using ID)
+      const processedImages = await callImageProcessingAPI(inputImageFile, filter.id)
 
       if (processedImages.length > 0) {
         // Construct full URL for the processed image
@@ -173,8 +196,8 @@ export default function SpecialEventSection() {
       // Convert uploaded image data URL to File
       const inputImageFile = dataURLtoFile(uploadedImage, 'user-photo.jpg')
 
-      // Call the API with the same selected sample image
-      const processedImages = await callImageProcessingAPI(inputImageFile, selectedFilter.image)
+      // Call the API with the same selected banknote choice (using ID)
+      const processedImages = await callImageProcessingAPI(inputImageFile, selectedFilter.id)
 
       if (processedImages.length > 0) {
         // Construct full URL for the processed image
@@ -267,7 +290,6 @@ export default function SpecialEventSection() {
                 onRestart={handleRestart}
                 onBack={() => handleBack()}
                 onRegenerate={handleRegenerate}
-                generationCount={generationCount}
                 isRegenerating={isRegenerating}
               />
             )}

@@ -3,12 +3,18 @@ import os
 import subprocess
 import uuid
 import json
+import shutil
+import time
+from datetime import datetime
 from flask import Flask, request, render_template, jsonify, send_from_directory, abort
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from pathlib import Path
 from dotenv import load_dotenv
 from PIL import Image
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+import pytz
 
 # Set UTF-8 encoding for the entire application
 import sys
@@ -33,6 +39,7 @@ ALLOWED_EXT = {"png","jpg","jpeg","webp"}
 
 API_KEY = os.environ.get("GEMINI_API_KEY")  # put your API key in .env or env var
 MODEL_NAME = os.environ.get("GEMINI_MODEL","gemini-2.5-flash-image")
+CLEANUP_AGE_HOURS = int(os.environ.get("CLEANUP_AGE_HOURS", "24"))  # Default 24 hours
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -45,6 +52,67 @@ SAMPLES_FOLDER.mkdir(exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXT
+
+
+def cleanup_old_files():
+    """Delete files and folders older than CLEANUP_AGE_HOURS in uploads and outputs directories"""
+    try:
+        current_time = time.time()
+        age_threshold = CLEANUP_AGE_HOURS * 3600  # Convert hours to seconds
+        deleted_files = 0
+        deleted_folders = 0
+        freed_space = 0
+
+        print(f"[CLEANUP] Starting cleanup at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} (VN Time)", flush=True)
+        print(f"[CLEANUP] Deleting files/folders older than {CLEANUP_AGE_HOURS} hours", flush=True)
+
+        # Clean uploads folder
+        if UPLOAD_FOLDER.exists():
+            for item in UPLOAD_FOLDER.iterdir():
+                try:
+                    item_age = current_time - item.stat().st_mtime
+                    if item_age > age_threshold:
+                        if item.is_file():
+                            size = item.stat().st_size
+                            item.unlink()
+                            deleted_files += 1
+                            freed_space += size
+                            print(f"[CLEANUP] Deleted file: {item.name} ({size / 1024:.2f} KB)", flush=True)
+                        elif item.is_dir():
+                            size = sum(f.stat().st_size for f in item.rglob('*') if f.is_file())
+                            shutil.rmtree(item)
+                            deleted_folders += 1
+                            freed_space += size
+                            print(f"[CLEANUP] Deleted folder: {item.name} ({size / 1024:.2f} KB)", flush=True)
+                except Exception as e:
+                    print(f"[CLEANUP] Error deleting {item}: {e}", flush=True)
+
+        # Clean outputs folder
+        if OUTPUT_FOLDER.exists():
+            for item in OUTPUT_FOLDER.iterdir():
+                try:
+                    item_age = current_time - item.stat().st_mtime
+                    if item_age > age_threshold:
+                        if item.is_dir():
+                            size = sum(f.stat().st_size for f in item.rglob('*') if f.is_file())
+                            shutil.rmtree(item)
+                            deleted_folders += 1
+                            freed_space += size
+                            print(f"[CLEANUP] Deleted output folder: {item.name} ({size / 1024:.2f} KB)", flush=True)
+                        elif item.is_file():
+                            size = item.stat().st_size
+                            item.unlink()
+                            deleted_files += 1
+                            freed_space += size
+                            print(f"[CLEANUP] Deleted output file: {item.name} ({size / 1024:.2f} KB)", flush=True)
+                except Exception as e:
+                    print(f"[CLEANUP] Error deleting {item}: {e}", flush=True)
+
+        print(f"[CLEANUP] Completed: {deleted_files} files, {deleted_folders} folders deleted", flush=True)
+        print(f"[CLEANUP] Total space freed: {freed_space / 1024 / 1024:.2f} MB", flush=True)
+
+    except Exception as e:
+        print(f"[CLEANUP] Error during cleanup: {e}", flush=True)
 
 
 def load_banknote_styles():
@@ -83,24 +151,43 @@ def run_generate_command(prompt, image_paths, output_dir):
         return ProcessResult()
 
 
-def resize_image(image_path, target_size=(512, 512)):
+def optimize_image_for_gemini(image_path, max_dimension=1024):
     """
-    Resize image to target size directly, may distort aspect ratio
-    Uses LANCZOS resampling for high quality
+    Optimize image for Gemini Flash processing by downscaling if too large.
+    Only resizes if width or height exceeds max_dimension (default 1024px).
+    Preserves aspect ratio using thumbnail() to avoid distortion.
+    
+    Based on Gemini Flash documentation:
+    - Images ≤1024×1024: optimal quality and processing speed
+    - Images >1024×1024: automatically tiled (slower, more tokens)
+    
+    Args:
+        image_path: Path to image file to optimize
+        max_dimension: Maximum width/height in pixels (default 1024)
+    
+    Returns:
+        True if successful, False if error occurred
     """
     try:
         with Image.open(image_path) as img:
+            original_size = img.size
+            
             # Convert RGBA to RGB if needed
             if img.mode == 'RGBA':
                 img = img.convert('RGB')
 
-            # Resize directly to target size
-            img = img.resize(target_size, Image.Resampling.LANCZOS)
+            # Only resize if image exceeds max_dimension
+            if img.width > max_dimension or img.height > max_dimension:
+                # Use thumbnail to preserve aspect ratio
+                img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
+                print(f"Image optimized: {original_size[0]}x{original_size[1]} → {img.size[0]}x{img.size[1]}", flush=True)
+            else:
+                print(f"Image already optimal: {original_size[0]}x{original_size[1]} (no resize needed)", flush=True)
 
             img.save(image_path, quality=95)
             return True
     except Exception as e:
-        print(f"Error resizing image {image_path}: {e}")
+        print(f"Error optimizing image {image_path}: {e}", flush=True)
         return False
 
 
@@ -148,6 +235,9 @@ def run_generation():
     input_id = f"{uuid.uuid4().hex}_{input_fname}"
     input_path = UPLOAD_FOLDER / input_id
     input_file.save(input_path)
+
+    # Optimize input image for Gemini Flash processing
+    optimize_image_for_gemini(input_path)
 
     # Prepare unique output folder for this run with step1 and step2 subfolders
     run_id = uuid.uuid4().hex
@@ -280,6 +370,27 @@ def hello():
     return jsonify({"message": "Hello, World!"})
 
 if __name__ == '__main__':
-    # for development only
-    port = int(os.environ.get('FLASK_PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # Configure scheduler for automatic cleanup
+    vn_tz = pytz.timezone('Asia/Ho_Chi_Minh')
+    scheduler = BackgroundScheduler(timezone=vn_tz)
+    
+    # Schedule cleanup at 3:00 AM Vietnam time every day
+    scheduler.add_job(
+        func=cleanup_old_files,
+        trigger=CronTrigger(hour=3, minute=0, timezone=vn_tz),
+        id='cleanup_job',
+        name='Daily cleanup of old files',
+        replace_existing=True
+    )
+    
+    scheduler.start()
+    print(f"[SCHEDULER] Cleanup job scheduled at 3:00 AM Vietnam time (UTC+7)", flush=True)
+    print(f"[SCHEDULER] Files older than {CLEANUP_AGE_HOURS} hours will be deleted", flush=True)
+    
+    try:
+        # for development only
+        port = int(os.environ.get('FLASK_PORT', 5000))
+        app.run(host='0.0.0.0', port=port, debug=True)
+    except (KeyboardInterrupt, SystemExit):
+        scheduler.shutdown()
+        print("[SCHEDULER] Scheduler stopped", flush=True)
