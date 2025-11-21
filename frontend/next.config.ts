@@ -14,7 +14,7 @@ const remotePatterns: RemotePattern[] = [
   {
     protocol: "http",
     hostname: "**",
-  }
+  },
 ];
 
 if (process.env.NEXT_PUBLIC_MEDIA_HOST) {
