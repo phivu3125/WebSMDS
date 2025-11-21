@@ -285,7 +285,7 @@ def run_generation():
         print(f"Step 1 completed successfully, styled image saved to {styled_image_path}")
 
         # Step 2: Integrate styled image into banknote
-        integration_prompt = """Place the first image into the banknote design without creating any frames, borders, or decorative edges around it. Simply insert the image into available empty spaces, being extremely careful to not cover any text, numbers, or existing printed elements. The image should blend directly with the banknote's artistic style without any additional framing or borders. Position and scale the image to fit naturally within open areas while preserving all original text and printed information completely visible and intact."""
+        integration_prompt = """insert the first image as the main central content in the banknote. ensure the first image is at the center of the banknote and neatly enclosed between the banknote frames. make it look seamlessly integrated to the banknote."""
 
         print(f"Step 2: Integrating styled image into {selected_banknote['name']}")
         step2_result = run_generate_command(
