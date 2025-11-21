@@ -88,7 +88,7 @@ export default function ResultScreen({
           >
             {/* Front - Processed Image */}
             <div
-              className="relative overflow-hidden rounded-xl"
+              className="relative overflow-hidden rounded-xl h-full"
               style={{
                 backfaceVisibility: 'hidden',
                 position: isFlipped ? 'absolute' : 'relative'
@@ -97,18 +97,13 @@ export default function ResultScreen({
               <img
                 src={processedImage}
                 alt="Processed"
-                className="w-full h-auto"
+                className="w-full h-full object-contain"
               />
-
-              {/* Filter Badge */}
-              <div className="absolute top-4 right-4 rounded-lg px-3 py-1 text-sm" style={{ backgroundColor: 'rgba(170, 118, 56, 0.9)', color: '#e7eef7' }}>
-                {selectedFilter.name}
               </div>
-            </div>
 
             {/* Back - Original Image */}
             <div
-              className="relative overflow-hidden rounded-xl"
+              className="relative overflow-hidden rounded-xl h-full"
               style={{
                 backfaceVisibility: 'hidden',
                 transform: 'rotateY(180deg)',
@@ -118,13 +113,8 @@ export default function ResultScreen({
               <img
                 src={originalImage}
                 alt="Original"
-                className="w-full h-auto"
+                className="w-full h-full object-contain"
               />
-
-              {/* Original Badge */}
-              <div className="absolute top-4 right-4 rounded-lg px-3 py-1 text-sm" style={{ backgroundColor: 'rgba(149, 112, 72, 0.9)', color: '#e7eef7' }}>
-                Gốc
-              </div>
             </div>
           </div>
         </div>
@@ -149,6 +139,9 @@ export default function ResultScreen({
         </p>
         <p className="text-sm" style={{ color: '#855923' }}>
           Năm phát hành {selectedFilter.year}
+        </p>
+        <p className="text-sm mt-2 italic" style={{ color: '#855923' }}>
+          Bạn vẫn chưa hài lòng? Hãy nhấn vào nút "Tạo lại" để xem hình mới nhé!
         </p>
       </div>
 
