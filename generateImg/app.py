@@ -1,14 +1,28 @@
 # app.py
 import os
-import shutil
 import subprocess
 import uuid
+import json
 from flask import Flask, request, render_template, jsonify, send_from_directory, abort
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from pathlib import Path
 from dotenv import load_dotenv
 from PIL import Image
+
+# Set UTF-8 encoding for the entire application
+import sys
+if sys.platform == 'win32':
+    import locale
+    import os
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    try:
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    except locale.Error:
+        try:
+            locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+        except locale.Error:
+            pass
 
 load_dotenv()
 
@@ -31,6 +45,42 @@ SAMPLES_FOLDER.mkdir(exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXT
+
+
+def load_banknote_styles():
+    """Load banknote styles from JSON configuration file"""
+    try:
+        with open('banknote_styles.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading banknote styles: {e}")
+        return {"banknotes": []}
+
+
+def run_generate_command(prompt, image_paths, output_dir):
+    """Helper to run generate.py with subprocess"""
+    cmd = [
+        'python', 'generate.py',
+        '--images', *image_paths,
+        '--prompt', prompt,
+        '--outdir', output_dir,
+        '--api-key', API_KEY,
+        '--model', MODEL_NAME
+    ]
+
+    try:
+        # Set environment to handle UTF-8 encoding
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'
+        completed = subprocess.run(cmd, capture_output=True, text=True, timeout=300, env=env)
+        return completed
+    except subprocess.TimeoutExpired:
+        class ProcessResult:
+            def __init__(self):
+                self.returncode = 1
+                self.stdout = ""
+                self.stderr = "Generation timed out"
+        return ProcessResult()
 
 
 def resize_image(image_path, target_size=(512, 512)):
@@ -56,15 +106,15 @@ def resize_image(image_path, target_size=(512, 512)):
 
 @app.route('/')
 def index():
-    # list sample images in /samples for convenience
-    samples = [p.name for p in SAMPLES_FOLDER.iterdir() if p.is_file() and allowed_file(p.name)]
-    return render_template('index.html', samples=samples)
+    # load banknote styles from JSON
+    banknote_styles = load_banknote_styles()
+    return render_template('index.html', banknotes=banknote_styles['banknotes'])
 
 
 @app.route('/run', methods=['POST'])
 def run_generation():
     # input_image: required
-    # sample_image: can be uploaded or chosen from existing samples
+    # banknote_choice: required (select which banknote style to use)
     if 'input_image' not in request.files:
         return jsonify({"error": "input_image field is required"}), 400
 
@@ -72,30 +122,26 @@ def run_generation():
     if input_file.filename == '' or not allowed_file(input_file.filename):
         return jsonify({"error": "Invalid input image"}), 400
 
-    # Decide sample image path: either uploaded or chosen by name
-    sample_path = None
+    # Get banknote choice
+    banknote_choice = request.form.get('banknote_choice')
+    if not banknote_choice:
+        return jsonify({"error": "banknote_choice field is required"}), 400
 
-    # Option 1: sample uploaded
-    if 'sample_image' in request.files and request.files['sample_image'].filename != '':
-        sample_file = request.files['sample_image']
-        if not allowed_file(sample_file.filename):
-            return jsonify({"error": "Invalid sample image"}), 400
-        # save sample
-        sample_fname = secure_filename(sample_file.filename)
-        sample_id = f"{uuid.uuid4().hex}_{sample_fname}"
-        sample_path = UPLOAD_FOLDER / sample_id
-        sample_file.save(sample_path)
+    # Load banknote styles and find the selected one
+    banknote_styles = load_banknote_styles()
+    selected_banknote = None
+    for banknote in banknote_styles['banknotes']:
+        if banknote['id'] == banknote_choice:
+            selected_banknote = banknote
+            break
 
-    else:
-        # Option 2: sample chosen from existing samples by filename (form field 'sample_choice')
-        choice = request.form.get('sample_choice')
-        if choice:
-            candidate = SAMPLES_FOLDER / Path(choice).name
-            if candidate.exists() and allowed_file(candidate.name):
-                sample_path = candidate
+    if not selected_banknote:
+        return jsonify({"error": f"Banknote choice '{banknote_choice}' not found"}), 400
 
-    if sample_path is None:
-        return jsonify({"error": "No sample image provided"}), 400
+    # Get banknote sample image path
+    sample_path = SAMPLES_FOLDER / selected_banknote['sample_image']
+    if not sample_path.exists():
+        return jsonify({"error": f"Sample image {selected_banknote['sample_image']} not found"}), 400
 
     # Save input image
     input_fname = secure_filename(input_file.filename)
@@ -103,48 +149,102 @@ def run_generation():
     input_path = UPLOAD_FOLDER / input_id
     input_file.save(input_path)
 
-    # resize input image
-    resize_image(input_path)
-
-    # Prepare unique output folder for this run
+    # Prepare unique output folder for this run with step1 and step2 subfolders
     run_id = uuid.uuid4().hex
     this_outdir = OUTPUT_FOLDER / run_id
-    this_outdir.mkdir(parents=True, exist_ok=True)
+    step1_dir = this_outdir / "step1"
+    step2_dir = this_outdir / "step2"
+    step1_dir.mkdir(parents=True, exist_ok=True)
+    step2_dir.mkdir(parents=True, exist_ok=True)
 
-    # Build command — replicate the CLI you provided
-    # python3 generate.py --images <input> <sample> --prompt "" --outdir <outdir> --api-key <key> --model <model>
     if not API_KEY:
         return jsonify({"error": "Server missing GEMINI_API_KEY environment variable"}), 500
 
-    cmd = [
-        'python', 'generate.py',
-        '--images', str(input_path), str(sample_path),
-        '--prompt', '',
-        '--outdir', str(this_outdir),
-        '--api-key', API_KEY,
-        '--model', MODEL_NAME
-    ]
-
     try:
-        # run the process and capture output
-        completed = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        # Step 1: Apply banknote style to input image
+        style_prompt = f"{selected_banknote['style_description']}. Edit the image to precisely match this banknote style, maintaining high detail, engraving techniques, and all artistic elements without adding extra frames or borders."
+
+        print(f"Step 1: Applying style {selected_banknote['name']} to input image", flush=True)
+
+        # Validate input image before proceeding
+        if not os.path.exists(input_path):
+            return jsonify({"error": f"Input image file not found: {input_path}"}), 500
+
+        # Pass the input image to step 1
+        step1_images = [str(input_path)]
+
+        step1_result = run_generate_command(
+            style_prompt,
+            step1_images,
+            str(step1_dir)
+        )
+
+        if step1_result.returncode != 0:
+            return jsonify({
+                "error": "Step 1 (style application) failed",
+                "stdout": step1_result.stdout,
+                "stderr": step1_result.stderr,
+                "returncode": step1_result.returncode
+            }), 500
+
+        # Check if step 1 generated the styled image
+        styled_image_path = step1_dir / "styled_image.png"
+        if not styled_image_path.exists():
+            return jsonify({"error": "Step 1 did not generate styled image"}), 500
+
+        print(f"Step 1 completed successfully, styled image saved to {styled_image_path}")
+
+        # Step 2: Integrate styled image into banknote
+        integration_prompt = """Place the first image into the banknote design without creating any frames, borders, or decorative edges around it. Simply insert the image into available empty spaces, being extremely careful to not cover any text, numbers, or existing printed elements. The image should blend directly with the banknote's artistic style without any additional framing or borders. Position and scale the image to fit naturally within open areas while preserving all original text and printed information completely visible and intact."""
+
+        print(f"Step 2: Integrating styled image into {selected_banknote['name']}")
+        step2_result = run_generate_command(
+            integration_prompt,
+            [str(styled_image_path), str(sample_path)],
+            str(step2_dir)
+        )
+
+        if step2_result.returncode != 0:
+            return jsonify({
+                "error": "Step 2 (banknote integration) failed",
+                "stdout": step2_result.stdout,
+                "stderr": step2_result.stderr,
+                "returncode": step2_result.returncode
+            }), 500
+
+        print(f"Step 2 completed successfully")
+
+        # Collect results
+        result = {
+            'returncode': 0,
+            'stdout': f"Step 1: {step1_result.stdout}\nStep 2: {step2_result.stdout}",
+            'stderr': f"Step 1: {step1_result.stderr}\nStep 2: {step2_result.stderr}",
+            'outputs': [],
+            'step_outputs': {
+                'step1': [],
+                'step2': []
+            }
+        }
+
+        # List step1 outputs
+        for p in sorted(step1_dir.iterdir()):
+            if p.is_file() and allowed_file(p.name):
+                result['step_outputs']['step1'].append(f"/outputs/{run_id}/step1/{p.name}")
+
+        # List step2 outputs (final results)
+        for p in sorted(step2_dir.iterdir()):
+            if p.is_file() and allowed_file(p.name):
+                result['step_outputs']['step2'].append(f"/outputs/{run_id}/step2/{p.name}")
+                result['outputs'].append(f"/outputs/{run_id}/step2/{p.name}")
+
+        result['banknote_used'] = selected_banknote['name']
+
+        return jsonify(result)
+
     except subprocess.TimeoutExpired:
         return jsonify({"error": "Generation timed out"}), 500
-
-    # Collect stdout/stderr and exit code
-    result = {
-        'returncode': completed.returncode,
-        'stdout': completed.stdout,
-        'stderr': completed.stderr,
-        'outputs': []
-    }
-
-    # If the tool wrote images into this_outdir, list them
-    for p in sorted(this_outdir.iterdir()):
-        if p.is_file() and allowed_file(p.name):
-            result['outputs'].append(f"/outputs/{run_id}/{p.name}")
-
-    return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
 
 # Static serving of sample images
@@ -160,6 +260,17 @@ def serve_sample(filename):
 def serve_output(run_id, filename):
     safe = secure_filename(filename)
     folder = OUTPUT_FOLDER / run_id
+    if not (folder.exists() and (folder / safe).exists()):
+        abort(404)
+    return send_from_directory(folder, safe)
+
+# Static serving of step output images
+@app.route('/outputs/<run_id>/<step>/<filename>')
+def serve_step_output(run_id, step, filename):
+    safe = secure_filename(filename)
+    if step not in ['step1', 'step2']:
+        abort(404)
+    folder = OUTPUT_FOLDER / run_id / step
     if not (folder.exists() and (folder / safe).exists()):
         abort(404)
     return send_from_directory(folder, safe)
