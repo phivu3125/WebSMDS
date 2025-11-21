@@ -32,7 +32,7 @@ class GeminiImageGeneration:
             contents=parts,
             config=types.GenerateContentConfig(
                 response_modalities=["IMAGE"],
-                candidate_count=num_images
+                candidate_count=num_images,
             ),
         )
 
@@ -79,38 +79,39 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # Validate that we have images for step 1
+    if not args.images:
+        print("ERROR: No images provided. This script requires at least one image.")
+        exit(1)
+
+    # Validate that all image files exist
+    missing_files = []
+    for img_path in args.images:
+        if not os.path.exists(img_path):
+            missing_files.append(img_path)
+
+    if missing_files:
+        print(f"ERROR: The following image files do not exist: {missing_files}")
+        exit(1)
+
     model = GeminiImageGeneration(
         model=args.model,
         api_key=args.api_key
     )
     images = model.generate(
-        #prompt=args.prompt,
-        prompt="""
-Edit using two input images:
-Image 1: the selfie of the man.
-Image 2: the old Vietnamese 2-đồng banknote.
-Create one final image of the 2-đồng banknote where:
-Composition & placement
-Use Image 2 as the base.
-Completely remove the original group of people and flag inside the central picture area of the banknote.
-Insert exactly Image 1 inside the border of Image 2. Converted into engraved line art.
-Keep all original text, numbers, emblems, and outer ornamental borders of the banknote unchanged.
-Style
-Stylize the main content so it looks like it was engraved on the banknote, not pasted on top.
-Use intaglio-style line engraving: dense cross-hatching, etched shading, no smooth gradients.
-Apply a uniform color palette that exactly matches the ink and paper tone of the banknote.
-The entire image must look like one mechanically printed note on fibrous old paper, with faded ink and fine texture.
-Identity
-
-Goal: it should look as if this 2-đồng banknote was originally printed with the Image 1 inside the border of Image 2 as the central portrait.
-        """,
+        prompt=args.prompt,
         image_paths=args.images,
     )
     # save image to args.output/
     os.makedirs(args.outdir, exist_ok=True)
     print(f"Saving {len(images)} image(s)")
     for i, image in enumerate(images):
-        filename = f"image_hcmus1_{i+1}.png"
+        # Use consistent naming based on whether we're doing step 1 or step 2
+        # Step 1: styled_image.png, Step 2: final_banknote.png (by checking if prompt contains "integrate")
+        if "integrate" in args.prompt.lower():
+            filename = "final_banknote.png"
+        else:
+            filename = "styled_image.png"
         path = os.path.join(args.outdir, filename)
         image.save(path)
         print(f"Saved image: {path}")

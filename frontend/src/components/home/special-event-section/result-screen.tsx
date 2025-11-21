@@ -10,6 +10,8 @@ interface ResultScreenProps {
   selectedFilter: CurrencyFilter
   onRestart: () => void
   onBack: () => void
+  onRegenerate: () => void
+  isRegenerating: boolean
 }
 
 export default function ResultScreen({
@@ -17,7 +19,9 @@ export default function ResultScreen({
   processedImage,
   selectedFilter,
   onRestart,
-  onBack
+  onBack,
+  onRegenerate,
+  isRegenerating
 }: ResultScreenProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
@@ -152,7 +156,7 @@ export default function ResultScreen({
       <div className="flex flex-col space-y-3 max-w-xs mx-auto">
         <button
           onClick={handleDownload}
-          disabled={isDownloading}
+          disabled={isDownloading || isRegenerating}
           className="flex items-center justify-center space-x-2 rounded-lg px-6 py-3 font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: '#aa7638', color: '#e7eef7' }}
         >
@@ -170,8 +174,28 @@ export default function ResultScreen({
         </button>
 
         <button
+          onClick={onRegenerate}
+          disabled={isRegenerating || isDownloading}
+          className="flex items-center justify-center space-x-2 rounded-lg px-6 py-3 font-medium hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ backgroundColor: '#c4b3a4', color: '#723d2c' }}
+        >
+          {isRegenerating ? (
+            <>
+              <div className="h-4 w-4 animate-spin rounded-full border-2" style={{ borderColor: '#723d2c', borderTopColor: 'transparent' }}></div>
+              <span>Đang tạo lại...</span>
+            </>
+          ) : (
+            <>
+              <RotateCcw className="h-4 w-4" />
+              <span>Tạo lại</span>
+            </>
+          )}
+        </button>
+
+        <button
           onClick={onRestart}
-          className="flex items-center justify-center space-x-2 rounded-lg px-6 py-3 font-medium hover:opacity-80 transition-opacity"
+          disabled={isRegenerating || isDownloading}
+          className="flex items-center justify-center space-x-2 rounded-lg px-6 py-3 font-medium hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: '#c4b3a4', color: '#723d2c' }}
         >
           <RotateCcw className="h-4 w-4" />
