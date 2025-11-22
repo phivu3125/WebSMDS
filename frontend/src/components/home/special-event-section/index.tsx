@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import ImageUploadScreen from "./upload-screen"
 import FilterSelectionScreen from "./filter-selection-screen"
 import ResultScreen from "./result-screen"
+import { useBusinessHours } from "../../../hooks/useBusinessHours"
 
 export type CurrencyFilter = {
   id: string
@@ -71,7 +72,8 @@ type Screen = "upload" | "filter" | "result"
 const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_GEMINI_API_URL || 'http://localhost:5000',
   ENDPOINTS: {
-    PROCESS_IMAGE: '/run'
+    PROCESS_IMAGE: '/run',
+    REGENERATE_STEP2: '/regenerate-step2'
   },
   TIMEOUT: 300000 // 5 minutes
 }
@@ -89,11 +91,26 @@ const dataURLtoFile = (dataurl: string, filename: string): File => {
   return new File([u8arr], filename, { type: mime })
 }
 
+// Type for API response
+interface ImageProcessingResponse {
+  returncode: number
+  run_id: string
+  outputs: string[]
+  step_outputs: {
+    step1: string[]
+    step2: string[]
+  }
+  banknote_used: string
+  input_image_path?: string
+  input_filename?: string
+  regeneration_timestamp?: string
+}
+
 // API service function for image processing
 const callImageProcessingAPI = async (
   inputImage: File,
   banknoteChoice: string
-): Promise<string[]> => {
+): Promise<ImageProcessingResponse> => {
   const formData = new FormData()
   formData.append('input_image', inputImage)
   formData.append('banknote_choice', banknoteChoice)
@@ -112,10 +129,37 @@ const callImageProcessingAPI = async (
     throw new Error(result.error)
   }
 
-  return result.outputs || []
+  return result as ImageProcessingResponse
+}
+
+// API service function for step2-only regeneration
+const callRegenerateStep2API = async (
+  runId: string,
+  banknoteChoice: string
+): Promise<ImageProcessingResponse> => {
+  const formData = new FormData()
+  formData.append('run_id', runId)
+  formData.append('banknote_choice', banknoteChoice)
+
+  const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REGENERATE_STEP2}`, {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+
+  const result = await response.json()
+  if (result.error) {
+    throw new Error(result.error)
+  }
+
+  return result as ImageProcessingResponse
 }
 
 export default function SpecialEventSection() {
+  const { isBusinessHours } = useBusinessHours()
   const [currentScreen, setCurrentScreen] = useState<Screen>("upload")
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [selectedFilter, setSelectedFilter] = useState<CurrencyFilter | null>(null)
@@ -124,6 +168,82 @@ export default function SpecialEventSection() {
   const [error, setError] = useState<string | null>(null)
   const [isRegenerating, setIsRegenerating] = useState(false)
   const [generationCount, setGenerationCount] = useState(1)
+  const [runId, setRunId] = useState<string | null>(null)
+
+  // Background regeneration state
+  const [cachedImageUrl, setCachedImageUrl] = useState<string | null>(null)
+  const [isBackgroundRegenerating, setIsBackgroundRegenerating] = useState(false)
+  const [showFakeLoading, setShowFakeLoading] = useState(false)
+
+  // Refs to store current values for setTimeout callback
+  const runIdRef = useRef<string | null>(null)
+  const selectedFilterRef = useRef<CurrencyFilter | null>(null)
+  const backgroundTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Helper functions to update both state and refs
+  const updateRunId = (newRunId: string | null) => {
+    setRunId(newRunId)
+    runIdRef.current = newRunId
+  }
+
+  const updateSelectedFilter = (newFilter: CurrencyFilter | null) => {
+    setSelectedFilter(newFilter)
+    selectedFilterRef.current = newFilter
+  }
+
+  // Clear any pending background regeneration
+  const clearBackgroundTimeout = () => {
+    if (backgroundTimeoutRef.current) {
+      clearTimeout(backgroundTimeoutRef.current)
+      backgroundTimeoutRef.current = null
+    }
+  }
+
+  // Handle regeneration function for potential future use
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleRegenerate = async () => {
+    if (!selectedFilter || !uploadedImage) return
+
+    // Clear any background regeneration when user starts new regeneration
+    clearBackgroundTimeout()
+    setCachedImageUrl(null)
+    setIsBackgroundRegenerating(false)
+    setShowFakeLoading(false)
+
+    setIsRegenerating(true)
+    setError(null)
+
+    try {
+      // Convert uploaded image data URL to File
+      const inputImageFile = dataURLtoFile(uploadedImage, 'user-photo.jpg')
+
+      // Call the API with the same selected banknote choice (using ID)
+      const response = await callImageProcessingAPI(inputImageFile, selectedFilter.id)
+
+      if (response.outputs.length > 0) {
+        // Construct full URL for the processed image
+        const fullImageUrl = `${API_CONFIG.BASE_URL}${response.outputs[0]}`
+        setProcessedImage(fullImageUrl)
+        updateRunId(response.run_id) // Update run_id with new regeneration
+        setGenerationCount(prev => prev + 1) // Increment generation count
+
+        // Start background regeneration after initial generation
+        if (isBusinessHours()) {
+          clearBackgroundTimeout()
+          backgroundTimeoutRef.current = setTimeout(() => {
+            startBackgroundRegeneration()
+          }, 1000)
+        }
+      } else {
+        throw new Error("No processed image returned from API")
+      }
+    } catch (err) {
+      console.error('Error regenerating image:', err)
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
 
   const handleImageUpload = (imageDataUrl: string) => {
     setUploadedImage(imageDataUrl)
@@ -131,7 +251,7 @@ export default function SpecialEventSection() {
   }
 
   const handleFilterSelect = async (filter: CurrencyFilter) => {
-    setSelectedFilter(filter)
+    updateSelectedFilter(filter)
     setIsLoading(true)
     setError(null)
 
@@ -140,14 +260,23 @@ export default function SpecialEventSection() {
       const inputImageFile = dataURLtoFile(uploadedImage!, 'user-photo.jpg')
 
       // Call the API with the selected banknote choice (using ID)
-      const processedImages = await callImageProcessingAPI(inputImageFile, filter.id)
+      const response = await callImageProcessingAPI(inputImageFile, filter.id)
 
-      if (processedImages.length > 0) {
+      if (response.outputs.length > 0) {
         // Construct full URL for the processed image
-        const fullImageUrl = `${API_CONFIG.BASE_URL}${processedImages[0]}`
+        const fullImageUrl = `${API_CONFIG.BASE_URL}${response.outputs[0]}`
         setProcessedImage(fullImageUrl)
+        updateRunId(response.run_id) // Store the run_id for step2 regeneration
         setGenerationCount(1) // Reset generation count for new filter selection
         setCurrentScreen("result")
+
+        // Start background regeneration immediately if business hours
+        if (isBusinessHours()) {
+          clearBackgroundTimeout() // Clear any existing timeout
+          backgroundTimeoutRef.current = setTimeout(() => {
+            startBackgroundRegeneration()
+          }, 1000) // Only 1 second delay to let UI settle
+        }
       } else {
         throw new Error("No processed image returned from API")
       }
@@ -162,12 +291,17 @@ export default function SpecialEventSection() {
   const handleRestart = () => {
     setCurrentScreen("upload")
     setUploadedImage(null)
-    setSelectedFilter(null)
+    updateSelectedFilter(null)
     setProcessedImage(null)
     setError(null)
     setIsLoading(false)
     setIsRegenerating(false)
     setGenerationCount(1)
+    updateRunId(null)
+    setCachedImageUrl(null) // Clear cache
+    setIsBackgroundRegenerating(false) // Clear background state
+    setShowFakeLoading(false) // Clear fake loading
+    clearBackgroundTimeout() // Clear any pending background task
   }
 
   const handleBack = () => {
@@ -176,42 +310,101 @@ export default function SpecialEventSection() {
       setUploadedImage(null)
       setError(null)
       setGenerationCount(1)
+      updateRunId(null)
+      setCachedImageUrl(null) // Clear cache
+      setIsBackgroundRegenerating(false) // Clear background state
+      setShowFakeLoading(false) // Clear fake loading
+      clearBackgroundTimeout() // Clear any pending background task
     } else if (currentScreen === "result") {
       setCurrentScreen("filter")
       setProcessedImage(null)
-      setSelectedFilter(null)
+      updateSelectedFilter(null)
       setError(null)
       setIsRegenerating(false)
       setGenerationCount(1)
+      updateRunId(null)
+      setCachedImageUrl(null) // Clear cache
+      setIsBackgroundRegenerating(false) // Clear background state
+      setShowFakeLoading(false) // Clear fake loading
+      clearBackgroundTimeout() // Clear any pending background task
     }
   }
 
-  const handleRegenerate = async () => {
-    if (!selectedFilter || !uploadedImage) return
+  const handleRegenerateStep2 = async () => {
+    if (!selectedFilter || !runId) return
 
+    // Use cached result if available for instant response
+    if (cachedImageUrl) {
+      // Show fake loading for 1-3 seconds to make it feel like processing
+      setShowFakeLoading(true)
+
+      setTimeout(() => {
+        setProcessedImage(cachedImageUrl)
+        setCachedImageUrl(null) // Clear cache after using
+        setGenerationCount(prev => prev + 1)
+        setShowFakeLoading(false)
+      }, 2000) // 2 seconds fake loading
+
+      return
+    }
+
+    // Clear any pending background regeneration when user starts regeneration
+    clearBackgroundTimeout()
+    setShowFakeLoading(false) // Clear fake loading
     setIsRegenerating(true)
     setError(null)
 
     try {
-      // Convert uploaded image data URL to File
-      const inputImageFile = dataURLtoFile(uploadedImage, 'user-photo.jpg')
+      // Call the step2 regeneration API
+      const response = await callRegenerateStep2API(runId, selectedFilter.id)
 
-      // Call the API with the same selected banknote choice (using ID)
-      const processedImages = await callImageProcessingAPI(inputImageFile, selectedFilter.id)
-
-      if (processedImages.length > 0) {
+      if (response.outputs.length > 0) {
         // Construct full URL for the processed image
-        const fullImageUrl = `${API_CONFIG.BASE_URL}${processedImages[0]}`
+        const fullImageUrl = `${API_CONFIG.BASE_URL}${response.outputs[0]}`
         setProcessedImage(fullImageUrl)
-        setGenerationCount(prev => prev + 1) // Increment generation count
+        setGenerationCount(prev => prev + 1)
+
+        // Background regeneration will auto-trigger from startBackgroundRegeneration function
       } else {
-        throw new Error("No processed image returned from API")
+        throw new Error("No processed image returned from step2 regeneration API")
       }
     } catch (err) {
-      console.error('Error regenerating image:', err)
+      console.error('Error regenerating step2:', err)
       setError(err instanceof Error ? err.message : 'An unknown error occurred')
     } finally {
       setIsRegenerating(false)
+    }
+  }
+
+  // Background regeneration function
+  const startBackgroundRegeneration = async () => {
+    // Use refs to get current values (available in setTimeout callback)
+    const currentRunId = runIdRef.current
+    const currentSelectedFilter = selectedFilterRef.current
+
+    if (!currentRunId || !currentSelectedFilter || isBackgroundRegenerating) {
+      return
+    }
+
+    setIsBackgroundRegenerating(true)
+
+    try {
+      const response = await callRegenerateStep2API(currentRunId, currentSelectedFilter.id)
+      if (response.outputs.length > 0) {
+        const newImageUrl = `${API_CONFIG.BASE_URL}${response.outputs[0]}`
+        setCachedImageUrl(newImageUrl)
+
+        // Auto-trigger next background regeneration if still in business hours
+        if (isBusinessHours() && runIdRef.current && selectedFilterRef.current) {
+          backgroundTimeoutRef.current = setTimeout(() => {
+            startBackgroundRegeneration()
+          }, 5000) // 5 seconds delay before next background regeneration
+        }
+      }
+    } catch (error) {
+      // Error handled silently for production
+    } finally {
+      setIsBackgroundRegenerating(false)
     }
   }
 
@@ -289,8 +482,9 @@ export default function SpecialEventSection() {
                 selectedFilter={selectedFilter!}
                 onRestart={handleRestart}
                 onBack={() => handleBack()}
-                onRegenerate={handleRegenerate}
+                onRegenerateStep2={handleRegenerateStep2}
                 isRegenerating={isRegenerating}
+                isFakeLoading={showFakeLoading}
               />
             )}
           </div>

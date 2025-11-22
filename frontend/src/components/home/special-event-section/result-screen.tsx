@@ -10,8 +10,9 @@ interface ResultScreenProps {
   selectedFilter: CurrencyFilter
   onRestart: () => void
   onBack: () => void
-  onRegenerate: () => void
+  onRegenerateStep2: () => void
   isRegenerating: boolean
+  isFakeLoading?: boolean
 }
 
 export default function ResultScreen({
@@ -20,8 +21,9 @@ export default function ResultScreen({
   selectedFilter,
   onRestart,
   onBack,
-  onRegenerate,
-  isRegenerating
+  onRegenerateStep2,
+  isRegenerating,
+  isFakeLoading = false
 }: ResultScreenProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
@@ -166,16 +168,17 @@ export default function ResultScreen({
           )}
         </button>
 
+        {/* Step2-only regeneration button */}
         <button
-          onClick={onRegenerate}
-          disabled={isRegenerating || isDownloading}
+          onClick={onRegenerateStep2}
+          disabled={isRegenerating || isDownloading || isFakeLoading}
           className="flex items-center justify-center space-x-2 rounded-lg px-6 py-3 font-medium hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: '#c4b3a4', color: '#723d2c' }}
         >
-          {isRegenerating ? (
+          {isRegenerating || isFakeLoading ? (
             <>
               <div className="h-4 w-4 animate-spin rounded-full border-2" style={{ borderColor: '#723d2c', borderTopColor: 'transparent' }}></div>
-              <span>Đang tạo lại...</span>
+              <span>{isRegenerating ? 'Đang tạo lại...' : 'Đang xử lý...'}</span>
             </>
           ) : (
             <>
@@ -187,7 +190,7 @@ export default function ResultScreen({
 
         <button
           onClick={onRestart}
-          disabled={isRegenerating || isDownloading}
+          disabled={isRegenerating || isDownloading || isFakeLoading}
           className="flex items-center justify-center space-x-2 rounded-lg px-6 py-3 font-medium hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: '#c4b3a4', color: '#723d2c' }}
         >
