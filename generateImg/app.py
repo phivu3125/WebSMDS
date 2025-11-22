@@ -383,6 +383,7 @@ def run_generation():
         # Collect results
         result = {
             'returncode': 0,
+            'run_id': run_id,
             'stdout': f"Step 1: {step1_result.stdout}\nStep 2: {step2_result.stdout}",
             'stderr': f"Step 1: {step1_result.stderr}\nStep 2: {step2_result.stderr}",
             'outputs': [],
@@ -413,6 +414,112 @@ def run_generation():
         return jsonify({"error": "Generation timed out"}), 500
     except Exception as e:
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
+
+
+@app.route('/regenerate-step2', methods=['POST'])
+def regenerate_step2():
+    """
+    Regenerate only step 2 (banknote integration) using existing step1 output.
+    This keeps the styled image from step1 and only runs step2 again.
+    """
+    # Required fields: run_id, banknote_choice
+    run_id = request.form.get('run_id')
+    banknote_choice = request.form.get('banknote_choice')
+
+    if not run_id:
+        return jsonify({"error": "run_id field is required"}), 400
+
+    if not banknote_choice:
+        return jsonify({"error": "banknote_choice field is required"}), 400
+
+    # Load banknote styles and find the selected one
+    banknote_styles = load_banknote_styles()
+    selected_banknote = None
+    for banknote in banknote_styles['banknotes']:
+        if banknote['id'] == banknote_choice:
+            selected_banknote = banknote
+            break
+
+    if not selected_banknote:
+        return jsonify({"error": f"Banknote choice '{banknote_choice}' not found"}), 400
+
+    # Get banknote sample image path
+    sample_path = SAMPLES_FOLDER / selected_banknote['sample_image']
+    if not sample_path.exists():
+        return jsonify({"error": f"Sample image {selected_banknote['sample_image']} not found"}), 400
+
+    # Validate that the run_id exists and step1 output is available
+    step1_dir = OUTPUT_FOLDER / run_id / "step1"
+    if not step1_dir.exists():
+        return jsonify({"error": f"run_id '{run_id}' not found or step1 output missing"}), 400
+
+    # Check if step1 styled image exists
+    styled_image_path = step1_dir / "styled_image.png"
+    if not styled_image_path.exists():
+        return jsonify({"error": f"Step 1 styled image not found for run_id '{run_id}'"}), 400
+
+    if not API_KEY:
+        return jsonify({"error": "Server missing GEMINI_API_KEY environment variable"}), 500
+
+    try:
+        # Create new step2 directory with timestamp for this regeneration
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        new_step2_dir = OUTPUT_FOLDER / run_id / f"step2_{timestamp}"
+        new_step2_dir.mkdir(parents=True, exist_ok=True)
+
+        # Step 2: Integrate existing styled image into banknote
+        integration_prompt = """Remove the central content inside the banknote. Then insert the first image as the main central content in the banknote. Keep both images orientations intact. Ensure the first image is at the center of the banknote and neatly enclosed between the banknote frames. make it look boundlessly integrated to the banknote."""
+
+        print(f"Step 2 regeneration: Integrating styled image into {selected_banknote['name']} for run_id {run_id}", flush=True)
+
+        step2_result = run_generate_command(
+            integration_prompt,
+            [str(styled_image_path), str(sample_path)],
+            str(new_step2_dir)
+        )
+
+        if step2_result.returncode != 0:
+            return jsonify({
+                "error": "Step 2 regeneration failed",
+                "stdout": step2_result.stdout,
+                "stderr": step2_result.stderr,
+                "returncode": step2_result.returncode
+            }), 500
+
+        print(f"Step 2 regeneration completed successfully")
+
+        # Collect results
+        result = {
+            'returncode': 0,
+            'run_id': run_id,
+            'regeneration_timestamp': timestamp,
+            'stdout': step2_result.stdout,
+            'stderr': step2_result.stderr,
+            'outputs': [],
+            'step_outputs': {
+                'step1': [],  # Keep existing step1 outputs
+                'step2': []   # New step2 outputs
+            },
+            'banknote_used': selected_banknote['name']
+        }
+
+        # List existing step1 outputs
+        for p in sorted(step1_dir.iterdir()):
+            if p.is_file() and allowed_file(p.name):
+                result['step_outputs']['step1'].append(f"/outputs/{run_id}/step1/{p.name}")
+
+        # List new step2 outputs (final results)
+        for p in sorted(new_step2_dir.iterdir()):
+            if p.is_file() and allowed_file(p.name):
+                result['step_outputs']['step2'].append(f"/outputs/{run_id}/step2_{timestamp}/{p.name}")
+                result['outputs'].append(f"/outputs/{run_id}/step2_{timestamp}/{p.name}")
+
+        return jsonify(result)
+
+    except subprocess.TimeoutExpired:
+        return jsonify({"error": "Step 2 regeneration timed out"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Unexpected error during step 2 regeneration: {str(e)}"}), 500
 
 
 # Static serving of uploaded input images
@@ -447,6 +554,15 @@ def serve_step_output(run_id, step, filename):
     if step not in ['step1', 'step2']:
         abort(404)
     folder = OUTPUT_FOLDER / run_id / step
+    if not (folder.exists() and (folder / safe).exists()):
+        abort(404)
+    return send_from_directory(folder, safe)
+
+# Static serving of timestamped step2 output images (for regeneration)
+@app.route('/outputs/<run_id>/step2_<timestamp>/<filename>')
+def serve_timestamped_step_output(run_id, timestamp, filename):
+    safe = secure_filename(filename)
+    folder = OUTPUT_FOLDER / run_id / f"step2_{timestamp}"
     if not (folder.exists() and (folder / safe).exists()):
         abort(404)
     return send_from_directory(folder, safe)
