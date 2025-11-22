@@ -152,6 +152,35 @@
         border-radius: 4px;
         margin: 10px 0;
       }
+      .image-preview-container {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .image-preview-container h4 {
+        margin: 0 0 10px 0;
+        color: #007bff;
+        font-size: 16px;
+      }
+      #previewImage {
+        width: 100%;
+        height: auto;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease;
+      }
+      #previewImage:hover {
+        transform: scale(1.02);
+      }
+      #imageInfo {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        border-left: 4px solid #007bff;
+      }
     </style>
   </head>
   <body>
@@ -165,9 +194,16 @@
       <form id="form">
         <div>
           <label><strong>Your Photo (required)</strong></label><br>
-          <input type="file" name="input_image" accept="image/*" required />
+          <input type="file" name="input_image" accept="image/*" required id="fileInput" />
         </div>
       </form>
+
+      <!-- Image Preview Section -->
+      <div id="imagePreview" class="image-preview-container" style="display: none;">
+        <h4>📸 Image Preview:</h4>
+        <img id="previewImage" />
+        <div id="imageInfo"></div>
+      </div>
     </div>
 
     <div class="banknote-selection">
@@ -212,8 +248,43 @@
       const progressSection = document.getElementById('progressSection');
       const step1Indicator = document.getElementById('step1Indicator');
       const step2Indicator = document.getElementById('step2Indicator');
+      const fileInput = document.getElementById('fileInput');
+      const imagePreview = document.getElementById('imagePreview');
+      const previewImage = document.getElementById('previewImage');
+      const imageInfo = document.getElementById('imageInfo');
 
       let selectedBanknote = null;
+
+      // File input change handler - show preview
+      fileInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+
+        if (file && file.type.startsWith('image/')) {
+          const reader = new FileReader();
+
+          reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            imagePreview.style.display = 'block';
+
+            // Display image information
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            const fileName = file.name;
+            imageInfo.innerHTML = `
+              <strong>File:</strong> ${fileName}<br>
+              <strong>Size:</strong> ${fileSize} MB<br>
+              <strong>Type:</strong> ${file.type}<br>
+              <strong>Status:</strong> ✅ Ready for processing<br>
+              <small>⚡ EXIF orientation will be automatically corrected for iPhone photos</small>
+            `;
+          };
+
+          reader.readAsDataURL(file);
+        } else {
+          imagePreview.style.display = 'none';
+        }
+
+        checkGenerateButton();
+      });
 
       // Banknote selection handling
       document.querySelectorAll('.banknote-card').forEach(card => {
@@ -230,11 +301,10 @@
         });
       });
 
-      // File input handling
+      // Form change handler (for other form elements)
       form.addEventListener('change', checkGenerateButton);
 
       function checkGenerateButton() {
-        const fileInput = form.querySelector('input[type="file"]');
         const hasFile = fileInput.files.length > 0;
         const hasBanknote = selectedBanknote !== null;
 
@@ -276,6 +346,28 @@
 
             // Display results
             logs.textContent = `Status: ${res.status}\nReturn code: ${json.returncode}\n\nSTDOUT:\n${json.stdout}\n\nSTDERR:\n${json.stderr}`;
+
+            // Display input image for verification - First result
+            if (json.input_image_path) {
+              const inputContainer = document.createElement('div');
+              inputContainer.className = 'result-container';
+              inputContainer.style.border = '2px solid #28a745';
+              inputContainer.innerHTML = `
+                <div class="result-step">
+                  <h4>📸 Input Image (Original - Verification)</h4>
+                  <img src="${json.input_image_path}" alt="Input image" class="result-image" style="max-height: 200px;">
+                  <div style="background: #d4edda; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                    <strong>✅ Upload Successful!</strong><br>
+                    <span style="color: #666; font-size: 13px;">
+                      📁 File: <code>${json.input_filename}</code><br>
+                      📍 Path: <code>${json.input_image_path}</code><br>
+                      🔄 EXIF correction applied if needed
+                    </span>
+                  </div>
+                </div>
+              `;
+              results.appendChild(inputContainer);
+            }
 
             if (json.step_outputs && json.step_outputs.step1.length > 0) {
               const step1Container = document.createElement('div');

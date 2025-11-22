@@ -151,27 +151,91 @@ def run_generate_command(prompt, image_paths, output_dir):
         return ProcessResult()
 
 
+def fix_image_orientation(image_path):
+    """
+    Fix image orientation based on EXIF data to prevent iPhone rotation issues.
+    iPhone photos contain EXIF orientation metadata that browsers don't interpret,
+    causing images to appear rotated when uploaded.
+
+    Args:
+        image_path: Path to image file to fix orientation for
+
+    Returns:
+        True if orientation was fixed or no fix needed, False if error occurred
+    """
+    try:
+        with Image.open(image_path) as img:
+            exif = img._getexif()
+            if not exif:
+                return True
+
+            orientation_key = 0x0112
+            if orientation_key not in exif:
+                return True
+
+            orientation = exif[orientation_key]
+            orientation_fixed = False
+
+            # Apply rotation based on EXIF orientation
+            if orientation == 1:
+                pass  # Normal (no rotation)
+            elif orientation == 2:
+                img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+                orientation_fixed = True
+            elif orientation == 3:
+                img = img.transpose(Image.Transpose.ROTATE_180)
+                orientation_fixed = True
+            elif orientation == 4:
+                img = img.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+                orientation_fixed = True
+            elif orientation == 5:
+                img = img.transpose(Image.Transpose.ROTATE_270).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+                orientation_fixed = True
+            elif orientation == 6:
+                img = img.transpose(Image.Transpose.ROTATE_270)
+                orientation_fixed = True
+            elif orientation == 7:
+                img = img.transpose(Image.Transpose.ROTATE_270).transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+                orientation_fixed = True
+            elif orientation == 8:
+                img = img.transpose(Image.Transpose.ROTATE_90)
+                orientation_fixed = True
+            else:
+                return True  # Unknown orientation, skip processing
+
+            # Save the image if we made changes
+            if orientation_fixed:
+                img.save(image_path, quality=95)
+
+            return True
+
+    except Exception:
+        return False
+
+
 def optimize_image_for_gemini(image_path, max_dimension=1024):
     """
     Optimize image for Gemini Flash processing by downscaling if too large.
     Only resizes if width or height exceeds max_dimension (default 1024px).
     Preserves aspect ratio using thumbnail() to avoid distortion.
-    
+
     Based on Gemini Flash documentation:
     - Images ≤1024×1024: optimal quality and processing speed
     - Images >1024×1024: automatically tiled (slower, more tokens)
-    
+
     Args:
         image_path: Path to image file to optimize
         max_dimension: Maximum width/height in pixels (default 1024)
-    
+
     Returns:
         True if successful, False if error occurred
     """
     try:
+        # Step 1: Fix EXIF orientation to prevent iPhone rotation issues
+        fix_image_orientation(image_path)
+
+        # Step 2: Optimize image size
         with Image.open(image_path) as img:
-            original_size = img.size
-            
             # Convert RGBA to RGB if needed
             if img.mode == 'RGBA':
                 img = img.convert('RGB')
@@ -180,14 +244,10 @@ def optimize_image_for_gemini(image_path, max_dimension=1024):
             if img.width > max_dimension or img.height > max_dimension:
                 # Use thumbnail to preserve aspect ratio
                 img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
-                print(f"Image optimized: {original_size[0]}x{original_size[1]} → {img.size[0]}x{img.size[1]}", flush=True)
-            else:
-                print(f"Image already optimal: {original_size[0]}x{original_size[1]} (no resize needed)", flush=True)
 
             img.save(image_path, quality=95)
             return True
     except Exception as e:
-        print(f"Error optimizing image {image_path}: {e}", flush=True)
         return False
 
 
@@ -202,6 +262,13 @@ def index():
 def run_generation():
     # input_image: required
     # banknote_choice: required (select which banknote style to use)
+
+    # Verify upload folder exists and is writable
+    if not UPLOAD_FOLDER.exists():
+        UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+    if not os.access(UPLOAD_FOLDER, os.W_OK):
+        return jsonify({"error": f"Uploads folder is not writable: {UPLOAD_FOLDER}"}), 500
+
     if 'input_image' not in request.files:
         return jsonify({"error": "input_image field is required"}), 400
 
@@ -234,10 +301,19 @@ def run_generation():
     input_fname = secure_filename(input_file.filename)
     input_id = f"{uuid.uuid4().hex}_{input_fname}"
     input_path = UPLOAD_FOLDER / input_id
+
     input_file.save(input_path)
 
-    # Optimize input image for Gemini Flash processing
+    # Verify file was saved successfully
+    if not input_path.exists():
+        return jsonify({"error": f"Failed to save uploaded file to {input_path}"}), 500
+
+    # Optimize input image for Gemini Flash processing (includes EXIF correction)
     optimize_image_for_gemini(input_path)
+
+    # Final verification: Check that input file still exists after optimization
+    if not input_path.exists():
+        return jsonify({"error": f"Input file was lost during processing: {input_fname}"}), 500
 
     # Prepare unique output folder for this run with step1 and step2 subfolders
     run_id = uuid.uuid4().hex
@@ -313,7 +389,9 @@ def run_generation():
             'step_outputs': {
                 'step1': [],
                 'step2': []
-            }
+            },
+            'input_image_path': f"/uploads/{input_id}",
+            'input_filename': input_fname
         }
 
         # List step1 outputs
@@ -336,6 +414,14 @@ def run_generation():
     except Exception as e:
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
+
+# Static serving of uploaded input images
+@app.route('/uploads/<filename>')
+def serve_upload(filename):
+    safe = secure_filename(filename)
+    if not (UPLOAD_FOLDER / safe).exists():
+        abort(404)
+    return send_from_directory(UPLOAD_FOLDER, safe)
 
 # Static serving of sample images
 @app.route('/samples/<filename>')
