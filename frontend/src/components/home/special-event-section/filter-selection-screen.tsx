@@ -105,7 +105,7 @@ export default function FilterSelectionScreen({
               {/* Currency Image */}
               <div className="mb-2 aspect-[3/2] overflow-hidden rounded bg-gray-100">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_GEMINI_API_URL || 'http://localhost:5000'}/samples/${currency.image}`}
+                  src={currency.image}
                   alt={`${currency.name} - ${currency.year}`}
                   className="h-full w-full object-contain"
                 />

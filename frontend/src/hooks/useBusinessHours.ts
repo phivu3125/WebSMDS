@@ -1,6 +1,6 @@
 /**
  * Business hours detection hook
- * Detects peak hours: 7:30-4:30 next day (qua nửa đêm), Monday-Sunday (T2-CN)
+ * Detects peak hours: 7:30-21:30, Monday-Sunday (T2-CN)
  * Uses Vietnam timezone (Asia/Ho_Chi_Minh)
  */
 
@@ -15,13 +15,12 @@ export const useBusinessHours = () => {
     // Convert current time to minutes since midnight for easy comparison
     const currentTime = hour * 60 + minute
     const startTime = 7 * 60 + 30  // 7:30 = 450 minutes
-    const endTime = 4 * 60 + 30    // 4:30 = 270 minutes (ngày hôm sau)
+    const endTime = 21 * 60 + 30   // 21:30 = 1290 minutes
 
-    // Logic xử lý qua nửa đêm: từ 7:30 sáng đến 23:59 HOẶC từ 00:00 đến 4:30 sáng
-    const isAfterStartTime = currentTime >= startTime // Sau 7:30 sáng
-    const isBeforeEndTime = currentTime <= endTime     // Trước 4:30 sáng
+    const result = dayOfWeek >= 0 && dayOfWeek <= 6 && currentTime >= startTime && currentTime <= endTime
 
-    return dayOfWeek >= 0 && dayOfWeek <= 6 && (isAfterStartTime || isBeforeEndTime)
+    // Check if within business hours (7:30-21:30) and any day (0-6 = Sunday-Saturday)
+    return result
   }
 
   return { isBusinessHours }

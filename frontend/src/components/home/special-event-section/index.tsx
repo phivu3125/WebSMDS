@@ -21,7 +21,7 @@ const historicalCurrencies: CurrencyFilter[] = [
     name: "100 đồng",
     year: "1980",
     value: "100",
-    image: "Note1.jpg",
+    image: "/images/currency-notes/Note1.jpg",
     description: ""
   },
   {
@@ -29,7 +29,7 @@ const historicalCurrencies: CurrencyFilter[] = [
     name: "5000 đồng",
     year: "1987",
     value: "5000",
-    image: "Note2.jpg",
+    image: "/images/currency-notes/Note2.jpg",
     description: ""
   },
   {
@@ -37,7 +37,7 @@ const historicalCurrencies: CurrencyFilter[] = [
     name: "100000 đồng",
     year: "1994",
     value: "200.000",
-    image: "Note3.jpg",
+    image: "/images/currency-notes/Note3.jpg",
     description: ""
   },
   {
@@ -45,7 +45,7 @@ const historicalCurrencies: CurrencyFilter[] = [
     name: "2 đồng",
     year: "1958",
     value: "2",
-    image: "Note4.jpg",
+    image: "/images/currency-notes/Note4.jpg",
     description: ""
   },
   {
@@ -53,7 +53,7 @@ const historicalCurrencies: CurrencyFilter[] = [
     name: "5 đồng",
     year: "1966",
     value: "5",
-    image: "Note5.jpg",
+    image: "/images/currency-notes/Note5.jpg",
     description: ""
   },
   {
@@ -61,7 +61,7 @@ const historicalCurrencies: CurrencyFilter[] = [
     name: "5 đồng",
     year: "1966",
     value: "5",
-    image: "Note6.jpg",
+    image: "/images/currency-notes/Note6.jpg",
     description: ""
   },
 ]
@@ -179,6 +179,7 @@ export default function SpecialEventSection() {
   const runIdRef = useRef<string | null>(null)
   const selectedFilterRef = useRef<CurrencyFilter | null>(null)
   const backgroundTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   // Helper functions to update both state and refs
   const updateRunId = (newRunId: string | null) => {
@@ -197,6 +198,16 @@ export default function SpecialEventSection() {
       clearTimeout(backgroundTimeoutRef.current)
       backgroundTimeoutRef.current = null
     }
+  }
+
+  // Abort background regeneration
+  const abortBackgroundRegeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    clearBackgroundTimeout()
+    setIsBackgroundRegenerating(false)
   }
 
   // Handle regeneration function for potential future use
@@ -255,27 +266,28 @@ export default function SpecialEventSection() {
     setIsLoading(true)
     setError(null)
 
-    try {
-      // Convert uploaded image data URL to File
-      const inputImageFile = dataURLtoFile(uploadedImage!, 'user-photo.jpg')
+    // Clear any existing cache and abort background regeneration when selecting new filter
+    setCachedImageUrl(null)
+    abortBackgroundRegeneration()
 
-      // Call the API with the selected banknote choice (using ID)
+    try {
+      // Always generate from scratch
+      const inputImageFile = dataURLtoFile(uploadedImage!, 'user-photo.jpg')
       const response = await callImageProcessingAPI(inputImageFile, filter.id)
 
       if (response.outputs.length > 0) {
-        // Construct full URL for the processed image
         const fullImageUrl = `${API_CONFIG.BASE_URL}${response.outputs[0]}`
         setProcessedImage(fullImageUrl)
-        updateRunId(response.run_id) // Store the run_id for step2 regeneration
-        setGenerationCount(1) // Reset generation count for new filter selection
+        updateRunId(response.run_id)
+        setGenerationCount(1)
         setCurrentScreen("result")
 
         // Start background regeneration immediately if business hours
         if (isBusinessHours()) {
-          clearBackgroundTimeout() // Clear any existing timeout
+          clearBackgroundTimeout()
           backgroundTimeoutRef.current = setTimeout(() => {
             startBackgroundRegeneration()
-          }, 1000) // Only 1 second delay to let UI settle
+          }, 1000)
         }
       } else {
         throw new Error("No processed image returned from API")
@@ -301,7 +313,7 @@ export default function SpecialEventSection() {
     setCachedImageUrl(null) // Clear cache
     setIsBackgroundRegenerating(false) // Clear background state
     setShowFakeLoading(false) // Clear fake loading
-    clearBackgroundTimeout() // Clear any pending background task
+    abortBackgroundRegeneration() // Abort any running background regeneration
   }
 
   const handleBack = () => {
@@ -311,22 +323,22 @@ export default function SpecialEventSection() {
       setError(null)
       setGenerationCount(1)
       updateRunId(null)
+      updateSelectedFilter(null) // Also clear selected filter
       setCachedImageUrl(null) // Clear cache
       setIsBackgroundRegenerating(false) // Clear background state
       setShowFakeLoading(false) // Clear fake loading
-      clearBackgroundTimeout() // Clear any pending background task
+      abortBackgroundRegeneration() // Abort any running background regeneration
     } else if (currentScreen === "result") {
       setCurrentScreen("filter")
       setProcessedImage(null)
-      updateSelectedFilter(null)
+      // Keep selectedFilter so user can see current choice when going back to filter screen
       setError(null)
       setIsRegenerating(false)
       setGenerationCount(1)
-      updateRunId(null)
-      setCachedImageUrl(null) // Clear cache
+      // Keep runId and cache for background regeneration
       setIsBackgroundRegenerating(false) // Clear background state
       setShowFakeLoading(false) // Clear fake loading
-      clearBackgroundTimeout() // Clear any pending background task
+      abortBackgroundRegeneration() // Abort any running background regeneration
     }
   }
 
@@ -349,7 +361,7 @@ export default function SpecialEventSection() {
     }
 
     // Clear any pending background regeneration when user starts regeneration
-    clearBackgroundTimeout()
+    abortBackgroundRegeneration()
     setShowFakeLoading(false) // Clear fake loading
     setIsRegenerating(true)
     setError(null)
@@ -364,7 +376,13 @@ export default function SpecialEventSection() {
         setProcessedImage(fullImageUrl)
         setGenerationCount(prev => prev + 1)
 
-        // Background regeneration will auto-trigger from startBackgroundRegeneration function
+        // Start background regeneration after user regeneration
+        if (isBusinessHours()) {
+          clearBackgroundTimeout()
+          backgroundTimeoutRef.current = setTimeout(() => {
+            startBackgroundRegeneration()
+          }, 1000)
+        }
       } else {
         throw new Error("No processed image returned from step2 regeneration API")
       }
@@ -386,16 +404,31 @@ export default function SpecialEventSection() {
       return
     }
 
+    // Create new AbortController for this request
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+
     setIsBackgroundRegenerating(true)
 
     try {
+      // Check if aborted before making API call
+      if (abortController.signal.aborted) {
+        return
+      }
+
       const response = await callRegenerateStep2API(currentRunId, currentSelectedFilter.id)
+
+      // Check if aborted during API call
+      if (abortController.signal.aborted) {
+        return
+      }
+
       if (response.outputs.length > 0) {
         const newImageUrl = `${API_CONFIG.BASE_URL}${response.outputs[0]}`
         setCachedImageUrl(newImageUrl)
 
-        // Auto-trigger next background regeneration if still in business hours
-        if (isBusinessHours() && runIdRef.current && selectedFilterRef.current) {
+        // Auto-trigger next background regeneration if still in business hours and not aborted
+        if (isBusinessHours() && runIdRef.current && selectedFilterRef.current && !abortController.signal.aborted) {
           backgroundTimeoutRef.current = setTimeout(() => {
             startBackgroundRegeneration()
           }, 5000) // 5 seconds delay before next background regeneration
@@ -404,7 +437,10 @@ export default function SpecialEventSection() {
     } catch (error) {
       // Error handled silently for production
     } finally {
-      setIsBackgroundRegenerating(false)
+      // Only set false if this is still the current abortController
+      if (abortControllerRef.current === abortController) {
+        setIsBackgroundRegenerating(false)
+      }
     }
   }
 
